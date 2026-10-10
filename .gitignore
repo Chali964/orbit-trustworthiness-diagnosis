@@ -1,0 +1,17 @@
+# 依赖与构建产物
+node_modules/
+*.log
+
+# 缓存
+.cache/
+.slidep/
+
+# 密钥与凭据（绝不提交）
+.env
+*.key
+secrets/
+
+# 编辑器
+.vscode/
+.idea/
+.DS_Store

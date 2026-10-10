@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>智能体判断链路 · 一次完整诊断的实测记录</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#fff; --line:#e3e6ec; --line2:#cfd5df;
+    --ink:#1a1f29; --ink2:#3f4959; --ink3:#7b869a;
+    --brand:#1d5fd0; --brand2:#eaf1fd; --brand3:#cfe0fa;
+    --tool:#00897b; --tool2:#e0f2ef; --tool3:#b2ded7;
+    --hot:#c62828; --hot2:#fdecec; --hot3:#f4cccc;
+    --ok:#1f7a4d; --ok2:#e8f5ee; --ok3:#b6ddc7;
+    --warn:#9a6200; --warn2:#fdf3e3; --warn3:#efdcb4;
+    --violet:#5b3fa8; --violet2:#efecfa; --violet3:#cec4ef;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:15px;line-height:1.8}
+  .wrap{max-width:1020px;margin:0 auto;padding:32px 22px 80px}
+
+  .doc-head{border-bottom:3px double var(--line2);padding-bottom:18px;margin-bottom:22px}
+  .doc-head .kicker{font-size:12.4px;letter-spacing:.18em;color:var(--ink3);margin-bottom:8px}
+  .doc-head h1{margin:0 0 10px;font-size:25px;line-height:1.4;font-weight:700}
+  .doc-head .meta{font-size:13.2px;color:var(--ink2);line-height:1.9}
+  .doc-head .meta b{color:var(--ink)}
+
+  .abstract{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--brand);
+    border-radius:0 10px 10px 0;padding:16px 20px;margin:18px 0 30px;font-size:14.2px}
+  .abstract .t{font-weight:700;font-size:13.4px;color:var(--brand);letter-spacing:.06em;margin-bottom:6px}
+
+  .stage{margin:0 0 4px}
+  .stage-label{font-size:12.6px;font-weight:700;letter-spacing:.1em;color:var(--ink3);margin-bottom:8px}
+  .stage-label .n{display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;
+    background:var(--brand);color:#fff;border-radius:50%;font-size:11.5px;margin-right:7px;vertical-align:1px}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:16px 20px;margin-bottom:6px}
+
+  /* 用户原话 */
+  .utterance{border-left:4px solid var(--brand);background:var(--brand2);border-color:var(--brand3)}
+  .utterance .who{font-weight:700;color:var(--brand);font-size:13px;margin-bottom:6px}
+  .utterance .txt{font-size:14.6px;line-height:1.9}
+  .utterance .note-line{margin-top:10px;padding-top:9px;border-top:1px dashed var(--brand3);
+    font-size:13px;color:var(--ink2)}
+  .utterance .note-line b{color:var(--hot)}
+
+  /* 任务清单 */
+  .plan{border-left:4px solid var(--violet);background:var(--violet2);border-color:var(--violet3)}
+  .plan ol{margin:6px 0 0;padding-left:26px}
+  .plan li{font-size:14.2px;margin:3px 0}
+  .plan .flag{margin-top:11px;padding-top:9px;border-top:1px dashed var(--violet3);
+    font-size:13.2px;color:var(--ink2)}
+  .plan .flag b{color:var(--violet)}
+
+  /* 执行链 */
+  .chain{margin:0}
+  .step{display:flex;gap:14px;align-items:flex-start;padding:11px 0;border-bottom:1px dashed var(--line)}
+  .step:last-child{border-bottom:none}
+  .step .idx{flex:0 0 26px;height:26px;line-height:26px;text-align:center;border-radius:50%;
+    background:var(--line);color:var(--ink2);font-size:12.4px;font-weight:700;margin-top:2px}
+  .step .body{flex:1;min-width:0}
+  .step .top{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .tool{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.6px;font-weight:700;
+    padding:1.5px 9px;border-radius:5px;border:1px solid}
+  .tool.mine{color:var(--tool);background:var(--tool2);border-color:var(--tool3)}
+  .tool.agh{color:var(--ink2);background:#f0f2f6;border-color:var(--line2)}
+  .step .desc{font-size:13.6px;color:var(--ink2);margin-top:5px}
+  .step .result{font-size:13.4px;margin-top:5px;color:var(--ink)}
+  .step .result b{color:var(--brand)}
+  .step.key{background:var(--warn2);border:1px solid var(--warn3);border-radius:9px;padding:11px 13px;margin:5px 0}
+  .step.key .idx{background:var(--warn);color:#fff}
+  .step.key .result b{color:var(--warn)}
+
+  /* ★ 决策块 */
+  .judgment{border:2px solid var(--hot);background:var(--card);border-radius:13px;
+    padding:20px 22px;margin:14px 0}
+  .judgment .hd{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+  .judgment .star{font-size:19px;color:var(--hot)}
+  .judgment h3{margin:0;font-size:17.5px;font-weight:700;color:var(--hot)}
+  .judgment .sub{font-size:13.2px;color:var(--ink3);margin:-9px 0 14px}
+
+  .opt{border:1px solid var(--line);border-radius:10px;padding:13px 16px;margin-bottom:10px;background:#fbfcfd}
+  .opt .oh{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:7px}
+  .opt .name{font-weight:700;font-size:15px}
+  .opt .verdict{font-size:12.4px;font-weight:700;padding:2px 10px;border-radius:20px;border:1px solid;white-space:nowrap}
+  .opt.reject .name{color:var(--ink2)}
+  .opt.reject .verdict{color:var(--hot);background:var(--hot2);border-color:var(--hot3)}
+  .opt.take{border-color:var(--ok3);background:var(--ok2)}
+  .opt.take .name{color:var(--ok)}
+  .opt.take .verdict{color:var(--ok);background:#fff;border-color:var(--ok3)}
+  .opt .facts{font-size:13.3px;color:var(--ink2);line-height:1.85}
+  .opt .facts b{color:var(--ink)}
+  .opt .why{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);
+    font-size:13.2px;color:var(--ink)}
+
+  .concl{border-left:4px solid var(--ok);background:var(--ok2);border-color:var(--ok3);
+    border-radius:0 10px 10px 0;padding:14px 18px;margin:14px 0 0;font-size:14.3px}
+  .concl .t{font-weight:700;color:var(--ok);font-size:13.2px;margin-bottom:5px}
+
+  .punch{background:#1a1f29;color:#f2f5f9;border-radius:12px;padding:22px 26px;margin:26px 0;font-size:16.5px;
+    line-height:1.85;text-align:center}
+  .punch b{color:#8ec5ff}
+  .punch .small{display:block;margin-top:9px;font-size:13.2px;color:#9aa5b5;font-weight:400}
+
+  table.sum{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.4px;background:var(--card)}
+  table.sum th,table.sum td{border:1px solid var(--line);padding:8px 10px;text-align:left}
+  table.sum th{background:#f0f3f8;font-weight:700;color:var(--ink2);font-size:13px}
+  table.sum td.c,table.sum th.c{text-align:center}
+
+  footer{margin-top:42px;padding-top:16px;border-top:1px solid var(--line);font-size:12.6px;color:var(--ink3);line-height:1.85}
+  @media print{body{background:#fff}.card,.opt,.judgment,.punch{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="doc-head">
+  <div class="kicker">实测记录可视化 · 可直接用于路演 PPT</div>
+  <h1>智能体判断链路：一次完整诊断</h1>
+  <div class="meta">
+    <b>来源：</b>AGH 会话记录 <code>9b66886d</code>（2026-10-02 15:14–15:16）<br>
+    <b>规模：</b>单轮 <b>8 个连续步骤</b>　|　<b>耗时：</b><b>1 分 54 秒</b>　|　<b>人工介入：</b>0 次<br>
+    <b>数据档位：</b>本页全部数字均取自 AGH 自动记录，可逐项复核
+  </div>
+</div>
+
+<div class="abstract">
+  <div class="t">这一页要说明什么</div>
+  <b>左侧的每一句话都是设计师说的，右侧的每一步都是智能体自己决定的——中间没有任何人指定过步骤。</b><br>
+  最能说明问题的在第 ⑤ 段：它算出了两个方案，<b>放弃了看起来更省的那个，并把理由讲清楚了</b>。
+</div>
+
+<!-- ============================= ① 输入 ============================= -->
+<div class="stage">
+  <div class="stage-label"><span class="n">1</span>输入 · 设计师说的全部内容</div>
+  <div class="card utterance">
+    <div class="who">设计师</div>
+    <div class="txt">「帮我做一次完整的可信度评估。场景：a=7000km、e=0.05 的近地轨道，用 RK4 积 2 圈，位置误差要压到 1e-5 km 以内。我想知道：1) 这个内核里有哪些积分方法？RK4 是不是合适的选择？ 2) 要达到 1e-5 km 精度，我该用多少步？ 3) 用这个步长实际算一次，位置误差和守恒量误差分别是多少？ 4) 综合来看，这套配置能不能直接交付？依据是什么？另外我担心数值方法本身有没有实现问题（比如收敛阶不对），麻烦一并核实一下。」</div>
+    <div class="note-line">全程就这些。<b>没有出现任何工具名，也没有指定任何步骤。</b></div>
+  </div>
+</div>
+
+<!-- ============================= ② 规划 ============================= -->
+<div class="stage" style="margin-top:22px">
+  <div class="stage-label"><span class="n">2</span>规划 · 智能体自己拆出的任务清单</div>
+  <div class="card plan">
+    <ol>
+      <li>获取内核信息：积分方法、理论阶、精度地板</li>
+      <li>校准：RK4 达到 1e-5 km 所需步长 + 浮点上限</li>
+      <li>用校准步长实际传播，报告位置误差与守恒量误差</li>
+      <li>运行 6 条告警规则做综合可信度判断</li>
+      <li>观测阶数测试：验证 RK4 实现是否真的 4 阶</li>
+      <li>汇总评估结论</li>
+    </ol>
+    <div class="flag"><b>这张清单不是我们写的。</b>顺序也是它自己排的——注意它把"验证实现"放在第 5 位，而不是按工具定义顺序。</div>
+  </div>
+</div>
+
+<!-- ============================= ③ 执行 ============================= -->
+<div class="stage" style="margin-top:22px">
+  <div class="stage-label"><span class="n">3</span>执行 · 8 个连续步骤</div>
+  <div class="card chain">
+
+    <div class="step">
+      <div class="idx">1</div>
+      <div class="body">
+        <div class="top"><span class="tool agh">todo</span><span style="font-size:12.6px;color:var(--ink3)">AGH 内置</span></div>
+        <div class="desc">建立上面那张任务清单</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="idx">2</div>
+      <div class="body">
+        <div class="top"><span class="tool mine">orbit_kernel_info</span><span style="font-size:12.6px;color:var(--ink3)">本项目工具</span></div>
+        <div class="desc">查询这个内核有哪些方法可用、各自几阶、精度极限在哪</div>
+        <div class="result">结论：<b>五种方法中 RK4 精度最高且标定可靠</b>，选定 RK4</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="idx">3</div>
+      <div class="body">
+        <div class="top"><span class="tool mine">orbit_calibrate_step</span></div>
+        <div class="desc">由目标精度反推所需步长，并找出浮点上界</div>
+        <div class="result">最小 <b>763 步/圈</b>达标；上界 <b>6125 步/圈</b>（再缩无效）；位置精度地板 1.38e-9 km</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="idx">4</div>
+      <div class="body">
+        <div class="top"><span class="tool mine">orbit_propagate</span><span style="font-size:12.6px;color:var(--ink3)">nPerOrbit = 763</span></div>
+        <div class="desc">按标定结果实测一次</div>
+        <div class="result">位置误差 <b>9.81e-6 km</b>（略优于目标 1e-5）</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="idx">5</div>
+      <div class="body">
+        <div class="top"><span class="tool mine">orbit_order_test</span><span style="font-size:12.6px;color:var(--ink3)">200/400/800/1600 步，取全时段最大误差</span></div>
+        <div class="desc">实测收敛阶，与理论阶比对，检查数值实现本身</div>
+        <div class="result">位置阶 4.16 → 4.08 → 4.04，全局拟合 <b>4.09 ≈ 理论阶 4</b>；能量阶 5.000（= 理论阶 +1，符合守恒量规律）→ <b>实现无问题</b></div>
+      </div>
+    </div>
+
+    <div class="step key">
+      <div class="idx">6</div>
+      <div class="body">
+        <div class="top"><span class="tool mine">orbit_alarm_check</span><span style="font-size:12.6px;color:var(--warn)">nPerOrbit = 763</span></div>
+        <div class="desc">六条规则体检</div>
+        <div class="result"><b>触发 R5 告警</b>：末态合格（9.81e-6 &lt; 1e-5），但<b>加倍弧段内最大误差 2.61e-5，超差 2.6 倍</b></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="idx">7</div>
+      <div class="body">
+        <div class="top"><span class="tool mine">orbit_propagate</span><span style="font-size:12.6px;color:var(--ink3)">nPerOrbit = 6125</span></div>
+        <div class="desc">换用浮点上界的步长，再测一次做对比</div>
+        <div class="result">位置误差 <b>2.84e-9 km</b>（远低于目标）</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="idx">8</div>
+      <div class="body">
+        <div class="top"><span class="tool mine">orbit_alarm_check</span><span style="font-size:12.6px;color:var(--ink3)">nPerOrbit = 6125</span></div>
+        <div class="desc">对新配置再来一次体检</div>
+        <div class="result">触发 R2，但它<b>判定为浮点平台效应而非实现缺陷</b>——步长已使每步截断误差低于机器精度，属正常现象</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================= ④ 决策 ============================= -->
+<div class="stage" style="margin-top:26px">
+  <div class="stage-label"><span class="n">4</span>判断 · 两个方案，它选了哪个</div>
+
+  <div class="judgment">
+    <div class="hd"><span class="star">★</span><h3>这是全过程中最值钱的一步</h3></div>
+    <div class="sub">两个方案都能跑出结果。按数字看，其中一个明显更"划算"。</div>
+
+    <div class="opt reject">
+      <div class="oh">
+        <span class="name">方案 A　763 步/圈</span>
+        <span class="verdict">不采用</span>
+      </div>
+      <div class="facts">
+        末态位置误差 <b>9.81e-6 km</b> —— 恰好达标（目标 1e-5）<br>
+        算力消耗：整条链中最省的一档
+      </div>
+      <div class="why">但它在第 6 步发现了隐患：<b>这个配置在弧段中段的误差会涨到 2.6 倍、超出要求。</b>末态合格是种假象——如果只看交付时刻的误差，就会带着这个问题交付出去。</div>
+    </div>
+
+    <div class="opt take">
+      <div class="oh">
+        <span class="name">方案 B　6125 步/圈</span>
+        <span class="verdict">采用</span>
+      </div>
+      <div class="facts">
+        末态位置误差 <b>2.84e-9 km</b> —— 比目标低三个数量级<br>
+        算力消耗：方案 A 的 <b>8 倍</b>
+      </div>
+      <div class="why">虽然贵，但全程误差都在要求之内，可以安全交付。它触发的那条告警是浮点平台效应，属正常现象——<b>它把这条也判明白了</b>。</div>
+    </div>
+
+    <div class="concl">
+      <div class="t">它的最终建议</div>
+      用 <b>6125 步/圈</b>（步长 ≈ 0.95 秒）交付，并附上对 R2 告警的说明。<br>
+      同时说明了备选路径：如果下游只关心末态误差、不关心弧段中段，763 步也可用，但需附 R5 说明。
+    </div>
+  </div>
+</div>
+
+<div class="punch">
+  它没有选误差最小的，也没有选最省的——<br>
+  <b>它选了那个不会出事的。</b>
+  <span class="small">763 步看起来达标，实际有隐患；它把隐患找出来了，并为此多付了 8 倍算力。</span>
+</div>
+
+<!-- ============================= ⑤ 汇总 ============================= -->
+<div class="stage" style="margin-top:30px">
+  <div class="stage-label"><span class="n">5</span>说明 · 这次运行与"跑一个脚本"的区别</div>
+
+<table class="sum">
+  <caption style="caption-side:top;text-align:left;font-size:12.8px;color:var(--ink3);padding-bottom:5px">表 1　对照：命令执行 vs 自主诊断</caption>
+  <tr><th style="width:210px">观察点</th><th style="width:255px">如果只是"跑一个脚本"</th><th>实际发生了什么</th></tr>
+  <tr>
+    <td>步骤从哪来</td>
+    <td>由人预先写死</td>
+    <td><b>自己拆出 6 项任务清单</b>，顺序自己排</td>
+  </tr>
+  <tr>
+    <td>用哪个工具</td>
+    <td>由人指定</td>
+    <td><b>自己判断</b>需要哪些证据，选了 5 类工具</td>
+  </tr>
+  <tr>
+    <td>参数怎么填</td>
+    <td>由人给定</td>
+    <td><b>自己确定</b>：精度目标、弧段、步长阶梯都自己定</td>
+  </tr>
+  <tr>
+    <td>出现告警怎么办</td>
+    <td>按预设规则处理</td>
+    <td><b>自己判断告警性质</b>——R5 是真隐患，R2 是正常现象</td>
+  </tr>
+  <tr>
+    <td>怎么做取舍</td>
+    <td>不会遇到这个问题</td>
+    <td><b>在两个方案间权衡，并说清代价</b></td>
+  </tr>
+  <tr>
+    <td>遇到不理解的结果</td>
+    <td>报错或跳过</td>
+    <td>解释它、纳入结论</td>
+  </tr>
+</table>
+
+<div class="abstract" style="border-left-color:var(--tool);margin-top:18px">
+  <div class="t" style="color:var(--tool)">一句话</div>
+  这条链上没有一处是"照着写好的流程跑"——<b>因为流程里根本没有"发现弧段有隐患就换方案"这一步。那是它自己想出来的。</b>
+</div>
+
+</div>
+
+<footer>
+  <b>数据来源：</b>AGH 会话记录 <code>9b66886d</code>，事件表可逐条复核（含 <code>tool/call</code> 与 <code>tool/result</code>，各带时间戳与参数）。
+  本页所有数值（763 / 6125 步、9.81e-6 km、2.84e-9 km、2.61e-5 km、实测阶 4.09、1 分 54 秒、8 步）均为实测，无估算值。<br>
+  <b>工具归属：</b>标注「本项目工具」的 5 个由本作品提供；标注「AGH 内置」的 <code>todo</code> 由 AGH 平台提供。<br>
+  <b>用途：</b>本页可直接截图用于路演 PPT；配合《场景叙事》与《任务剧本》使用。
+</footer>
+
+</div>
+</body>
+</html>

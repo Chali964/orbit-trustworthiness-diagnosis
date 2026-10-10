@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GitHub 查重报告 · 轨道仿真可信度诊断系统</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#fff; --line:#e3e6ec; --line2:#cfd5df;
+    --ink:#1a1f29; --ink2:#3f4959; --ink3:#7b869a;
+    --brand:#1d5fd0; --brand2:#eaf1fd; --brand3:#cfe0fa;
+    --hot:#c62828; --hot2:#fdecec; --hot3:#f4cccc;
+    --ok:#1f7a4d; --ok2:#e8f5ee; --ok3:#b6ddc7;
+    --warn:#9a6200; --warn2:#fdf3e3; --warn3:#efdcb4;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:15px;line-height:1.85}
+  .wrap{max-width:1080px;margin:0 auto;padding:32px 22px 80px}
+  .doc-head{border-bottom:3px double var(--line2);padding-bottom:18px;margin-bottom:24px}
+  .doc-head .kicker{font-size:12.4px;letter-spacing:.18em;color:var(--ink3);margin-bottom:8px}
+  .doc-head h1{margin:0 0 12px;font-size:25px;line-height:1.4;font-weight:700}
+  .doc-head .meta{font-size:13.2px;color:var(--ink2);line-height:1.9}
+  .doc-head .meta b{color:var(--ink)}
+  .abstract{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--brand);
+    border-radius:0 10px 10px 0;padding:16px 20px;margin:20px 0 26px;font-size:14.2px}
+  .abstract .t{font-weight:700;font-size:13.4px;color:var(--brand);letter-spacing:.06em;margin-bottom:6px}
+  h2{font-size:19px;margin:42px 0 4px;padding-bottom:6px;border-bottom:1px solid var(--line2);font-weight:700}
+  h2 .num{color:var(--brand);margin-right:8px}
+  h3{font-size:16px;margin:26px 0 8px;font-weight:700}
+  p{margin:10px 0}
+  strong{color:var(--ink)}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.4px;background:var(--card)}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:#f0f3f8;font-weight:700;color:var(--ink2);font-size:13px}
+  td.c,th.c{text-align:center;white-space:nowrap}
+  caption{caption-side:top;text-align:left;font-size:12.8px;color:var(--ink3);padding-bottom:5px}
+  .note{background:var(--brand2);border:1px solid var(--brand3);border-radius:9px;padding:12px 16px;font-size:13.9px;margin:14px 0}
+  .note.warn{background:var(--warn2);border-color:var(--warn3)}
+  .note.hot{background:var(--hot2);border-color:var(--hot3)}
+  .note.ok{background:var(--ok2);border-color:var(--ok3)}
+  .note .nt{display:block;font-weight:700;margin-bottom:4px}
+  .tag{display:inline-block;font-size:11.6px;padding:1px 8px;border-radius:20px;border:1px solid;line-height:1.7;white-space:nowrap}
+  .t-ok{color:var(--ok);border-color:var(--ok3);background:var(--ok2)}
+  .t-hot{color:var(--hot);border-color:var(--hot3);background:var(--hot2)}
+  .t-warn{color:var(--warn);border-color:var(--warn3);background:var(--warn2)}
+  .t-info{color:var(--brand);border-color:var(--brand3);background:var(--brand2)}
+  code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.8px;
+    background:#f3f5f9;border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  a{color:var(--brand);text-decoration:none;border-bottom:1px solid var(--brand3)}
+  a:hover{border-bottom-color:var(--brand)}
+  .repo{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin:12px 0}
+  .repo-h{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+  .repo-n{font-size:16px;font-weight:700;font-family:ui-monospace,Menlo,Consolas,monospace}
+  .repo-m{font-size:12.6px;color:var(--ink3);white-space:nowrap}
+  .repo-s{font-size:13.4px;color:var(--ink2);margin-top:9px;line-height:1.75}
+  .rank{display:inline-block;min-width:30px;height:30px;line-height:30px;text-align:center;
+    background:var(--brand);color:#fff;border-radius:6px;font-size:14px;font-weight:700;margin-right:8px}
+  .rank.r1{background:#c62828} .rank.r2{background:#e65100} .rank.r3{background:#f9a825;color:#3a2a00}
+  .rank.rn{background:var(--ink3)}
+  .bar{display:flex;height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin-top:5px;max-width:220px}
+  .bar span{background:var(--brand)}
+  .bar span.hi{background:var(--hot)}
+  .bar span.mid{background:#e65100}
+  .bar span.lo{background:var(--ok)}
+  footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--line);font-size:12.6px;color:var(--ink3);line-height:1.85}
+  @media print{body{background:#fff}.repo,table,.note{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="doc-head">
+  <div class="kicker">开源查重 · 竞品与生态分析</div>
+  <h1>GitHub 查重报告</h1>
+  <div class="meta">
+    <b>检索对象：</b>轨道仿真可信度诊断系统（AGH 智能体驱动的轨道仿真 V&amp;V）<br>
+    <b>检索日期：</b>2026 年 10 月 2 日　|　<b>检索轮次：</b>5 轮 / 约 20 组关键词<br>
+    <b>数据来源：</b>GitHub 搜索 + REST API（star / fork 数<b>以 API 实时值为准</b>，见下方说明）
+  </div>
+</div>
+
+<div class="abstract">
+  <div class="t">结论先行</div>
+  <b>没有找到功能重复或高度相似的开源实现。</b>本项目的<b>每一个技术组件都是成熟领域已有方法</b>（收敛阶测试、守恒量校验、积分器标定都有成熟实现），
+  但<b>把这些组件用智能体编排起来、做成"仿真可信度诊断"并对判断本身做审计的组合，在 GitHub 上未查到先例</b>。<br>
+  需要警惕的不是"撞车"，而是<b>叙事撞车</b>：<b>"用 LLM 智能体编排科学计算工作流"这个故事已被占位</b>——
+  Foam-Agent（334 stars，已发 CMAME 论文）做的是 CFD 自动化，Amy（6 stars）做的与我们的功能最接近。
+  <span class="tag t-warn">建议</span> 把差异化重心从"用智能体做验证"移到<b>「判断可审计」与「误差预算」</b>——这两点目前<b>无人做得扎实</b>。
+</div>
+
+<h2><span class="num">一</span>本项目的检索基线</h2>
+
+<p>先明确本项目到底是什么，才能设计有区分度的检索词。</p>
+
+<table>
+  <caption>表 1　检索基线（这四条决定了检索词的四个方向）</caption>
+  <tr><th style="width:110px">维度</th><th style="width:280px">本项目的具体内容</th><th>对应用检索方向</th></tr>
+  <tr>
+    <td><b>核心功能</b></td>
+    <td>轨道仿真<b>可信度校验</b>：双判据（守恒量 + 位置误差对解析解）、观察阶测试、步长标定、六条报警规则、浮点精度下界刻画</td>
+    <td>功能同义词：<code>simulation verification</code> / <code>accuracy validation</code> / <code>error budget</code></td>
+  </tr>
+  <tr>
+    <td><b>技术栈</b></td>
+    <td>JavaScript ESM（自包含无依赖）内核 + <b>AGH 后端插件</b> + Agnes 模型驱动</td>
+    <td>技术栈组合：<code>AGH plugin</code> / <code>LLM agent scientific computing</code></td>
+  </tr>
+  <tr>
+    <td><b>使用场景</b></td>
+    <td>卫星 / 航天轨道设计中的仿真 V&amp;V（验证与确认）</td>
+    <td>场景词：<code>orbit propagation</code> / <code>astrodynamics</code></td>
+  </tr>
+  <tr>
+    <td><b>关键特性</b></td>
+    <td>① LLM 智能体<b>自主编排 V&amp;V 流程</b>（非执行预设脚本）② 误差预算分解 ③ <b>判断可审计</b>（智能体结论与工具证据交叉核对）</td>
+    <td>方法词：<code>observed order of convergence</code> / <code>floating point error floor</code> / <code>audit LLM output</code></td>
+  </tr>
+</table>
+
+<h2><span class="num">二</span>检索方法</h2>
+
+<h3>（一）关键词矩阵</h3>
+
+<table>
+  <caption>表 2　四组关键词（中文 / 英文 / 同义词组合）</caption>
+  <tr><th style="width:150px">方向</th><th>英文检索式</th></tr>
+  <tr>
+    <td rowspan="3"><b>功能同义词</b></td>
+    <td><code>orbital simulation verification accuracy validation tool</code></td>
+  </tr>
+  <tr><td><code>error budget numerical simulation floating point roundoff truncation breakdown</code></td></tr>
+  <tr><td><code>V&amp;V verification validation framework simulation automated</code></td></tr>
+  <tr>
+    <td rowspan="3"><b>技术方法词</b></td>
+    <td><code>observed order of convergence test numerical integrator floating point error floor</code></td>
+  </tr>
+  <tr><td><code>method of manufactured solutions Richardson extrapolation grid convergence index</code></td></tr>
+  <tr><td><code>symplectic integrator energy conservation verification long-term</code></td></tr>
+  <tr>
+    <td rowspan="2"><b>技术栈组合</b></td>
+    <td><code>LLM agent scientific computing tool orchestration numerical verification</code></td>
+  </tr>
+  <tr><td><code>"Agnes Harness" / "agnes-ai" agent harness plugin tool calling</code></td></tr>
+  <tr>
+    <td rowspan="2"><b>场景 / 判据</b></td>
+    <td><code>AI agent judge simulation result trustworthy orbit numerical validation automation</code></td>
+  </tr>
+  <tr><td><code>agent tool call self-audit verify LLM output numerical consistency check</code></td></tr>
+</table>
+
+<h3>（二）检索维度</h3>
+
+<table>
+  <caption>表 3　四个检索维度与实际手段</caption>
+  <tr><th style="width:130px">维度</th><th style="width:300px">手段</th><th>命中情况</th></tr>
+  <tr><td><b>仓库名</b></td><td>site: 检索 + 关键词匹配仓库名</td><td>命中 satkit、OrbitLab、twobody、OrbitalPropagator、sgp4 等</td></tr>
+  <tr><td><b>README 描述</b></td><td>检索式刻意包含描述性短语（"validation" "accuracy" "convergence"）</td><td><b>主要命中来源</b>——多数项目靠 README 里的功能描述被检出</td></tr>
+  <tr><td><b>主题标签</b></td><td>通过检索式间接覆盖（topics 通常描述技术栈与应用）</td><td>覆盖较弱，未单独遍历 topic 页</td></tr>
+  <tr><td><b>代码片段</b></td><td>未执行（WebSearch 不支持 GitHub 代码级检索）</td><td><b>本次查重的盲区，见第五节</b></td></tr>
+</table>
+
+<div class="note warn">
+  <span class="nt">★ 一个必须纠正的数据陷阱</span>
+  搜索结果页面显示的 star 数是<b>搜索引擎缓存的历史数据</b>：例如 <code>AgnesAI-Labs/agnes-harness</code> 在搜索结果里显示
+  <b>3434 stars / 44 forks</b>，而 REST API 实时查询结果是 <b>43 stars / 7 forks</b>（相差 80 倍）。<br>
+  <b>本报告一律采用 API 实时值。</b>如果评委自行核对，请以 GitHub 页面当时显示的数字为准。
+</div>
+
+<h2><span class="num">三</span>相似项目清单（按相似度排序）</h2>
+
+<p>共检出相关项目 <b>18 个</b>，按与本项目的功能重合度分四档。</p>
+
+<table>
+  <caption>表 4　总览（star 数为 API 实时值，2026-10-02）</caption>
+  <tr>
+    <th class="c" style="width:40px">档</th><th style="width:290px">项目</th><th class="c" style="width:64px">stars</th>
+    <th class="c" style="width:70px">语言</th><th>与本项目的关系</th>
+  </tr>
+  <tr style="background:#fdecec">
+    <td class="c"><span class="tag t-hot">最高</span></td>
+    <td><a href="https://github.com/agenisea/agentic-mathematical-engine" target="_blank">agenisea/agentic-mathematical-engine</a><br><span style="font-size:12px;color:var(--ink3)">Amy · Agentic Mathematical Engine</span></td>
+    <td class="c">6</td><td class="c">Julia</td>
+    <td><b>功能最接近</b>：LLM 智能体 + 七大数学域（含轨道力学）+ <code>Verification: Checks units, conservation laws, physical bounds</code></td>
+  </tr>
+  <tr style="background:#fdf3e3">
+    <td class="c"><span class="tag t-hot">高</span></td>
+    <td><a href="https://github.com/csml-rpi/Foam-Agent" target="_blank">csml-rpi/Foam-Agent</a></td>
+    <td class="c"><b>334</b></td><td class="c">Python</td>
+    <td><b>叙事最接近</b>：LLM 多智能体自动化科学计算工作流（Architect/Runner/Reviewer），<b>已发表于 CMAME</b>，工具经 <b>MCP</b> 暴露</td>
+  </tr>
+  <tr style="background:#fdf3e3">
+    <td class="c"><span class="tag t-warn">中高</span></td>
+    <td><a href="https://github.com/Mercer8964/audit-loop" target="_blank">Mercer8964/audit-loop</a></td>
+    <td class="c">0</td><td class="c">Shell</td>
+    <td><b>理念最接近</b>：AI 自审协议。明确指出"让 AI 自我检查是<b>结构性失败</b>"，改用<b>独立重解 + 机械对照</b></td>
+  </tr>
+  <tr style="background:#fdf3e3">
+    <td class="c"><span class="tag t-warn">中高</span></td>
+    <td><a href="https://github.com/0xelitesystem/agent-receipts" target="_blank">0xelitesystem/agent-receipts</a></td>
+    <td class="c">0</td><td class="c">Python</td>
+    <td><b>功能最接近</b>：审计"智能体<b>声称</b>做了什么"vs"实际工具调用记录"，检测 phantom calls</td>
+  </tr>
+  <tr>
+    <td class="c"><span class="tag t-info">中</span></td>
+    <td><a href="https://github.com/SciML/DiffEqDevTools.jl" target="_blank">SciML/DiffEqDevTools.jl</a></td>
+    <td class="c">53</td><td class="c">Julia</td>
+    <td><b>技术组件重合</b>：<code>test_convergence</code> 验证理论收敛阶、<code>analyticless_test_convergence</code>、<code>Shootout</code> 算法对比</td>
+  </tr>
+  <tr>
+    <td class="c"><span class="tag t-info">中</span></td>
+    <td><a href="https://github.com/ssmichael1/satkit" target="_blank">ssmichael1/satkit</a></td>
+    <td class="c">91</td><td class="c">Rust</td>
+    <td><b>场景重合</b>：卫星工具包，<b>对标 GMAT 25 条参考轨迹做交叉验证</b>，精度 2–13 cm</td>
+  </tr>
+  <tr>
+    <td class="c"><span class="tag t-info">中</span></td>
+    <td><a href="https://github.com/salinas2000/astroworld" target="_blank">salinas2000/astroworld</a></td>
+    <td class="c">2</td><td class="c">Python</td>
+    <td><b>方法重合</b>：误差残差<b>归因分析</b>（RTN 分解 + FFT 频谱），与我们的误差预算思路同源</td>
+  </tr>
+  <tr>
+    <td class="c"><span class="tag t-info">中</span></td>
+    <td><a href="https://github.com/ut-issl/s2e-documents" target="_blank">ut-issl/s2e-documents</a></td>
+    <td class="c">17</td><td class="c">C</td>
+    <td><b>做法重合</b>：RK4 轨道传播对解析解做误差验证，含长周期（10 圈）测试与误差增长分析</td>
+  </tr>
+  <tr>
+    <td class="c"><span class="tag t-info">中</span></td>
+    <td><a href="https://github.com/rikusalminen/twobody" target="_blank">rikusalminen/twobody</a></td>
+    <td class="c">43</td><td class="c">C</td>
+    <td><b>做法重合</b>：二体问题库，测试框架验证<b>能量与角动量守恒</b>，专门关注浮点问题（NaN/inf）</td>
+  </tr>
+  <tr>
+    <td class="c"><span class="tag t-info">中</span></td>
+    <td><a href="https://github.com/crweber2/agents" target="_blank">crweber2/agents</a></td>
+    <td class="c">0</td><td class="c">Python</td>
+    <td><b>组合重合</b>：科学计算智能体框架，测试题含<b>轨道力学</b>，带答案已知的验证系统</td>
+  </tr>
+  <tr>
+    <td class="c"><span class="tag t-info">中</span></td>
+    <td><a href="https://github.com/AniketWathore/Ramanujan" target="_blank">AniketWathore/Ramanujan</a></td>
+    <td class="c">4</td><td class="c">TypeScript</td>
+    <td><b>理念重合</b>：计算数学多模型智能体，<b>SymPy + Z3 确定性验证</b>（不靠模型自审）</td>
+  </tr>
+  <tr>
+    <td class="c"><span class="tag t-info">中</span></td>
+    <td><a href="https://github.com/Batyrkajan/compute-physics-benchmarks" target="_blank">Batyrkajan/compute-physics-benchmarks</a></td>
+    <td class="c">1</td><td class="c">Python</td>
+    <td><b>做法重合</b>：四积分器对比，明确给出 <code>Order of Accuracy (Error ~ O(dt^n))</code>、能量守恒、稳定性</td>
+  </tr>
+  <tr>
+    <td class="c"><span class="tag t-info">中</span></td>
+    <td><a href="https://github.com/slavasavelyev/OrbitLab" target="_blank">slavasavelyev/OrbitLab</a></td>
+    <td class="c">1</td><td class="c">—</td>
+    <td><b>做法重合</b>：Euler / RK4 / Leapfrog 对比 + 能量漂移基准（教学型）</td>
+  </tr>
+  <tr style="background:#f0f5fc">
+    <td class="c"><span class="tag t-info">平台</span></td>
+    <td><a href="https://github.com/AgnesAI-Labs/agnes-harness" target="_blank">AgnesAI-Labs/agnes-harness</a>　★ 本项目所用平台</td>
+    <td class="c">43</td><td class="c">TS</td>
+    <td>我们用的底座本身。生态位：<b>科学计算类插件尚为空白</b></td>
+  </tr>
+  <tr style="background:#f0f5fc">
+    <td class="c"><span class="tag t-info">平台</span></td>
+    <td><a href="https://github.com/AgnesAI-Labs/agnes-harness-tech-report" target="_blank">AgnesAI-Labs/agnes-harness-tech-report</a></td>
+    <td class="c">3</td><td class="c">—</td>
+    <td>官方技术报告，称 AGH 为 <b>“recoverable, evidence-first agent runtime”</b>——<b>与我们的"判断可审计"方向高度一致</b></td>
+  </tr>
+  <tr style="background:#f0f5fc">
+    <td class="c"><span class="tag t-info">平台</span></td>
+    <td><a href="https://github.com/AgnesAI-Labs/skills" target="_blank">AgnesAI-Labs/skills</a>　/　<a href="https://github.com/AgnesAI-Labs/VGR-TL" target="_blank">VGR-TL</a></td>
+    <td class="c">62 / 1</td><td class="c">Python / —</td>
+    <td>官方技能库；VGR-TL 为「verifier-gated repair」审计框架</td>
+  </tr>
+  <tr style="background:#f0f5fc">
+    <td class="c"><span class="tag t-info">生态</span></td>
+    <td><a href="https://github.com/Dingpenghui-good/dsh-tool-agnes" target="_blank">dsh-tool-agnes</a>　/　<a href="https://github.com/LittleBeaverStudio/agnes-media" target="_blank">agnes-media</a></td>
+    <td class="c">1 / 3</td><td class="c">TS / JS</td>
+    <td>第三方 AGH 插件，<b>均为媒体生成类</b>（文生图/视频）</td>
+  </tr>
+</table>
+
+<h2><span class="num">四</span>重合点、差异点与可借鉴项</h2>
+
+<h3>（一）与最高相似项目的逐项对比</h3>
+
+<table>
+  <caption>表 5　本项目 vs Amy（功能最接近） vs Foam-Agent（叙事最接近）</caption>
+  <tr><th style="width:150px">维度</th><th>本项目</th><th>Amy (6★)</th><th>Foam-Agent (334★)</th></tr>
+  <tr>
+    <td><b>领域</b></td><td>轨道仿真（二体 + 简谐振子）</td><td>七域含轨道力学、相对论、推进</td><td><b>CFD 流体仿真</b></td>
+  </tr>
+  <tr>
+    <td><b>验证对象</b></td><td><b>数值方法本身的可信度</b>（收敛阶、标定、浮点地板）</td>
+    <td>计算结果的物理有效性（单位、守恒律、物理边界）</td>
+    <td>仿真<b>能否跑通</b>（配置生成、执行、错误修复）</td>
+  </tr>
+  <tr>
+    <td><b>核心能力</b></td><td>步长标定 + 观察阶测试 + 六规则 + 误差预算</td>
+    <td>多步规划 + 工具选择 + 结果验证 + 解释</td>
+    <td>多智能体协作 + RAG 生成配置 + 自动纠错（≤25 轮）</td>
+  </tr>
+  <tr>
+    <td><b>智能体角色</b></td><td><b>自主诊断并做取舍</b>（实测：否掉了自己算出的最省方案）</td>
+    <td>规划与求解</td>
+    <td>Planner / Runner / Reviewer 分工</td>
+  </tr>
+  <tr>
+    <td><b>判断可审计</b></td>
+    <td><b>有</b>：三项确定性检查 + 审计器自测</td>
+    <td>有 verification 模块，但<b>未说明是否核对"智能体结论 vs 证据"</b></td>
+    <td><b>无</b>（Reviewer 审的是仿真输出，不是智能体判断）</td>
+  </tr>
+  <tr>
+    <td><b>误差预算</b></td>
+    <td><b>有</b>（截断/浮点/参考解三分解 + 瓶颈判定）</td>
+    <td>无</td>
+    <td>无</td>
+  </tr>
+  <tr>
+    <td><b>成熟度</b></td>
+    <td>12 项验证全绿，8 步闭环实测</td>
+    <td>自称 "experiment and a work in progress"</td>
+    <td><b>已发 CMAME 论文，工程成熟度高</b></td>
+  </tr>
+</table>
+
+<div class="note ok">
+  <span class="nt">差异总结</span>
+  <b>没有任何一个项目在做"验证数值方法本身的可信度、并让智能体自主做这个判断"。</b><br>
+  Amy 验证的是<b>结果对不对</b>；Foam-Agent 验证的是<b>流程通不通</b>；<br>
+  而我们做的是<b>「这个数值方法在这套配置下可不可信、瓶颈在哪、能不能交付」</b>——这是第三方。
+</div>
+
+<h3>（二）可借鉴项（三个具体建议）</h3>
+
+<table>
+  <tr><th style="width:190px">来源</th><th style="width:250px">可借鉴什么</th><th>对我们的具体价值</th></tr>
+  <tr>
+    <td><b>audit-loop</b><br><span style="font-size:12px;color:var(--ink3)">明确指出"AI 自我检查是<b>结构性失败</b>"</span></td>
+    <td>它给出的失败模式清单：<b>refinement-aware bias、CoT trust、sycophancy、self-preference bias、intrinsic self-correction 反而降低准确率</b>（引 Huang et al., ICLR 2024）</td>
+    <td><b>可为我们的"判断可审计"提供理论依据</b>。我们的做法（用确定性规则核对，不让模型自审）<b>正好符合它给出的"唯一结构上可行"的路径</b>。答辩时引用这条会让元层验证更有分量</td>
+  </tr>
+  <tr>
+    <td><b>astroworld</b></td>
+    <td>误差残差<b>归因</b>：RTN 分解（径向/切向/法向）+ FFT 频谱识别隐藏信号</td>
+    <td>我们的误差预算是<b>按误差机制分解</b>，它按<b>空间方向</b>分解。<b>两者互补</b>——若在答辩中提到"可扩展到方向分解"，是加分点，但当前不必实现</td>
+  </tr>
+  <tr>
+    <td><b>DiffEqDevTools.jl</b></td>
+    <td><code>analyticless_test_convergence</code>：无解析解时改用<b>高精度参考解</b>做收敛测试</td>
+    <td>我们的场景<b>有</b>解析解（开普勒），所以不需要。但这个方法提示了一条<b>推广路径</b>：将来做 J2 摄动时，解析解消失，可改用高精度参考解做观察阶测试——<b>这正好回应"只支持二体"的质疑</b></td>
+  </tr>
+</table>
+
+<h3>（三）存在冲突或风险的部分</h3>
+
+<div class="note hot">
+  <span class="nt">风险 1（叙事撞车）：「用智能体编排科学计算」已被占位</span>
+  Foam-Agent <b>334 stars、已发 CMAME 论文</b>，其定位就是"LLM 多智能体自动化科学计算工作流"。<br>
+  <b>后果：</b>如果我们的答辩把"用智能体做科学计算自动化"当主要卖点，评委会问"这和 Foam-Agent 有什么区别"。<br>
+  <b>应对：</b>差异化必须落在<b>「验证对象是数值方法本身」+「判断可审计」+「误差预算」</b>这三点上，而不是"我们也在用智能体做科学计算"。
+</div>
+
+<div class="note warn">
+  <span class="nt">风险 2（方法不新）：收敛阶测试是成熟方法</span>
+  <code>test_convergence</code> 在 SciML/DiffEqDevTools.jl（<b>53 stars</b>）中已是标准功能，
+  <code>compute-physics-benchmarks</code>、<code>OrbitLab</code> 等多个项目也做积分器阶数对比。<br>
+  <b>后果：</b><b>不能把"做了观察阶测试"说成创新。</b>我们在项目文档里已经写明"方法层是成熟学科"，这个处理是对的，<b>继续保持</b>。
+</div>
+
+<div class="note">
+  <span class="nt">风险 3（生态位观察）</span>
+  AGH 官方 <code>skills</code> 库 <b>62 stars</b>，第三方插件（<code>dsh-tool-agnes</code> 1★、<code>agnes-media</code> 3★）<b>都是媒体生成类</b>。
+  <b>科学计算类插件在 AGH 生态里目前是空白</b>——这既是机会（无人占位），也说明<b>生态尚不成熟</b>，评审时不宜把"AGH 生态丰富"当卖点。
+</div>
+
+<h2><span class="num">五</span>结论建议</h2>
+
+<div class="note ok">
+  <span class="nt">技术选型：不需要调整</span>
+  AGH 是<b>赛事指定</b>的运行底座，Agnes 模型是<b>赛事指定</b>的模型——这不是技术偏好问题，没有替代方案。<br>
+  内核用 JavaScript 也是<b>被 AGH 逼出来的</b>（其 Python 运行时 <code>runtime.python.execution</code> 仍为 stub），属合理约束。<br>
+  <b>结论：维持现状。</b>
+</div>
+
+<div class="note warn">
+  <span class="nt">功能定位：建议微调三处</span>
+  <b>① 卖点重心从"智能体做验证"移到"判断可审计 + 误差预算"。</b><br>
+  理由：前者已被 Foam-Agent（334★，已发论文）与 Amy 占位；后者在本次检索中<b>未找到做得扎实的后继者</b>。<br>
+  <b>② 把"判断可审计"提到与内核同等的位置。</b><br>
+  理由：它与 AGH 官方技术报告自称的 <b>“evidence-first agent runtime”</b> 方向一致（是加分而非独创），但同类项目
+  （audit-loop、agent-receipts）<b>star 数都是 0、明显未完成工程化</b>——我们做得更完整。<br>
+  <b>③ 引用 audit-loop 的文献来支撑审计设计。</b><br>
+  理由："模型自审结构性失败"有论文支撑（refinement-aware bias、CoT trust、sycophancy 等），引它能让我们的做法从"我们想的"变成"有依据的"。
+</div>
+
+<div class="note">
+  <span class="nt">★ 查重本身的局限（必须说明）</span>
+  <b>① 未做代码级检索。</b>WebSearch 不支持 GitHub 代码片段搜索（<code>use code search</code> 语法），本次仅覆盖仓库名、README 描述与间接标签。<b>可能漏掉"代码里实现但 README 没写"的项目。</b><br>
+  <b>② 未遍历 GitHub 全部 topic 页。</b>topics 维度仅通过检索式间接覆盖。<br>
+  <b>③ 相似度评级是人工判断</b>，基于 README 与技术描述的语义比对，未做代码相似度计算。<br>
+  <b>④ 检索偏向英文结果</b>，中文项目与国内平台（Gitee 等）未纳入本次范围。
+</div>
+
+<footer>
+  <b>检索方法：</b>5 轮 WebSearch（约 20 组关键词，覆盖功能同义词 / 技术方法词 / 技术栈组合 / 场景判据四个方向），
+  命中相关项目 18 个；对其中 17 个通过 GitHub REST API 核实 star / fork / 语言 / 最近推送时间。<br>
+  <b>数据准确性：</b>star 数以 API 实时值为准。注意搜索引擎缓存的 star 数可能严重失真（本报告即发现某项目缓存值 3434、实际 43）。<br>
+  <b>结论档位：</b>「未发现功能重复实现」这一结论基于上述检索范围，<b>不等于全网不存在</b>——代码级检索与中文平台的盲区已列于第五节。
+</footer>
+
+</div>
+</body>
+</html>

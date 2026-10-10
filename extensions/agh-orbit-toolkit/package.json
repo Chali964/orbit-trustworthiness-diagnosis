@@ -1,0 +1,20 @@
+{
+  "name": "agh-orbit-toolkit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "description": "轨道递推与可信度校验工具箱：把观察阶测试、步长自动标定与六规则信号体检暴露为 AGH 工具",
+  "exports": "./index.mjs",
+  "agnes": {
+    "plugins": [
+      {
+        "export": "orbitToolkit",
+        "id": "ext:agh-orbit-toolkit",
+        "inject": [
+          "extension"
+        ]
+      }
+    ]
+  }
+}

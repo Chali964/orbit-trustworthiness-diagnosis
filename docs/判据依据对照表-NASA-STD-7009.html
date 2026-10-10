@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>判据依据对照表 · NASA-STD-7009</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#fff; --line:#e3e6ec; --line2:#cfd5df;
+    --ink:#1a1f29; --ink2:#3f4959; --ink3:#7b869a;
+    --brand:#1d5fd0; --brand2:#eaf1fd; --brand3:#cfe0fa;
+    --hot:#c62828; --hot2:#fdecec; --hot3:#f4cccc;
+    --ok:#1f7a4d; --ok2:#e8f5ee; --ok3:#b6ddc7;
+    --warn:#9a6200; --warn2:#fdf3e3; --warn3:#efdcb4;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:15.5px;line-height:1.88}
+  .wrap{max-width:1000px;margin:0 auto;padding:32px 22px 90px}
+  .doc-head{border-bottom:3px double var(--line2);padding-bottom:18px;margin-bottom:24px}
+  .doc-head .kicker{font-size:12.4px;letter-spacing:.18em;color:var(--ink3);margin-bottom:8px}
+  .doc-head h1{margin:0 0 12px;font-size:26px;line-height:1.4;font-weight:700}
+  .doc-head .meta{font-size:13.4px;color:var(--ink2);line-height:1.95}
+  .doc-head .meta b{color:var(--ink)}
+
+  .lead{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--brand);
+    border-radius:0 10px 10px 0;padding:16px 20px;margin:20px 0 26px;font-size:15px}
+  .lead .t{font-weight:700;font-size:14px;color:var(--brand);letter-spacing:.05em;margin-bottom:7px}
+
+  h2{font-size:20px;margin:44px 0 6px;padding-bottom:7px;border-bottom:2px solid var(--line2);font-weight:700}
+  h2 .num{color:var(--brand);margin-right:9px}
+  h3{font-size:17px;margin:28px 0 8px;font-weight:700}
+  p{margin:11px 0}
+
+  table{width:100%;border-collapse:collapse;margin:15px 0;font-size:13.7px;background:var(--card)}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:#f0f3f8;font-weight:700;color:var(--ink2);font-size:13.3px}
+  td.c,th.c{text-align:center}
+  caption{caption-side:top;text-align:left;font-size:13px;color:var(--ink3);padding-bottom:6px}
+
+  .note{background:var(--brand2);border:1px solid var(--brand3);border-radius:9px;padding:13px 17px;font-size:14.4px;margin:14px 0}
+  .note .t{font-weight:700;color:var(--brand);margin-bottom:4px}
+  .note.hot{background:var(--hot2);border-color:var(--hot3)}
+  .note.hot .t{color:var(--hot)}
+  .note.ok{background:var(--ok2);border-color:var(--ok3)}
+  .note.ok .t{color:var(--ok)}
+  .note.warn{background:var(--warn2);border-color:var(--warn3)}
+  .note.warn .t{color:var(--warn)}
+
+  .lv{display:inline-block;min-width:22px;text-align:center;font-weight:700;border-radius:5px;padding:0 7px;font-size:12.5px}
+  .lv4{background:var(--ok2);color:var(--ok);border:1px solid var(--ok3)}
+  .lv3{background:var(--brand2);color:var(--brand);border:1px solid var(--brand3)}
+  .lv2{background:#f0f3f8;color:var(--ink2);border:1px solid var(--line)}
+  .lv1{background:#f7f7f7;color:var(--ink3);border:1px solid var(--line)}
+  .lv0{background:var(--hot2);color:var(--hot);border:1px solid var(--hot3)}
+
+  code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;
+    background:#f3f5f9;border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  a{color:var(--brand);text-decoration:none;border-bottom:1px solid var(--brand3)}
+  footer{margin-top:46px;padding-top:16px;border-top:1px solid var(--line);font-size:12.8px;color:var(--ink3);line-height:1.9}
+  @media print{body{background:#fff}table,.note,.lead{break-inside:avoid}h2{break-after:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="doc-head">
+  <div class="kicker">判据依据 · 答辩材料</div>
+  <h1>我们的六条规则，对应 NASA 标准里哪一条</h1>
+  <div class="meta">
+    <b>用途：</b>回答「你们的判据是拍脑袋定的吗」<br>
+    <b>依据：</b>NASA-STD-7009《Standard for Models and Simulations》及其 B 版（2024-03-05，88 页）<br>
+    <b>结论：</b>六条规则不是自创判据，而是<b>把标准中「Verification」这一项的要求自动化了</b>
+  </div>
+</div>
+
+<div class="lead">
+  <div class="t">一句话结论（答辩可直接用）</div>
+  <b>NASA-STD-7009 定义 Verification 因子的原话是：</b>
+  <div style="margin:10px 0;padding:10px 16px;background:#f8fafc;border-left:3px solid var(--line2);border-radius:0 6px 6px 0;font-size:14.5px">
+    「Were the models implemented correctly, and <b>what is the numerical error/uncertainty</b>?」
+  </div>
+  ——<b>正好是两件事：① 实现对不对 ② 数值误差是多少。</b>
+  我们的六条规则，做的就是这两件事的自动判定。<br><br>
+  <b>而标准只回答了「应该评估什么」，没有回答「怎么自动评估」——实施仍依赖专家人工。</b>我们填的是这个空。
+</div>
+
+<h2><span class="num">一</span>标准本身长什么样</h2>
+
+<p>NASA-STD-7009 因 2003 年哥伦比亚号事故而起（源于事故调查委员会 CAIB 的建议）。它给出<b>可信度评估的 8 个因子，分为三大类</b>：</p>
+
+<table>
+  <caption>表 1　NASA-STD-7009 可信度评估的 8 个因子（Table 1）</caption>
+  <tr><th class="c" style="width:130px">类别</th><th style="width:170px">因子</th><th>标准对这一项要问什么</th></tr>
+  <tr style="background:#f6f9ff">
+    <td class="c" rowspan="2"><b>M&S<br>Development</b></td>
+    <td><b>① Verification</b></td>
+    <td><b>实现是否正确？数值误差／不确定度是多少？</b>　← <b>本文全篇对应这一项</b></td>
+  </tr>
+  <tr><td>② Validation</td><td>结果与参照数据吻合吗？参照数据离真实系统多近？</td></tr>
+  <tr>
+    <td class="c" rowspan="3"><b>M&S<br>Operations</b></td>
+    <td>③ Input Pedigree</td><td>当前输入数据有多可信？</td>
+  </tr>
+  <tr><td>④ Results Uncertainty</td><td>当前结果的（不确定度）有多大？</td></tr>
+  <tr><td>⑤ Results Robustness</td><td>敏感性被掌握到什么程度？</td></tr>
+  <tr>
+    <td class="c" rowspan="3"><b>Supporting<br>Evidence</b></td>
+    <td>⑥ Use History</td><td>这套 M&amp;S 以前成功用过吗？</td>
+  </tr>
+  <tr><td>⑦ M&amp;S Management</td><td>过程管理得怎么样？</td></tr>
+  <tr><td>⑧ People Qualifications</td><td>人员有什么资质？</td></tr>
+</table>
+
+<div class="note warn">
+  <div class="t">版本说明（避免引用错版本）</div>
+  <b>现行版本是 NASA-STD-7009B，2024-03-05 批准，88 页。</b>相对 A 版的主要结构变化是：
+  「把 M&amp;S Results Credibility Assessment <b>拆分为 M&amp;S Capability 与 M&amp;S Results 两块评估</b>」。
+  三大项（Verification / Validation / Uncertainty Characterization）仍归在 <code>4.2 M&amp;S Development</code> 下。<br>
+  上文表 1 的<b>因子定义与分级</b>在 7009 系列中持续沿用，本文据此对照。
+</div>
+
+<div class="note">
+  <div class="t">★ 一个容易被混淆的点：我们做的是 Verification，不是 Validation</div>
+  标准里的 <b>Verification</b>（实现对不对、数值误差多少）与 <b>Validation</b>（像不像真实世界）是<b>两件不同的事</b>。<br>
+  我们做的全部是前者——<b>对照解析解</b>属于 Code Verification 的范畴（比的是数学真值，不是实验数据）。<br>
+  <b>我们不声称做过 Validation</b>，因为本内核不含 J2 摄动等真实力模型，与真实轨道的差异是已知且刻意保留的。
+</div>
+
+<h2><span class="num">二</span>六条规则逐个对应</h2>
+
+<h3>2.1 标准把 V&amp;V 活动分四类，我们覆盖前两类</h3>
+
+<table>
+  <caption>表 2　V&amp;V 活动分类与实际覆盖情况</caption>
+  <tr><th style="width:170px">活动类别</th><th style="width:230px">标准列出的典型手段</th><th class="c" style="width:80px">我们<br>是否做</th><th>对应实现</th></tr>
+  <tr style="background:#e8f5ee">
+    <td><b>Code Verification</b><br><span style="font-size:12.5px;color:var(--ink3)">实现正确性</span></td>
+    <td>patch test、MMS、<b>order-of-accuracy testing</b></td>
+    <td class="c"><b>✅ 核心</b></td>
+    <td><b>R2</b>（观察阶 vs 理论阶）、<b>R4</b>（递推发散）、<br>Python↔JS 两套独立实现互相对拍</td>
+  </tr>
+  <tr style="background:#e8f5ee">
+    <td><b>Solution Verification</b><br><span style="font-size:12.5px;color:var(--ink3)">数值误差量化</span></td>
+    <td>网格收敛研究、Richardson 外推、GCI</td>
+    <td class="c"><b>✅ 核心</b></td>
+    <td>截断误差标定 <code>E ≈ A·hᵖ</code>、四重可靠性检验、<br><b>R3</b>（浮点地板）、误差预算三分解</td>
+  </tr>
+  <tr>
+    <td>Model Validation</td>
+    <td>与实验数据比较（E-value、贝叶斯等）</td>
+    <td class="c" style="color:var(--hot)"><b>❌ 不做</b></td>
+    <td>无实验数据；内核不含真实力模型——<b>这是刻意的</b></td>
+  </tr>
+  <tr>
+    <td>Uncertainty Quantification</td>
+    <td>蒙特卡洛、多项式混沌、敏感性分析</td>
+    <td class="c" style="color:var(--warn)">⚠️ 部分</td>
+    <td>误差预算给出<b>误差来源分解与瓶颈</b>，但不做概率型 UQ</td>
+  </tr>
+</table>
+
+<h3>2.2 标准给 Verification 打了 0–4 级，我们在第 3 级</h3>
+
+<table>
+  <caption>表 3　Verification 因子分级（Table 1）与我们的位置</caption>
+  <tr><th class="c" style="width:60px">级别</th><th style="width:330px">标准原文（Verification 列）</th><th>我们</th></tr>
+  <tr>
+    <td class="c"><span class="lv lv4">4</span></td>
+    <td>Numerical errors small for all important features.<br><span style="font-size:12.5px;color:var(--ink3)">所有重要特征的数值误差都小</span></td>
+    <td><b>未声称达到。</b>「小」是相对用途的判断，我们的工具<b>算出误差交给用户判断</b>，不替用户定义「够小」——这是刻意的边界</td>
+  </tr>
+  <tr style="background:#eaf1fd">
+    <td class="c"><span class="lv lv3">3</span></td>
+    <td><b>Formal numerical error estimation.</b><br><span style="font-size:12.5px;color:var(--ink3)">形式化的数值误差估计</span></td>
+    <td><b>★ 我们在这一级。</b>截断误差幂律标定（含四重检验）+ 误差预算三分解 + 浮点下界实测</td>
+  </tr>
+  <tr>
+    <td class="c"><span class="lv lv2">2</span></td>
+    <td>Unit and regression testing of key features.<br><span style="font-size:12.5px;color:var(--ink3)">关键特性的单元与回归测试</span></td>
+    <td>✅ 也做到：12 项验证脚本（对拍 / 冒烟 / 闭环 / 网格统计 / 可迁移性 / 误差预算验收）</td>
+  </tr>
+  <tr>
+    <td class="c"><span class="lv lv1">1</span></td>
+    <td>Conceptual and mathematical models verified.</td>
+    <td>✅ 有：物理系统建模、解析解真值、守恒量推导</td>
+  </tr>
+  <tr>
+    <td class="c"><span class="lv lv0">0</span></td>
+    <td>Insufficient evidence.</td>
+    <td>—</td>
+  </tr>
+</table>
+
+<div class="note ok">
+  <div class="t">「第 3 级」这个定位的分量</div>
+  标准对 <b>Level 3</b> 的要求是「形式化数值误差估计」。<br>
+  <b>关键词是「形式化」</b>——不是「跑几组试试看」，而是有<b>可复现的估计方法</b>。我们给出的是
+  <code>E(h) ≈ A·hᵖ</code> 的标定式（含 <code>A</code>、<code>p</code> 与拟合优度），并做四重可靠性检验（R² / 残差 / 外推 / 幂次自洽），
+  <b>不通过就返回「不可用」而不是返回数字。</b>
+</div>
+
+<h2><span class="num">三</span>逐条规则的出处</h2>
+
+<table>
+  <caption>表 4　六条规则各自的 NASA 依据</caption>
+  <tr><th class="c" style="width:56px">规则</th><th style="width:250px">我们检查什么</th><th>对应标准里的什么</th></tr>
+  <tr>
+    <td class="c"><b>R2</b></td>
+    <td>用四点阶梯实测收敛阶，明显低于理论阶即报警</td>
+    <td><b>Code Verification 的教科书手段</b>。标准把 <b>order-of-accuracy testing</b> 明确列为 Code Verification 的核心方法——
+    因为「实现写错了」最典型的表现就是<b>收敛阶对不上</b></td>
+  </tr>
+  <tr>
+    <td class="c"><b>R1</b></td>
+    <td>守恒量达标、但位置误差超差 → 致命级</td>
+    <td>Verification 同时要求「实现对不对」<b>和</b>「数值误差多少」。<b>两个指标互相矛盾时，说明至少有一个不能用</b>——
+    这是把领域已知陷阱（守恒量好≠位置准）形式化</td>
+  </tr>
+  <tr>
+    <td class="c"><b>R3</b></td>
+    <td>步长已到浮点地板，再细化无改善</td>
+    <td><b>Solution Verification 的下界刻画</b>。标准要求给出数值误差；<b>误差到不了零，卡在什么上就必须说清</b>——
+    我们的答案是双判据：标定式反推 + 现场再细分 8 倍实测</td>
+  </tr>
+  <tr>
+    <td class="c"><b>R4</b></td>
+    <td>递推发散（迭代跑飞）</td>
+    <td><b>Verification 的底线</b>：结果不可用时必须明说。标准 Level 0 =「Insufficient evidence」，发散即落此档</td>
+  </tr>
+  <tr>
+    <td class="c"><b>R5</b></td>
+    <td>短弧段合格、长弧段不合格</td>
+    <td>对应 <b>Results Robustness</b>（⑤）——<b>结论的适用范围</b>。标准问「敏感性掌握到什么程度」，
+    我们问的是「这个结论在外推到更长弧段时还成立吗」<b>（同构的问题）</b></td>
+  </tr>
+  <tr>
+    <td class="c"><b>R6</b></td>
+    <td>两项指标均不达标</td>
+    <td>综合判定：<b>该配置不合格</b>。对应 Verification 因子的低分档</td>
+  </tr>
+</table>
+
+<h2><span class="num">四</span>我们没做的，以及为什么</h2>
+
+<table>
+  <caption>表 5　主动列出边界（答辩时先说自己说，比被问出来好）</caption>
+  <tr><th style="width:190px">项</th><th>状态与理由</th></tr>
+  <tr>
+    <td><b>Validation</b></td>
+    <td><b>不做。</b>内核只有二体引力，不含 J2／大气阻力／三体摄动——<b>与真实轨道的差异是已知且刻意保留的</b>
+    （加摄动会让解析真值失效，而解析真值是全部可信度主张的地基）。<b>不声称"验证了模型像真实世界"。</b></td>
+  </tr>
+  <tr>
+    <td><b>概率型 UQ</b></td>
+    <td><b>不做。</b>我们是<b>确定性误差分解</b>（截断／浮点／参考解），不改参数分布、不做蒙特卡洛。
+    这属于标准的 ④⑤ 两类，不是我们这条线的重点。</td>
+  </tr>
+  <tr>
+    <td><b>Verification Level 4</b></td>
+    <td><b>不声称。</b>Level 4 要求「所有重要特征的误差都小」，而「小不小」取决于用途和阈值。
+    <b>我们的工具反推「要达到你给的阈值需要多少步」，但不替用户宣布"够好了"。</b></td>
+  </tr>
+  <tr>
+    <td><b>标准中的 ⑥⑦⑧</b><br><span style="font-size:12.5px;color:var(--ink3)">Use History / 管理 / 人员资质</span></td>
+    <td><b>不在工具职责内。</b>那是项目层评估，属于工程管理体系，不是软件能自动完成的</td>
+  </tr>
+</table>
+
+<h2><span class="num">五</span>答辩话术（可直接照用）</h2>
+
+<div class="note ok">
+  <div class="t">被问「你们的判据是不是自己想的？」</div>
+  「不是。<b>我们的六条规则对应 NASA-STD-7009 的 Verification 因子。</b><br><br>
+  标准对这个因子的要求原话是「实现是否正确、数值误差是多少」——<b>正好是我们做的事</b>。
+  其中 R2 的观察阶测试，是标准明确列出的 Code Verification 核心手段；R3 的浮点下界是 Solution Verification 的下界刻画。<br><br>
+  标准给 Verification 打了 0–4 级，<b>Level 3 是「形式化的数值误差估计」，我们在这一级</b>——
+  因为我们给出的是带拟合优度和四重检验的误差标定式，不是「跑几组看看」。<br><br>
+  <b>标准回答的是「应该评估什么」，没回答「怎么自动评估」。我们填的是这个空。</b>」
+</div>
+
+<div class="note">
+  <div class="t">被追一句「那你们为什么没到 Level 4，也没做 Validation？」</div>
+  「<b>这两条都是我们刻意划的边界。</b><br><br>
+  <b>不到 Level 4</b>：Level 4 要断言「所有重要特征的误差都小」，但「小」取决于用途和阈值。
+  我们<b>反推「要达到你给的精度需要多少步」</b>，但<b>不替你宣布够好了</b>——判定权应该在提出需求的人手里。<br><br>
+  <b>不做 Validation</b>：内核只有二体引力，与真实轨道的差异是已知且刻意的。加了摄动，解析真值就没了，而
+  <b>解析真值是全部可信度主张的地基</b>。所以我们做窄而深，<b>不声称验证了"像真实世界"</b>。」
+</div>
+
+<footer>
+  <b>来源：</b>NASA-STD-7009B《Standard for Models and Simulations》，2024-03-05 批准，88 页，NASA 首席工程师签署；
+  因子定义与 0–4 级分级见该标准 Table 1 与 Figure 2（可信度评估量表）。原题：<code>standards.nasa.gov/standard/NASA/NASA-STD-7009</code><br>
+  <b>版本诚实性：</b>表 1 的 8 因子结构沿用 7009 系列；<b>B 版的结构变化（拆分 Capability / Results 两块评估）已在第一节注明</b>。
+  本文未逐字核对 B 版全部 88 页，<b>引用以因子定义与分级为准，不涉及条款编号</b>。<br>
+  <b>配套材料：</b>《与同期工作的关系说明》（新颖性口径）·《新颖性核查报告-多渠道路径》·《判断链路可视化》（实际运行记录）。
+</footer>
+
+</div>
+</body>
+</html>

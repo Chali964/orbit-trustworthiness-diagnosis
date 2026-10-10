@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>场景叙事 · 小卫星轨道设计中的仿真配置难题</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#fff; --line:#e3e6ec; --line2:#cfd5df;
+    --ink:#1a1f29; --ink2:#3f4959; --ink3:#7b869a;
+    --brand:#1d5fd0; --brand2:#eaf1fd; --brand3:#cfe0fa;
+    --hot:#c62828; --hot2:#fdecec; --hot3:#f4cccc;
+    --ok:#1f7a4d; --ok2:#e8f5ee; --ok3:#b6ddc7;
+    --warn:#9a6200; --warn2:#fdf3e3; --warn3:#efdcb4;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:15px;line-height:1.88}
+  .wrap{max-width:1000px;margin:0 auto;padding:32px 22px 80px}
+  .doc-head{border-bottom:3px double var(--line2);padding-bottom:18px;margin-bottom:24px}
+  .doc-head .kicker{font-size:12.4px;letter-spacing:.18em;color:var(--ink3);margin-bottom:8px}
+  .doc-head h1{margin:0 0 12px;font-size:25px;line-height:1.4;font-weight:700}
+  .doc-head .meta{font-size:13.2px;color:var(--ink2);line-height:1.9}
+  .doc-head .meta b{color:var(--ink)}
+  .abstract{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--brand);
+    border-radius:0 10px 10px 0;padding:16px 20px;margin:20px 0 26px;font-size:14.2px}
+  .abstract .t{font-weight:700;font-size:13.4px;color:var(--brand);letter-spacing:.06em;margin-bottom:6px}
+  h2{font-size:19px;margin:44px 0 4px;padding-bottom:6px;border-bottom:1px solid var(--line2);font-weight:700}
+  h2 .num{color:var(--brand);margin-right:8px}
+  h3{font-size:16px;margin:26px 0 8px;font-weight:700}
+  p{margin:10px 0}
+  strong{color:var(--ink)}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px;background:var(--card)}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:#f0f3f8;font-weight:700;color:var(--ink2);font-size:13px}
+  td.c,th.c{text-align:center;white-space:nowrap}
+  caption{caption-side:top;text-align:left;font-size:12.8px;color:var(--ink3);padding-bottom:5px}
+  .note{background:var(--brand2);border:1px solid var(--brand3);border-radius:9px;padding:12px 16px;font-size:13.9px;margin:14px 0}
+  .note.warn{background:var(--warn2);border-color:var(--warn3)}
+  .note.hot{background:var(--hot2);border-color:var(--hot3)}
+  .note.ok{background:var(--ok2);border-color:var(--ok3)}
+  .note .nt{display:block;font-weight:700;margin-bottom:4px}
+  .tag{display:inline-block;font-size:11.6px;padding:1px 8px;border-radius:20px;border:1px solid;line-height:1.7;white-space:nowrap}
+  .t-ok{color:var(--ok);border-color:var(--ok3);background:var(--ok2)}
+  .t-hot{color:var(--hot);border-color:var(--hot3);background:var(--hot2)}
+  .t-warn{color:var(--warn);border-color:var(--warn3);background:var(--warn2)}
+  .t-info{color:var(--brand);border-color:var(--brand3);background:var(--brand2)}
+  code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.8px;
+    background:#f3f5f9;border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  .story{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:20px 24px;margin:18px 0;font-size:14.6px;line-height:1.95}
+  .story .who{font-weight:700;color:var(--brand);margin-right:6px}
+  .flow{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:16px 20px;margin:16px 0;font-family:ui-monospace,Menlo,Consolas,monospace;
+    font-size:12.8px;line-height:2;white-space:pre;overflow-x:auto;color:var(--ink2)}
+  footer{margin-top:46px;padding-top:16px;border-top:1px solid var(--line);font-size:12.6px;color:var(--ink3);line-height:1.8}
+  @media print{body{background:#fff}.note,table,.story{break-inside:avoid}h2{break-after:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="doc-head">
+  <div class="kicker">场景叙事 · 作品定位的地基文档</div>
+  <h1>小卫星轨道设计中的仿真配置难题</h1>
+  <div class="meta">
+    <b>用途：</b>为作品说明书、路演 PPT、演示视频提供统一的叙事底本<br>
+    <b>编制日期：</b>2026 年 10 月 2 日　|　<b>版本：</b>v1（待队伍修改）<br>
+    <b>数据来源：</b>文中全部量化数据均为本项目<b>本机实测</b>；场景为工程典型场景的构造，非特定真实任务。
+  </div>
+</div>
+
+<div class="abstract">
+  <div class="t">一句话叙事</div>
+  <b>卫星轨道设计师每天都要面对一个不报错的风险：仿真算出来的数，到底能不能信？</b><br>
+  传统做法靠经验试、靠文献比对，慢而且会漏——最危险的是那些"看起来正常"的结果。
+  我们把这条流程做成了 AGH 智能体可以自主完成的闭环：<b>设计师给一句自然语言需求，智能体自己拆任务、取数据、做判断，输出能不能信、依据是什么、该怎么改。</b>
+</div>
+
+<h2><span class="num">一</span>场景：一次典型的轨道设计流程</h2>
+
+<p>下面这个场景是工程上常见的典型情形，用它说明问题所在。</p>
+
+<div class="story">
+  <p><span class="who">任务背景</span>一颗小卫星要进入近地轨道，半长轴约 7000 公里、偏心率 0.05。总体给轨道组提了两个数字：<strong>预报 2 圈，位置误差控制在 1e-5 公里（约 1 厘米）以内。</strong></p>
+  <p><span class="who">手上有什么</span>一套自己写的轨道仿真程序，用的是 RK4 积分器。程序能跑，也能出结果。</p>
+  <p><span class="who">卡在哪</span>三个问题都没有确定答案：<strong>该用多少步长？算出来的结果准不准？这个结果能不能直接拿去用？</strong></p>
+</div>
+
+<h3>（一）三个问题的实质</h3>
+
+<table>
+  <caption>表 1　三个问题与它们背后的工程困难</caption>
+  <tr><th style="width:150px">问题</th><th style="width:280px">表面看是</th><th>实质是</th></tr>
+  <tr>
+    <td><strong>该用多少步长</strong></td>
+    <td>调一个参数</td>
+    <td>步长与误差之间是非线性关系，而且存在<b>下界</b>——步长缩到一定程度后，误差不再改善，反而被浮点舍入主导。上下界都不知道，只能试</td>
+  </tr>
+  <tr>
+    <td><strong>结果准不准</strong></td>
+    <td>看一眼误差</td>
+    <td>误差本身<b>没有解析对照</b>就无从判断。很多人退而求其次去看"守恒量保持得好不好"，但守恒量好<b>不等于</b>位置精度高</td>
+  </tr>
+  <tr>
+    <td><strong>能不能交付</strong></td>
+    <td>差不多就行</td>
+    <td>短弧段验证合格，<b>不能推出</b>长弧段也合格。而仿真失效往往要跑很久才显现</td>
+  </tr>
+</table>
+
+<h3>（二）最危险的地方：错误不会自己报错</h3>
+
+<div class="note hot"><span class="nt">这是整个问题的核心</span>
+数值仿真有一个特别之处：<strong>参数取错了，程序照常跑完，输出的数看起来也很正常。</strong><br>
+步长太大 → 程序不报错，只是结果慢慢偏离；<br>
+步长太小 → 程序不报错，误差被浮点噪声淹没，看似"很精确"；<br>
+守恒量达标但位置超差 → 两个指标各说各话，单看任何一个都发现不了。<br>
+<strong>这些都不产生错误提示。它们只等你交付之后，在真实任务里暴露。</strong>
+</div>
+
+<h2><span class="num">二</span>行业通行做法，以及它的边界</h2>
+
+<p>这类问题在工程上并不新鲜。业内有一套成熟的方法论，叫 <strong>V&amp;V（Verification and Validation，验证与确认）</strong>。其中的"代码验证"分支专门回答"我算得准不准"，并有明确的严格度分级。</p>
+
+<table>
+  <caption>表 2　代码验证的五级严格度（由低到高）</caption>
+  <tr><th class="c" style="width:60px">级别</th><th style="width:230px">方法</th><th>能回答什么</th></tr>
+  <tr><td class="c">1</td><td>简单测试（对称性、<strong>守恒性</strong>、不变性）</td><td>结果是否明显违反物理规律</td></tr>
+  <tr><td class="c">2</td><td>代码间比对</td><td>两套独立实现是否给出同一结果</td></tr>
+  <tr><td class="c">3</td><td>离散误差量化</td><td>误差有多大</td></tr>
+  <tr><td class="c">4</td><td>收敛性测试</td><td>误差随步长缩小的趋势是否符合预期</td></tr>
+  <tr><td class="c">5</td><td><strong>观察阶测试</strong></td><td>实测收敛阶是否等于理论阶——最严格</td></tr>
+</table>
+
+<p>标准工具也已存在：制造解方法（MMS）、Richardson 外推、网格收敛指数（GCI）。<strong>方法层面早已成熟，不需要我们发明什么。</strong></p>
+
+<h3>那它的问题在哪</h3>
+
+<table>
+  <caption>表 3　成熟方法的三个使用门槛</caption>
+  <tr><th style="width:200px">门槛</th><th>表现</th></tr>
+  <tr><td><strong>要人工操作</strong></td><td>每一级都要人设计算例、跑多组、画图、判断。一轮下来大半天</td></tr>
+  <tr><td><strong>要专业知识</strong></td><td>知道该用哪一级、怎么设计算例、结果偏离多少算异常——这些不写在软件里，写在人的经验里</td></tr>
+  <tr><td><strong>不可复现</strong></td><td>换个人、换个时间，判断结论可能不同，而且没有留痕</td></tr>
+</table>
+
+<div class="note"><span class="nt">所以真正的问题不是"没有方法"，而是"方法用不起来"</span>
+一个熟练工程师知道该做观察阶测试，但<strong>让他每次都做、做完整、留好记录，成本太高</strong>。<br>
+结果是：<strong>最强的方法（第 5 级）反而最少被用，最弱的方法（第 1 级）最常用。</strong>
+</div>
+
+<h2><span class="num">三</span>我们的介入点</h2>
+
+<p>不去发明新方法。把已有的成熟方法<strong>做成智能体能自主跑完的闭环</strong>。</p>
+
+<div class="flow">设计师：帮我判断一下，a=7000km、e=0.05 这条轨道，用 RK4 每圈 400 步积 2 圈，
+        位置误差要压到 1e-5 km 以内。这个结果可不可信？不可信的话该用多少步？
+
+        ↓  （下面全部由智能体自主完成，设计师不介入）
+
+  ① 自己拆出任务清单
+  ② 查内核有哪些方法可用，比较各自的可靠性
+  ③ 由目标精度反推所需步长，并找出"再缩也没用"的浮点上界
+  ④ 用标定出的步长实测，量出位置误差与守恒量误差
+  ⑤ 做观察阶测试，确认数值实现本身没有写错
+  ⑥ 跑六条规则体检，检查有没有"看起来正常其实有隐患"的情形
+
+        ↓
+
+智能体：结果可信／不可信 + 每一步的实测依据 + 该怎么改</div>
+
+<h3>关键：智能体在做判断，不是在执行命令</h3>
+
+<p>上面那句话里<strong>没有出现任何工具名，也没有指定步骤</strong>。整个流程是它自己规划出来的。更重要的是下面这件事 ——</p>
+
+<div class="note ok"><span class="nt">它否掉了自己算出的"最优"方案</span>
+实测中，智能体给出了两个候选配置：<br>
+· <strong>763 步/圈</strong>——末态位置误差 9.81e-6 km，<strong>恰好达标</strong>，算力最省；<br>
+· <strong>6125 步/圈</strong>——误差低至 2.84e-9 km，但要跑 8 倍算力。<br><br>
+按数字看，763 步是"经济解"。但它在体检环节发现：<strong>该配置在弧段中段的误差会涨到 2.6 倍、超出要求</strong>——末态合格是种假象。<br><br>
+于是它<strong>放弃了 763 步，选择 6125 步，并把理由说清楚了</strong>。<br>
+同时它还判断出：6125 步触发的另一条告警是"浮点平台效应"，属于正常现象而非实现缺陷。<br>
+<strong>它没有盲从数字，而是理解了数字的含义。</strong>
+</div>
+
+<h2><span class="num">四</span>介入前后：一次真实运行的对照</h2>
+
+<p>下表是同一个需求的两种做法对照。左侧是传统做法的人工工作项，右侧是实际运行记录。</p>
+
+<table>
+  <caption>表 4　对照（右侧数据来自本项目实测运行记录）</caption>
+  <tr><th style="width:230px">环节</th><th style="width:270px">传统做法</th><th>本项目</th></tr>
+  <tr><td>确定用哪个方法</td><td>凭经验，或翻文献</td><td>比较五种方法的理论阶与标定可靠性后选定</td></tr>
+  <tr><td>确定步长</td><td>试几组，看趋势</td><td>由目标精度反推：最小 763 步/圈，浮点上界 6125 步/圈</td></tr>
+  <tr><td>判断结果准不准</td><td>看误差量级，凭感觉</td><td>对解析解实测：763 步 → 9.81e-6 km；6125 步 → 2.84e-9 km</td></tr>
+  <tr><td>确认实现没写错</td><td>通常跳过</td><td>观察阶测试：实测阶 4.09 ≈ 理论阶 4</td></tr>
+  <tr><td>检查隐蔽隐患</td><td>通常跳过</td><td>六条规则体检，<strong>抓出 763 步的弧段超差 2.6 倍</strong></td></tr>
+  <tr><td>给出结论</td><td>口头判断，无留痕</td><td>结论 + 每步依据 + 修正建议，全部留痕可复核</td></tr>
+  <tr><td><strong>总耗时</strong></td><td>熟练工程师约半天</td><td><strong>1 分 54 秒</strong>，单轮 8 个连续步骤</td></tr>
+</table>
+
+<div class="note warn"><span class="nt">关于上表最后一行，要诚实</span>
+"半天"是人工做完整套 V&amp;V（含多级验证、画图、写记录）的粗略量级，属<b>工程经验估计</b>，不是我们测出来的。<br>
+"1 分 54 秒"是<b>实测</b>（会话记录可查）。<br>
+<b>但这个对比本身要谨慎使用</b>——两者不完全等价：人类做完能得到更丰富的理解，智能体目前覆盖的是标准化程度最高的那部分流程。
+</div>
+
+<h2><span class="num">五</span>这个场景的推广性</h2>
+
+<p>轨道只是入口。真正可迁移的是<strong>验证机制本身</strong>，而不是轨道力学的具体公式。</p>
+
+<table>
+  <caption>表 5　迁移的依据</caption>
+  <tr><th style="width:210px">迁移依赖什么</th><th>说明</th></tr>
+  <tr><td><strong>解析真值</strong></td><td>有精确解，才能硬判"算得对不对"。轨道二体问题有，很多守恒系统也有</td></tr>
+  <tr><td><strong>守恒量</strong></td><td>用于快速筛查。能量、角动量、质量、电荷……不同领域各有形式</td></tr>
+  <tr><td><strong>收敛阶</strong></td><td>任何数值积分方法都有理论阶，可实测比对</td></tr>
+</table>
+
+<p>我们已经做过一次迁移验证：<strong>在二体问题与一维简谐振子（线性系统、无角动量）上跑同一套机制，五项对照全部通过，六条规则全部可触发。</strong></p>
+
+<p>这说明——<strong>迁移的不是某个数值方法，而是"验证判断"这件事本身。</strong></p>
+
+<h2><span class="num">六</span>叙事要点（后续材料统一口径）</h2>
+
+<div class="note warn"><span class="nt">三句话，对外统一</span>
+<strong>① 问题是什么：</strong>仿真算出来的数能不能信，这件事传统上靠人的经验，慢、会漏、不可复现。<br>
+<strong>② 我们做了什么：</strong>把成熟的 V&amp;V 方法做成 AGH 智能体可自主跑完的闭环——设计师说一句话，它自己拆任务、取数据、做判断。<br>
+<strong>③ 凭什么信：</strong>每条结论都有实测依据；在"能不能交付"这个关键判据上，六场景 480 个配置单元做到零误报零漏报。
+</div>
+
+<h3>措辞上必须注意的一点</h3>
+
+<table>
+  <caption>表 6　对外表述口径</caption>
+  <tr><th style="width:250px">不要这样说</th><th>应该这样说</th></tr>
+  <tr>
+    <td>"我们做了一个自动化校验工具"</td>
+    <td><strong>"AGH 智能体驱动的仿真可信度诊断"</strong>——工具提供证据与自动化手段，判断与决策由智能体完成</td>
+  </tr>
+  <tr>
+    <td>"我们发明了新的数值方法"</td>
+    <td>"方法层是成熟学科；<strong>我们做的是把方法用起来</strong>"——诚实且更有说服力</td>
+  </tr>
+  <tr>
+    <td>"效果不错，能省很多时间"</td>
+    <td>给出具体数字，并标注哪些是实测、哪些是估计</td>
+  </tr>
+</table>
+
+<h3>要主动说的不足</h3>
+
+<p>准备好下面两条，被问到就直接讲。<strong>自己先说，比被问出来强。</strong></p>
+
+<table>
+  <tr><th style="width:220px">不足</th><th>说明</th></tr>
+  <tr>
+    <td>弧段外推规则的漏报率 24.4%</td>
+    <td>规则用 2 倍弧段代理 4 倍真值，省了一半算力，代价就是漏报。这是明确的取舍，不是缺陷</td>
+  </tr>
+  <tr>
+    <td>只覆盖二体问题，未含 J2 摄动</td>
+    <td>加入摄动后解析真值不再闭合，整套双判据需要重写。<b>这是刻意的范围选择</b>——解析真值是全部可信度主张的根基</td>
+  </tr>
+</table>
+
+<footer>
+  <b>数据核实档位：</b>本文所有量化数据（763 / 6125 步、9.81e-6 km、2.84e-9 km、实测阶 4.09、1 分 54 秒、单轮 8 步、480 单元统计）
+  均为<b>已核实·本机实跑</b>，可在 AGH 会话记录与 <code>agh-orbit-plugin/out/</code> 留档中逐项复核。<br>
+  <b>场景性质：</b>第一节的场景为工程典型情形的构造，用于说明问题，<b>非特定真实任务</b>；表 4 中"半天"为工程经验估计，已标注。<br>
+  <b>五级严格度与标准工具</b>（MMS、Richardson 外推、GCI、五级代码验证框架）为领域既有成果，非本项目提出。<br>
+  <b>用途：</b>本文是作品说明书、路演 PPT、演示视频的叙事底本，后续所有对外材料应与本文口径一致。
+</footer>
+
+</div>
+</body>
+</html>

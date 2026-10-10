@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>AGH 执行记录 · 9b66886d</title>
+<style>
+  :root{--bg:#f6f7f9;--card:#fff;--line:#e3e6ec;--line2:#cfd5df;--ink:#1a1f29;--ink2:#3f4959;--ink3:#7b869a;
+    --brand:#1d5fd0;--brand2:#eaf1fd;--hot:#c62828;--hot2:#fdecec;--ok:#1f7a4d;--ok2:#e8f5ee;--tool:#00897b;--tool2:#e0f2ef}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;font-size:14.5px;line-height:1.75}
+  .wrap{max-width:1040px;margin:0 auto;padding:30px 22px 70px}
+  .hd{border-bottom:3px double var(--line2);padding-bottom:16px;margin-bottom:20px}
+  .hd .k{font-size:12px;letter-spacing:.18em;color:var(--ink3);margin-bottom:6px}
+  .hd h1{margin:0 0 10px;font-size:23px;font-weight:700}
+  .hd .m{font-size:13px;color:var(--ink2);line-height:1.9}
+  .hd .m b{color:var(--ink)}
+  .kpis{display:flex;gap:0;background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:18px;overflow:hidden}
+  .kpi{flex:1;padding:14px 16px;border-right:1px solid var(--line);text-align:center}
+  .kpi:last-child{border-right:none}
+  .kpi .v{font-size:26px;font-weight:700;color:var(--brand);line-height:1.2}
+  .kpi .l{font-size:12.5px;color:var(--ink3);margin-top:3px}
+  table{width:100%;border-collapse:collapse;font-size:13.4px;background:var(--card);margin:12px 0}
+  th,td{border:1px solid var(--line);padding:6px 10px;text-align:left}
+  th{background:#f0f3f8;font-weight:700;color:var(--ink2);font-size:13px}
+  td.c,th.c{text-align:center}
+  h2{font-size:18px;margin:32px 0 6px;padding-bottom:5px;border-bottom:1px solid var(--line2);font-weight:700}
+  .tl{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px 0}
+  .ev{padding:7px 16px;border-bottom:1px dashed var(--line)}
+  .ev:last-child{border-bottom:none}
+  .ev-h{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+  .ts{font-family:ui-monospace,Consolas,monospace;font-size:12.6px;color:var(--ink3);flex:0 0 62px}
+  .ty{font-size:12.4px;font-weight:700;padding:1px 9px;border-radius:4px;white-space:nowrap}
+  .nm{font-size:13.4px;color:var(--ink);font-weight:600;word-break:break-all}
+  .dg{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:#b4b2a9;margin-left:auto;flex:0 0 auto}
+  .ev-b{padding:5px 0 3px 74px}
+  .kv{display:flex;gap:8px;align-items:baseline;margin:2px 0}
+  .kv .k{font-size:11.6px;color:var(--ink3);flex:0 0 74px;text-align:right}
+  code{font-family:ui-monospace,Consolas,monospace;font-size:12.4px;background:#f3f5f9;border:1px solid var(--line);border-radius:4px;padding:1px 5px;word-break:break-all}
+  pre.out{margin:2px 0;background:#f8fafc;border:1px solid var(--line);border-radius:6px;padding:9px 12px;
+    font-family:ui-monospace,Consolas,monospace;font-size:12.2px;line-height:1.7;white-space:pre-wrap;color:#25303f}
+  .msg{background:#f8fafc;border-left:3px solid var(--line2);border-radius:0 6px 6px 0;padding:9px 13px;font-size:13.4px;color:var(--ink2);white-space:pre-wrap}
+  .call .ty{background:var(--tool2);color:var(--tool)}
+  .result .ty{background:#f0f3f8;color:var(--ink2)}
+  .step .ty{background:var(--brand2);color:var(--brand)}
+  .st{background:#fbfdff}
+  .sess .ty,.turn .ty{background:#f0f3f8;color:var(--ink3)}
+  .asst .ty{background:#efecfa;color:#5b3fa8}
+  .user .ty{background:#fdf3e3;color:#9a6200}
+  .other .ty{background:#f5f5f5;color:#b4b2a9}
+  .other{opacity:.62}
+  .note{background:var(--brand2);border:1px solid #cfe0fa;border-radius:9px;padding:13px 17px;font-size:13.6px;margin:14px 0}
+  .note .t{font-weight:700;color:var(--brand);margin-bottom:4px}
+  footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-size:12.4px;color:var(--ink3);line-height:1.8}
+  @media print{body{background:#fff}.ev{break-inside:avoid}}
+</style>
+</head>
+<body><div class="wrap">
+
+<div class="hd">
+  <div class="k">AGH 执行记录 · 运行证据</div>
+  <h1>AGH 会话执行记录</h1>
+  <div class="m">
+    <b>会话 ID：</b><code>9b66886d-ff56-477e-8778-fd05956e37e5</code><br>
+    <b>时间：</b>2026-10-02 08:14:22 → 08:16:17（北京时间 1 分 55 秒）<br>
+    <b>环境：</b>standard-windows　|　<b>事件总数：</b>159<br>
+    <b>来源：</b><code>~/.agh/data/sessions.db</code> 的 <code>events</code> 表，由 AGH 自动记录，本页仅为可读化呈现，未修改任何原始数据。
+  </div>
+</div>
+
+<div class="kpis">
+  <div class="kpi"><div class="v">8</div><div class="l">连续步骤（step）</div></div>
+  <div class="kpi"><div class="v">8</div><div class="l">工具调用次数</div></div>
+  <div class="kpi"><div class="v">6</div><div class="l">涉及的不同工具</div></div>
+  <div class="kpi"><div class="v">1 分 55 秒</div><div class="l">全程耗时</div></div>
+</div>
+
+<div class="note">
+  <div class="t">这份记录说明什么</div>
+  上面每一个步骤、每一次工具调用都是 <b>AGH 自己记录</b>的，带时间戳与完整性校验字段。
+  页面右侧每行末尾的短码是 <code>integrity_digest</code> 的前 16 位——它把相邻事件串成哈希链，
+  <b>任何一条被改动，后续校验都会对不上</b>。这不是事后整理的说明文档，是系统留的运行痕迹。
+</div>
+
+<h2>工具调用顺序</h2>
+<table>
+  <tr><th class="c" style="width:60px">序号</th><th>工具名</th></tr>
+  <tr><td class="c">1</td><td><code>todo</code></td></tr>
+<tr><td class="c">2</td><td><code>orbit_kernel_info</code></td></tr>
+<tr><td class="c">3</td><td><code>orbit_calibrate_step</code></td></tr>
+<tr><td class="c">4</td><td><code>orbit_propagate</code></td></tr>
+<tr><td class="c">5</td><td><code>orbit_order_test</code></td></tr>
+<tr><td class="c">6</td><td><code>orbit_alarm_check</code></td></tr>
+<tr><td class="c">7</td><td><code>orbit_propagate</code></td></tr>
+<tr><td class="c">8</td><td><code>orbit_alarm_check</code></td></tr>
+</table>
+
+<h2>事件类型统计</h2>
+<table>
+  <tr><th>类型</th><th class="c" style="width:90px">条数</th></tr>
+  <tr><td>effect/intent</td><td class="c">16</td></tr>
+<tr><td>effect/settled</td><td class="c">16</td></tr>
+<tr><td>verifier/signal</td><td class="c">16</td></tr>
+<tr><td>cost/ledger</td><td class="c">9</td></tr>
+<tr><td>assistant/output</td><td class="c">9</td></tr>
+<tr><td>budget.state</td><td class="c">8</td></tr>
+<tr><td>x/core/op-mark</td><td class="c">8</td></tr>
+<tr><td>x/core/context-breakdown</td><td class="c">8</td></tr>
+<tr><td>step/start</td><td class="c">8</td></tr>
+<tr><td>request/header</td><td class="c">8</td></tr>
+<tr><td>request/sent</td><td class="c">8</td></tr>
+<tr><td>assistant/message</td><td class="c">8</td></tr>
+<tr><td>tool/call</td><td class="c">8</td></tr>
+<tr><td>tool/result</td><td class="c">8</td></tr>
+<tr><td>step/end</td><td class="c">8</td></tr>
+<tr><td>x/host/session-title</td><td class="c">3</td></tr>
+<tr><td>inbox</td><td class="c">2</td></tr>
+<tr><td>user/message</td><td class="c">2</td></tr>
+<tr><td>session/start</td><td class="c">1</td></tr>
+<tr><td>x/agnes/code-mode/kernel</td><td class="c">1</td></tr>
+<tr><td>x/core/model-switch</td><td class="c">1</td></tr>
+<tr><td>turn/start</td><td class="c">1</td></tr>
+<tr><td>plan.items</td><td class="c">1</td></tr>
+<tr><td>turn/end</td><td class="c">1</td></tr>
+</table>
+
+<h2>完整时间线</h2>
+<div class="tl">
+<div class="ev sess">
+      <div class="ev-h"><span class="ts">08:14:22</span><span class="ty">会话开始</span>
+        <span class="nm">preset=standard-windows · 0.0.0</span>
+        <span class="dg">7e1354cd063b16d9</span></div></div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:22</span><span class="ty">x/agnes/code-mode/kernel</span>
+      <span class="dg">00699d252bcfdce9</span></div>
+    <div class="ev-b"><div class="kv"><code>{"alive":false}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:22</span><span class="ty">x/core/model-switch</span>
+      <span class="dg">c6349d00668b7af7</span></div>
+    <div class="ev-b"><div class="kv"><code>{"slot":"primary","from":{"route":"account-acct-4fe0d957-cf49-4b29-af6b-116dc200b192","model":"agnes-3.0-flash"},"to":{"route":"account-acct-4fe0d957-cf49-4b29-…</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:22</span><span class="ty">inbox</span>
+      <span class="dg">ebbded58d0c66ed7</span></div>
+    <div class="ev-b"><div class="kv"><code>{"items":[{"itemId":"r-5c635afe9ce69d865bac38f7b9cc9071","target":"next-turn","content":[{"type":"text","text":"帮我做一次完整的可信度评估。\n\n场景：a=7000km、e=0.05 的近地轨道，用 RK4…</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:22</span><span class="ty">inbox</span>
+      <span class="dg">76ae13a83965ce5c</span></div>
+    <div class="ev-b"><div class="kv"><code>{"items":[]}</code></div></div>
+  </div>
+<div class="ev user">
+      <div class="ev-h"><span class="ts">08:14:22</span><span class="ty">用户输入</span>
+        <span class="dg">f40902e2ab1e7dd5</span></div>
+      <div class="ev-b"><div class="msg">帮我做一次完整的可信度评估。
+
+场景：a=7000km、e=0.05 的近地轨道，用 RK4 积 2 圈，位置误差要压到 1e-5 km 以内。
+
+我想知道几件事：
+
+这个内核里有哪些积分方法？RK4 是不是合适的选择？
+要达到 1e-5 km 精度，我该用多少步？
+用这个步长实际算一次，位置误差和守恒量误差分别是多少？
+综合来看，这套配置能不能直接交付？依据是什么？
+另外我担心数值方法本身有没有实现问题（比如收敛阶不对），麻烦一并核实一下。</div></div>
+    </div>
+<div class="ev turn">
+      <div class="ev-h"><span class="ts">08:14:22</span>
+        <span class="ty">轮次开始</span>
+        <span class="nm">turn 1</span>
+        <span class="dg">8f701c2288c35dc7</span></div></div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:22</span><span class="ty">x/host/session-title</span>
+      <span class="dg">fc64b2b409448604</span></div>
+    <div class="ev-b"><div class="kv"><code>{"status":"pending","turn":1,"startSeq":7,"route":"account-acct-4fe0d957-cf49-4b29-af6b-116dc200b192","model":"agnes-3.0-flash","prompt":"帮我做一次完整的可信度评估。\n\n场景：a…</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:22</span><span class="ty">budget.state</span>
+      <span class="dg">050647651e724959</span></div>
+    <div class="ev-b"><div class="kv"><code>{"slot":"primary","escalate":false,"creditsUsed":0,"creditsCap":4000,"lastPreflight":{"tokens":113,"source":"estimate"}}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:22</span><span class="ty">x/core/op-mark</span>
+      <span class="dg">213e51589809e814</span></div>
+    <div class="ev-b"><div class="kv"><code>{"phase":"inference"}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:22</span><span class="ty">x/core/context-breakdown</span>
+      <span class="dg">6065cd12ec164a02</span></div>
+    <div class="ev-b"><div class="kv"><code>{"sections":[{"id":"core:untrusted-envelope","order":0,"source":"core","tokens":380},{"id":"persona","order":100,"source":"@agnes/code","tokens":266},{"id":"env…</code></div></div>
+  </div>
+<div class="ev step st">
+      <div class="ev-h"><span class="ts">08:14:22</span>
+        <span class="ty">步骤开始</span>
+        <span class="nm">turn 1 · step 1</span>
+        <span class="dg">a5b17ee172dd6e9b</span></div></div>
+<div class="ev user">
+      <div class="ev-h"><span class="ts">08:14:22</span><span class="ty">用户输入</span>
+        <span class="dg">c90be57ef4b7edcc</span></div>
+      <div class="ev-b"><div class="msg">[runtime context]
+{"environment":{"cwd":"<user>\\Desktop\\AGH\\agnes-harness-main","date":"2026-10-02","disclosure":"standard","enforcement":"unavailable","model":"agnes-3.0-flash","preset":"standard-windows","route":"account-acct-4fe0d957-cf49-4b29-af6b-116dc200b192","sessionKey":"9b66886d-ff56-477e-8778-fd05956e37e5","slot":"primary"},"tools":{"complete":"The tools named in this request's tools field are the complete set offered this turn. You have no others: no filesystem access, no command execution and no network access except through one of them. When a task needs something the list does not cover, say which capability is missing rather than describing what you would have don…</div></div>
+    </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:22</span><span class="ty">request/header</span>
+      <span class="dg">1323680686fed5c1</span></div>
+    <div class="ev-b"><div class="kv"><code>{"derived_hash":"78b4d2104de617a834c7312867ff1bd59f2aa6c2a5edf6722e8b72cb3e568c59","prompt_prefix_hash":"ab3a7df39e692f6e3f8e4edfdf80c49439b53e517d56337ad0fd4bd…</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:22</span><span class="ty">effect/intent</span>
+      <span class="dg">1506add11d0db255</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-e25fbc98e3f14fdc0c86a9b681dde9e0","kind":"inference","replay":"never","slot":"primary"}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:53</span><span class="ty">request/sent</span>
+      <span class="dg">f184539a71ac0ccb</span></div>
+    <div class="ev-b"><div class="kv"><code>{"prompt_prefix_hash":null,"tool_schema_hash":"9117590821c8c73d80bb4b68b71dcb2259df65eab86b739cf13be0074f9549ff","parser_version":"2","contract_id":null,"model"…</code></div></div>
+  </div>
+<div class="ev call">
+      <div class="ev-h"><span class="ts">08:14:54</span><span class="ty">工具调用</span>
+        <span class="nm">todo</span><span class="dg">3f495681c11c73f9</span></div>
+      <div class="ev-b"><div class="kv"><span class="k">args</span><code>{"items":[{"content":"获取内核信息：积分方法、理论阶、精度地板","status":"in_progress"},{"content":"校准：RK4 达到 1e-5 km 所需步长 + 浮点上限","status":"pending"},{"content":"用校准步长实际传播，报告位置误差与守恒量误差","status":"pending"},{"content":"运行 6 条告警规则做综合可信度判断","status":"pending"},{"content":"观测阶数测试：验证 RK4 实现是否真的 4 阶","status":"pending"},{"content":"汇总评估结论","status":"pending"}]}</code></div>
+        <div class="kv"><span class="k">policyHash</span><code>529cd54eb2bf4c0c6bbd57c0…</code></div>
+        <div class="kv"><span class="k">定义指纹</span><code>bd2786035109694946c260b4…</code></div>
+      </div></div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:54</span><span class="ty">cost/ledger</span>
+      <span class="dg">ae3573ba8495badf</span></div>
+    <div class="ev-b"><div class="kv"><code>{"purpose":"inference","effectId":"e-e25fbc98e3f14fdc0c86a9b681dde9e0","tokens":{"input":10476,"output":173,"cacheRead":0,"cacheWrite":0,"reasoning":0},"credits…</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:54</span><span class="ty">effect/settled</span>
+      <span class="dg">cce61aca224698af</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-e25fbc98e3f14fdc0c86a9b681dde9e0","outcome":"ok","durationMs":32000}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:54</span><span class="ty">effect/intent</span>
+      <span class="dg">d831c050ae5e71b5</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-107fe6ed99ebc7e62f8dbacfb2da77bf","kind":"tool","tool":{"toolUseId":"t0-4a18fa79a148e531057ea06b45b795a9","name":"todo"},"replay":"idempotent","a…</code></div></div>
+  </div>
+<div class="ev result">
+      <div class="ev-h"><span class="ts">08:14:54</span><span class="ty">工具返回</span>
+        <span class="nm">plan updated: 6 items (0 done, 1 in progress)</span>
+        <span class="dg">6698d0a58f6e953b</span></div>
+      <div class="ev-b"><pre class="out">plan updated: 6 items (0 done, 1 in progress)</pre></div>
+    </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:54</span><span class="ty">effect/settled</span>
+      <span class="dg">508a4754901c41a1</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-107fe6ed99ebc7e62f8dbacfb2da77bf","outcome":"ok","durationMs":6}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:54</span><span class="ty">verifier/signal</span>
+      <span class="dg">7d8143c563e81fb1</span></div>
+    <div class="ev-b"><div class="kv"><code>{"scope":"tool","tier":0,"verdict":"pass","reasons":[],"toolUseId":"t0-4a18fa79a148e531057ea06b45b795a9"}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:54</span><span class="ty">verifier/signal</span>
+      <span class="dg">78a4145b66180d13</span></div>
+    <div class="ev-b"><div class="kv"><code>{"scope":"step","tier":0,"verdict":"pass","reasons":[]}</code></div></div>
+  </div>
+<div class="ev step se">
+      <div class="ev-h"><span class="ts">08:14:54</span>
+        <span class="ty">步骤结束</span>
+        <span class="nm">turn 1 · step 1</span>
+        <span class="dg">76200b75accdf3e1</span></div></div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:54</span><span class="ty">budget.state</span>
+      <span class="dg">543d9565a20caa7b</span></div>
+    <div class="ev-b"><div class="kv"><code>{"slot":"primary","escalate":false,"creditsUsed":0,"creditsCap":4000,"lastPreflight":{"tokens":10661,"source":"estimate"}}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:54</span><span class="ty">x/core/op-mark</span>
+      <span class="dg">0ba3ddb14b0fe847</span></div>
+    <div class="ev-b"><div class="kv"><code>{"phase":"inference"}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:54</span><span class="ty">x/core/context-breakdown</span>
+      <span class="dg">60117842f2aaa8a0</span></div>
+    <div class="ev-b"><div class="kv"><code>{"sections":[{"id":"core:untrusted-envelope","order":0,"source":"core","tokens":380},{"id":"persona","order":100,"source":"@agnes/code","tokens":266},{"id":"env…</code></div></div>
+  </div>
+<div class="ev step st">
+      <div class="ev-h"><span class="ts">08:14:54</span>
+        <span class="ty">步骤开始</span>
+        <span class="nm">turn 1 · step 2</span>
+        <span class="dg">4b304b0e8eacd922</span></div></div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:54</span><span class="ty">request/header</span>
+      <span class="dg">131077fe8932cf1a</span></div>
+    <div class="ev-b"><div class="kv"><code>{"derived_hash":"85171a739938bbc528b53bf055b4defe950fbe6d0db4f5f4cc4f3a4649e664a2","prompt_prefix_hash":"ab3a7df39e692f6e3f8e4edfdf80c49439b53e517d56337ad0fd4bd…</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:54</span><span class="ty">effect/intent</span>
+      <span class="dg">9c7538e388252ccc</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-8ee9e9da1876bdb9e14ea75efacaa576","kind":"inference","replay":"never","slot":"primary"}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:55</span><span class="ty">request/sent</span>
+      <span class="dg">78989489dcde35e7</span></div>
+    <div class="ev-b"><div class="kv"><code>{"prompt_prefix_hash":null,"tool_schema_hash":"9117590821c8c73d80bb4b68b71dcb2259df65eab86b739cf13be0074f9549ff","parser_version":"2","contract_id":null,"model"…</code></div></div>
+  </div>
+<div class="ev call">
+      <div class="ev-h"><span class="ts">08:14:56</span><span class="ty">工具调用</span>
+        <span class="nm">orbit_kernel_info</span><span class="dg">e4c75d609f6126d0</span></div>
+      <div class="ev-b"><div class="kv"><span class="k">args</span><code>{"semiMajorAxisKm":7000,"eccentricity":0.05,"system":"twoBody"}</code></div>
+        <div class="kv"><span class="k">policyHash</span><code>2440d18ddde5694e1a0e604f…</code></div>
+        <div class="kv"><span class="k">定义指纹</span><code>a4cefe4978f456cee9952696…</code></div>
+      </div></div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:56</span><span class="ty">cost/ledger</span>
+      <span class="dg">b3cd7117dfdc788f</span></div>
+    <div class="ev-b"><div class="kv"><code>{"purpose":"inference","effectId":"e-8ee9e9da1876bdb9e14ea75efacaa576","tokens":{"input":2485,"output":64,"cacheRead":8192,"cacheWrite":0,"reasoning":0},"credit…</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:56</span><span class="ty">effect/settled</span>
+      <span class="dg">79d299fc7aa05b0a</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-8ee9e9da1876bdb9e14ea75efacaa576","outcome":"ok","durationMs":2163}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:56</span><span class="ty">effect/intent</span>
+      <span class="dg">5e13b1928f101b24</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-5dcf72b64259062f5cef5a99b796d57e","kind":"tool","tool":{"toolUseId":"t1-9f05844e8c693ff3260d96a8efd0c203","name":"orbit_kernel_info"},"replay":"s…</code></div></div>
+  </div>
+<div class="ev result">
+      <div class="ev-h"><span class="ts">08:14:56</span><span class="ty">工具返回</span>
+        <span class="nm">{
+  "model": "常微分方程组；每个系统都提供解析真值，故可自动核对正确性",
+ …</span>
+        <span class="dg">ce5c3a9a6b1635ac</span></div>
+      <div class="ev-b"><pre class="out">{
+  "model": "常微分方程组；每个系统都提供解析真值，故可自动核对正确性",
+  "availableSystems": [
+    {
+      "key": "twoBody",
+      "name": "二体问题（开普勒轨道）",
+      "scenarioParams": [
+        "semiMajorAxisKm",
+        "eccentricity",
+        "mu"
+      ],
+      "conservedQuantities": [
+        "比能量 ε",
+        "比角动量 h"
+      ]
+    },
+    {
+      "key": "sho",
+      "name": "简谐振子（一维）",
+      "scenarioParams": [
+        "amplitudeKm",
+        "periodSeconds"
+      ],
+      "conservedQuantities": [
+        "比能量 ε"
+      ]
+    }
+  ],
+  "scenario": {
+    "semiMajorAxis_km": 7000,
+    "eccentricity": 0.05,
+    "mu_km3_s2": 398600.4418,
+    "period_s": 5828.516637686015,
+    "rPeriapsis_km": 6650,
+    "rApoapsis_km": 7350,
+    "divergenceLimit_km": 14700,
+    "note": "发散判据为远地点半径的 2 倍。可传 semiMajorAxisKm / eccentricity 换场景，标定与平台会随之重算。本内核只处理椭圆轨道（0 ≤ e &lt; 1）。"
+  },
+  "machineEpsilon": 2.220446049250313e-16,
+  "integrators": [
+ 
+…（截断）</pre></div>
+    </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:56</span><span class="ty">effect/settled</span>
+      <span class="dg">52bfb73a22c47bb1</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-5dcf72b64259062f5cef5a99b796d57e","outcome":"ok","durationMs":72}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:56</span><span class="ty">verifier/signal</span>
+      <span class="dg">8555b928828cbfb1</span></div>
+    <div class="ev-b"><div class="kv"><code>{"scope":"tool","tier":0,"verdict":"pass","reasons":[],"toolUseId":"t1-9f05844e8c693ff3260d96a8efd0c203"}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:56</span><span class="ty">verifier/signal</span>
+      <span class="dg">15e17a759a04c8fd</span></div>
+    <div class="ev-b"><div class="kv"><code>{"scope":"step","tier":0,"verdict":"pass","reasons":[]}</code></div></div>
+  </div>
+<div class="ev step se">
+      <div class="ev-h"><span class="ts">08:14:56</span>
+        <span class="ty">步骤结束</span>
+        <span class="nm">turn 1 · step 2</span>
+        <span class="dg">f32c6d99ba18b716</span></div></div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:56</span><span class="ty">budget.state</span>
+      <span class="dg">0b102f42386b6369</span></div>
+    <div class="ev-b"><div class="kv"><code>{"slot":"primary","escalate":false,"creditsUsed":0,"creditsCap":4000,"lastPreflight":{"tokens":12130,"source":"estimate"}}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:56</span><span class="ty">x/core/op-mark</span>
+      <span class="dg">b5c807a4b8e5ef85</span></div>
+    <div class="ev-b"><div class="kv"><code>{"phase":"inference"}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:56</span><span class="ty">x/core/context-breakdown</span>
+      <span class="dg">c85d2074aa4d615d</span></div>
+    <div class="ev-b"><div class="kv"><code>{"sections":[{"id":"core:untrusted-envelope","order":0,"source":"core","tokens":380},{"id":"persona","order":100,"source":"@agnes/code","tokens":266},{"id":"env…</code></div></div>
+  </div>
+<div class="ev step st">
+      <div class="ev-h"><span class="ts">08:14:56</span>
+        <span class="ty">步骤开始</span>
+        <span class="nm">turn 1 · step 3</span>
+        <span class="dg">f5a134273bc5b5bd</span></div></div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:56</span><span class="ty">request/header</span>
+      <span class="dg">00dc575c682d87fc</span></div>
+    <div class="ev-b"><div class="kv"><code>{"derived_hash":"d755a38b7f72d529240cc4cc76781de7c81689010a679725dcf56937c632bef1","prompt_prefix_hash":"ab3a7df39e692f6e3f8e4edfdf80c49439b53e517d56337ad0fd4bd…</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:14:56</span><span class="ty">effect/intent</span>
+      <span class="dg">7a13425ee5d79ca4</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-e0240f8cd663f88274590d75e0bcf210","kind":"inference","replay":"never","slot":"primary"}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:03</span><span class="ty">request/sent</span>
+      <span class="dg">4ece7346de12e22a</span></div>
+    <div class="ev-b"><div class="kv"><code>{"prompt_prefix_hash":null,"tool_schema_hash":"9117590821c8c73d80bb4b68b71dcb2259df65eab86b739cf13be0074f9549ff","parser_version":"2","contract_id":null,"model"…</code></div></div>
+  </div>
+<div class="ev asst">
+      <div class="ev-h"><span class="ts">08:15:06</span><span class="ty">模型输出</span>
+        <span class="dg">2b4c92a001a00f84</span></div>
+      <div class="ev-b"><div class="msg">拿到内核信息。RK4 理论 4 阶，标定口径为截断误差 E≈A·h^p（能量口径实测幂次 ~5.000），位置精度地板 ~1.38e-9 km，R1/R2/R3/R5 对 RK4 的可靠性检查全部通过。接下来校准所需步长。
+
+</div></div>
+    </div>
+<div class="ev call">
+      <div class="ev-h"><span class="ts">08:15:06</span><span class="ty">工具调用</span>
+        <span class="nm">orbit_calibrate_step</span><span class="dg">5d62c6f410d4f1ae</span></div>
+      <div class="ev-b"><div class="kv"><span class="k">args</span><code>{"method":"rk4","orbits":2,"system":"twoBody","targetPosErrKm":0.00001,"targetRelEnergyErr":1e-8}</code></div>
+        <div class="kv"><span class="k">policyHash</span><code>2440d18ddde5694e1a0e604f…</code></div>
+        <div class="kv"><span class="k">定义指纹</span><code>757b0f701f463c817927cc4e…</code></div>
+      </div></div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:06</span><span class="ty">cost/ledger</span>
+      <span class="dg">ae958d80c127576f</span></div>
+    <div class="ev-b"><div class="kv"><code>{"purpose":"inference","effectId":"e-e0240f8cd663f88274590d75e0bcf210","tokens":{"input":4941,"output":170,"cacheRead":8192,"cacheWrite":0,"reasoning":0},"credi…</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:06</span><span class="ty">effect/settled</span>
+      <span class="dg">95d43e367475148a</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-e0240f8cd663f88274590d75e0bcf210","outcome":"ok","durationMs":9894}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:06</span><span class="ty">effect/intent</span>
+      <span class="dg">d6d66a829fb733f1</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-a3b4732e5a7d40f520be909696dc1a3f","kind":"tool","tool":{"toolUseId":"t2-f322bfdfddd7060455660a0a1ebcbaaf","name":"orbit_calibrate_step"},"replay"…</code></div></div>
+  </div>
+<div class="ev result">
+      <div class="ev-h"><span class="ts">08:15:06</span><span class="ty">工具返回</span>
+        <span class="nm">场景【二体问题】a=7000 km，e=0.05，周期 5828.517 s
+方法 RK4（…</span>
+        <span class="dg">228328f6e2df223c</span></div>
+      <div class="ev-b"><pre class="out">场景【二体问题】a=7000 km，e=0.05，周期 5828.517 s
+方法 RK4（理论阶 4）｜标定可靠性：✓ 可靠
+口径选择：选定口径：守恒量，E(h) ≈ 5.549e-16·h^4.998（R² = 1.00000，残差 0.002 dex，外推偏差 0.13 dex）。两个口径都可靠，取拟合优度更高者。
+标定式：E(h) ≈ 5.5486e-16 × h^4.998（守恒量口径，h 单位为秒）
+
+【守恒量口径】目标比能量相对误差 ≤ 1e-8
+  至少每圈 207 步
+  上界 3024 步/圈（再缩无效）
+  精度平台 1.472e-14（探针实测 1.472e-14，散布 6.11e-15 ~ 2.13e-14）
+  可达性：可达
+
+【位置口径】目标位置误差 ≤ 0.00001 km
+  至少每圈 763 步，上界 6125 步
+
+说明：探针已进入舍入主导区，平台可用。</pre></div>
+    </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:06</span><span class="ty">effect/settled</span>
+      <span class="dg">6be0e4670a4fc09a</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-a3b4732e5a7d40f520be909696dc1a3f","outcome":"ok","durationMs":53}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:06</span><span class="ty">verifier/signal</span>
+      <span class="dg">6373c68139369201</span></div>
+    <div class="ev-b"><div class="kv"><code>{"scope":"tool","tier":0,"verdict":"pass","reasons":[],"toolUseId":"t2-f322bfdfddd7060455660a0a1ebcbaaf"}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:06</span><span class="ty">verifier/signal</span>
+      <span class="dg">43a31dd79c1e8fd7</span></div>
+    <div class="ev-b"><div class="kv"><code>{"scope":"step","tier":0,"verdict":"pass","reasons":[]}</code></div></div>
+  </div>
+<div class="ev step se">
+      <div class="ev-h"><span class="ts">08:15:06</span>
+        <span class="ty">步骤结束</span>
+        <span class="nm">turn 1 · step 3</span>
+        <span class="dg">ea1702013627c6a5</span></div></div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:06</span><span class="ty">budget.state</span>
+      <span class="dg">815c0daf0652a8ba</span></div>
+    <div class="ev-b"><div class="kv"><code>{"slot":"primary","escalate":false,"creditsUsed":0,"creditsCap":4000,"lastPreflight":{"tokens":13463,"source":"estimate"}}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:06</span><span class="ty">x/core/op-mark</span>
+      <span class="dg">b3b1b9633023a071</span></div>
+    <div class="ev-b"><div class="kv"><code>{"phase":"inference"}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:06</span><span class="ty">x/core/context-breakdown</span>
+      <span class="dg">ed287535aee96c25</span></div>
+    <div class="ev-b"><div class="kv"><code>{"sections":[{"id":"core:untrusted-envelope","order":0,"source":"core","tokens":380},{"id":"persona","order":100,"source":"@agnes/code","tokens":266},{"id":"env…</code></div></div>
+  </div>
+<div class="ev step st">
+      <div class="ev-h"><span class="ts">08:15:06</span>
+        <span class="ty">步骤开始</span>
+        <span class="nm">turn 1 · step 4</span>
+        <span class="dg">9563a7aded898638</span></div></div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:06</span><span class="ty">request/header</span>
+      <span class="dg">d8b1b1413fe0e89b</span></div>
+    <div class="ev-b"><div class="kv"><code>{"derived_hash":"a096928b1db8a037604c2e33279ace657ec89f75bfabc84b9431c7b9eed3ddd3","prompt_prefix_hash":"ab3a7df39e692f6e3f8e4edfdf80c49439b53e517d56337ad0fd4bd…</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:06</span><span class="ty">effect/intent</span>
+      <span class="dg">80cac89617aad592</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-c60ea0f660445d6e4a2f6a527e681371","kind":"inference","replay":"never","slot":"primary"}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:07</span><span class="ty">request/sent</span>
+      <span class="dg">11f319c70bb84592</span></div>
+    <div class="ev-b"><div class="kv"><code>{"prompt_prefix_hash":null,"tool_schema_hash":"9117590821c8c73d80bb4b68b71dcb2259df65eab86b739cf13be0074f9549ff","parser_version":"2","contract_id":null,"model"…</code></div></div>
+  </div>
+<div class="ev asst">
+      <div class="ev-h"><span class="ts">08:15:11</span><span class="ty">模型输出</span>
+        <span class="dg">9286dea539544888</span></div>
+      <div class="ev-b"><div class="msg">RK4 标定可靠，四项检查通过。位置口径下需 **763 步/圈** 才能压到 1e-5 km。取 763 步实际跑一次，并同步启动观测阶数测试核实实现。
+
+
+</div></div>
+    </div>
+<div class="ev call">
+      <div class="ev-h"><span class="ts">08:15:11</span><span class="ty">工具调用</span>
+        <span class="nm">orbit_propagate</span><span class="dg">0a7ffdc835fd98ba</span></div>
+      <div class="ev-b"><div class="kv"><span class="k">args</span><code>{"method":"rk4","nPerOrbit":763,"orbits":2,"system":"twoBody","eccentricity":0.05,"semiMajorAxisKm":7000}</code></div>
+        <div class="kv"><span class="k">policyHash</span><code>2440d18ddde5694e1a0e604f…</code></div>
+        <div class="kv"><span class="k">定义指纹</span><code>3b01036fa25515f0cc8daece…</code></div>
+      </div></div>
+<div class="ev call">
+      <div class="ev-h"><span class="ts">08:15:11</span><span class="ty">工具调用</span>
+        <span class="nm">orbit_order_test</span><span class="dg">3c2f5c1298f83f9f</span></div>
+      <div class="ev-b"><div class="kv"><span class="k">args</span><code>{"method":"rk4","orbits":2,"system":"twoBody","nList":[200,400,800,1600],"eccentricity":0.05,"semiMajorAxisKm":7000,"useMaxError":true}</code></div>
+        <div class="kv"><span class="k">policyHash</span><code>2440d18ddde5694e1a0e604f…</code></div>
+        <div class="kv"><span class="k">定义指纹</span><code>bd2e6ce6e5d411ca1a73f4eb…</code></div>
+      </div></div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:11</span><span class="ty">cost/ledger</span>
+      <span class="dg">0ba1428f5a6ee30c</span></div>
+    <div class="ev-b"><div class="kv"><code>{"purpose":"inference","effectId":"e-c60ea0f660445d6e4a2f6a527e681371","tokens":{"input":5445,"output":298,"cacheRead":8192,"cacheWrite":0,"reasoning":0},"credi…</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:11</span><span class="ty">effect/settled</span>
+      <span class="dg">b036155dc6551f82</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-c60ea0f660445d6e4a2f6a527e681371","outcome":"ok","durationMs":5554}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:11</span><span class="ty">effect/intent</span>
+      <span class="dg">0f0136ecada5936d</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-523294ff2d84270f6bdb3f52e6ec437d","kind":"tool","tool":{"toolUseId":"t3-ba596c2ffc723495cdedf45a50ffe78a","name":"orbit_propagate"},"replay":"saf…</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:11</span><span class="ty">effect/intent</span>
+      <span class="dg">52e0dc69826ceb2d</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-92ffa39b77627954bb59959baa7d27a2","kind":"tool","tool":{"toolUseId":"t4-a8faacfbe0e435480180b1988d80bb94","name":"orbit_order_test"},"replay":"sa…</code></div></div>
+  </div>
+<div class="ev result">
+      <div class="ev-h"><span class="ts">08:15:11</span><span class="ty">工具返回</span>
+        <span class="nm">场景【二体问题】a=7000 km，e=0.05，周期 5828.517 s
+方法 RK4（…</span>
+        <span class="dg">df717d792bc121a9</span></div>
+      <div class="ev-b"><pre class="out">场景【二体问题】a=7000 km，e=0.05，周期 5828.517 s
+方法 RK4（理论阶 4）｜每圈 763 步｜步长 7.6389e+0 s｜共 1526 步
+位置误差（对解析解）  9.8103e-6 km
+比能量相对误差        1.4328e-11  （64529.5 × ε）
+比角动量相对误差      6.9704e-12
+状态：正常</pre></div>
+    </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:11</span><span class="ty">effect/settled</span>
+      <span class="dg">9a3d42d7104e757a</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-523294ff2d84270f6bdb3f52e6ec437d","outcome":"ok","durationMs":11}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:11</span><span class="ty">verifier/signal</span>
+      <span class="dg">762d23c6de25e423</span></div>
+    <div class="ev-b"><div class="kv"><code>{"scope":"tool","tier":0,"verdict":"pass","reasons":[],"toolUseId":"t3-ba596c2ffc723495cdedf45a50ffe78a"}</code></div></div>
+  </div>
+<div class="ev result">
+      <div class="ev-h"><span class="ts">08:15:11</span><span class="ty">工具返回</span>
+        <span class="nm">场景【二体问题】a=7000 km，e=0.05，周期 5828.517 s
+RK4：理论阶…</span>
+        <span class="dg">8766c94e6176cf42</span></div>
+      <div class="ev-b"><pre class="out">场景【二体问题】a=7000 km，e=0.05，周期 5828.517 s
+RK4：理论阶 4，拟合实测阶 4.093（比值 1.02）
+  200 → 400 步/圈：位置阶 4.157｜能量阶 5.000｜角动量阶 5.000
+  400 → 800 步/圈：位置阶 4.082｜能量阶 5.000｜角动量阶 5.000
+  800 → 1600 步/圈：位置阶 4.042｜能量阶 4.983｜角动量阶 4.983
+判定：observed_order_matches_theory
+提示：用位置误差标定阶数；比能量误差的幂次通常会高出一阶，不可用于标定收敛阶。若实测阶高于理论阶，多半是抽样时刻落在折返点（改 useMaxError 或用非整周期弧段）。</pre></div>
+    </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:11</span><span class="ty">effect/settled</span>
+      <span class="dg">38875da9643232d6</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-92ffa39b77627954bb59959baa7d27a2","outcome":"ok","durationMs":8}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:11</span><span class="ty">verifier/signal</span>
+      <span class="dg">cf5c2affad2307bf</span></div>
+    <div class="ev-b"><div class="kv"><code>{"scope":"tool","tier":0,"verdict":"pass","reasons":[],"toolUseId":"t4-a8faacfbe0e435480180b1988d80bb94"}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:11</span><span class="ty">verifier/signal</span>
+      <span class="dg">555f2309c3812d46</span></div>
+    <div class="ev-b"><div class="kv"><code>{"scope":"step","tier":0,"verdict":"pass","reasons":[]}</code></div></div>
+  </div>
+<div class="ev step se">
+      <div class="ev-h"><span class="ts">08:15:11</span>
+        <span class="ty">步骤结束</span>
+        <span class="nm">turn 1 · step 4</span>
+        <span class="dg">aae5aefee9ca56be</span></div></div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:11</span><span class="ty">budget.state</span>
+      <span class="dg">0129ae3e2d636628</span></div>
+    <div class="ev-b"><div class="kv"><code>{"slot":"primary","escalate":false,"creditsUsed":0,"creditsCap":4000,"lastPreflight":{"tokens":14135,"source":"estimate"}}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:11</span><span class="ty">x/core/op-mark</span>
+      <span class="dg">c8f94dd16249c62a</span></div>
+    <div class="ev-b"><div class="kv"><code>{"phase":"inference"}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:11</span><span class="ty">x/core/context-breakdown</span>
+      <span class="dg">4b13883894142ba0</span></div>
+    <div class="ev-b"><div class="kv"><code>{"sections":[{"id":"core:untrusted-envelope","order":0,"source":"core","tokens":380},{"id":"persona","order":100,"source":"@agnes/code","tokens":266},{"id":"env…</code></div></div>
+  </div>
+<div class="ev step st">
+      <div class="ev-h"><span class="ts">08:15:11</span>
+        <span class="ty">步骤开始</span>
+        <span class="nm">turn 1 · step 5</span>
+        <span class="dg">0a3a2513d5945a03</span></div></div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:11</span><span class="ty">request/header</span>
+      <span class="dg">f1217a53cc23e1a0</span></div>
+    <div class="ev-b"><div class="kv"><code>{"derived_hash":"93af560585c4fdff10c296da29f4b68b79a30e9bc8486aa2621af366568fc7fa","prompt_prefix_hash":"ab3a7df39e692f6e3f8e4edfdf80c49439b53e517d56337ad0fd4bd…</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:11</span><span class="ty">effect/intent</span>
+      <span class="dg">612311745d0a2c2a</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-1f42d2731c957c3f9b2de7d253f13fae","kind":"inference","replay":"never","slot":"primary"}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:13</span><span class="ty">request/sent</span>
+      <span class="dg">6786803195ec759f</span></div>
+    <div class="ev-b"><div class="kv"><code>{"prompt_prefix_hash":null,"tool_schema_hash":"9117590821c8c73d80bb4b68b71dcb2259df65eab86b739cf13be0074f9549ff","parser_version":"2","contract_id":null,"model"…</code></div></div>
+  </div>
+<div class="ev asst">
+      <div class="ev-h"><span class="ts">08:15:17</span><span class="ty">模型输出</span>
+        <span class="dg">76db91aff5724938</span></div>
+      <div class="ev-b"><div class="msg">实际跑的结果：位置误差 9.81e-6 km（贴近 1e-5 目标但略高于校准式预测），守恒量误差 1e-11 量级（远低于浮点地板 1.47e-14 的上限，正常）。阶数测试完美：实测 4.09 ≈ 理论 4，无实现问题。
+
+跑 763 步位置误差 9.81e-6 刚好卡在 1e-5 边缘，需要确认上界并做告警规则综合判定。
+
+</div></div>
+    </div>
+<div class="ev call">
+      <div class="ev-h"><span class="ts">08:15:17</span><span class="ty">工具调用</span>
+        <span class="nm">orbit_alarm_check</span><span class="dg">f7a003daf4e1c0cf</span></div>
+      <div class="ev-b"><div class="kv"><span class="k">args</span><code>{"amplitudeKm":7000,"eccentricity":0.05,"method":"rk4","nPerOrbit":763,"orbits":2,"semiMajorAxisKm":7000,"system":"twoBody","targetPosErrKm":0.00001,"targetRelEnergyErr":1e-8}</code></div>
+        <div class="kv"><span class="k">policyHash</span><code>2440d18ddde5694e1a0e604f…</code></div>
+        <div class="kv"><span class="k">定义指纹</span><code>038cd298ceb2208a08961021…</code></div>
+      </div></div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:17</span><span class="ty">cost/ledger</span>
+      <span class="dg">d4a28b53828e10a9</span></div>
+    <div class="ev-b"><div class="kv"><code>{"purpose":"inference","effectId":"e-1f42d2731c957c3f9b2de7d253f13fae","tokens":{"input":786,"output":285,"cacheRead":13568,"cacheWrite":0,"reasoning":0},"credi…</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:17</span><span class="ty">effect/settled</span>
+      <span class="dg">ccc66cabc0c02a24</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-1f42d2731c957c3f9b2de7d253f13fae","outcome":"ok","durationMs":5634}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:17</span><span class="ty">effect/intent</span>
+      <span class="dg">8e452001ac672730</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-7280845317fce96f031ed2f78c83b4b2","kind":"tool","tool":{"toolUseId":"t5-8d6a3a2e41bcde49b5ec7b3d2dc6e929","name":"orbit_alarm_check"},"replay":"s…</code></div></div>
+  </div>
+<div class="ev result">
+      <div class="ev-h"><span class="ts">08:15:17</span><span class="ty">工具返回</span>
+        <span class="nm">场景【二体问题】a=7000 km，e=0.05，周期 5828.517 s
+RK4｜每圈 …</span>
+        <span class="dg">e1046ef3ab4002b8</span></div>
+      <div class="ev-b"><pre class="out">场景【二体问题】a=7000 km，e=0.05，周期 5828.517 s
+RK4｜每圈 763 步｜2 圈
+位置误差 9.810e-6 km｜比能量 1.433e-11｜实测阶 4.076（理论 4）
+触发 1 条：R5（致命 0 条，警告 1 条）：结果仍可用于交付，但需说明上述警告。
+  [R5] 短弧段合格但长弧段不合格（弧段外推失效，与 R1 同构的虚假安心）
+      证据：当前弧段末态合格（9.810e-6 km）；加倍弧段内的最大位置误差为 2.613e-5 km（阈值 0.00001 km），末态增长 2.20 倍</pre></div>
+    </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:17</span><span class="ty">effect/settled</span>
+      <span class="dg">e7b009c8efe7ea7f</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-7280845317fce96f031ed2f78c83b4b2","outcome":"ok","durationMs":62}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:17</span><span class="ty">verifier/signal</span>
+      <span class="dg">d015b37c1538dd72</span></div>
+    <div class="ev-b"><div class="kv"><code>{"scope":"tool","tier":0,"verdict":"pass","reasons":[],"toolUseId":"t5-8d6a3a2e41bcde49b5ec7b3d2dc6e929"}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:17</span><span class="ty">verifier/signal</span>
+      <span class="dg">fa0857ca583b3958</span></div>
+    <div class="ev-b"><div class="kv"><code>{"scope":"step","tier":0,"verdict":"pass","reasons":[]}</code></div></div>
+  </div>
+<div class="ev step se">
+      <div class="ev-h"><span class="ts">08:15:17</span>
+        <span class="ty">步骤结束</span>
+        <span class="nm">turn 1 · step 5</span>
+        <span class="dg">23491fc4bad48857</span></div></div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:17</span><span class="ty">budget.state</span>
+      <span class="dg">af01c1417f0de123</span></div>
+    <div class="ev-b"><div class="kv"><code>{"slot":"primary","escalate":false,"creditsUsed":0,"creditsCap":4000,"lastPreflight":{"tokens":14752,"source":"estimate"}}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:17</span><span class="ty">x/core/op-mark</span>
+      <span class="dg">bf4aaacda104548a</span></div>
+    <div class="ev-b"><div class="kv"><code>{"phase":"inference"}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:17</span><span class="ty">x/core/context-breakdown</span>
+      <span class="dg">6759cefe3f35cc30</span></div>
+    <div class="ev-b"><div class="kv"><code>{"sections":[{"id":"core:untrusted-envelope","order":0,"source":"core","tokens":380},{"id":"persona","order":100,"source":"@agnes/code","tokens":266},{"id":"env…</code></div></div>
+  </div>
+<div class="ev step st">
+      <div class="ev-h"><span class="ts">08:15:17</span>
+        <span class="ty">步骤开始</span>
+        <span class="nm">turn 1 · step 6</span>
+        <span class="dg">94c1bbef7cafa498</span></div></div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:17</span><span class="ty">request/header</span>
+      <span class="dg">634fe37e7e829342</span></div>
+    <div class="ev-b"><div class="kv"><code>{"derived_hash":"a41d615e39a69ab74f2c7f0a88aa26da1a52ac33cb0fb7071568373cb0df66f1","prompt_prefix_hash":"ab3a7df39e692f6e3f8e4edfdf80c49439b53e517d56337ad0fd4bd…</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:17</span><span class="ty">effect/intent</span>
+      <span class="dg">b1cb0c3f018a5ce5</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-8b9b8ab882f3d6d8ad35986170e73231","kind":"inference","replay":"never","slot":"primary"}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:19</span><span class="ty">request/sent</span>
+      <span class="dg">b5614855d01c911e</span></div>
+    <div class="ev-b"><div class="kv"><code>{"prompt_prefix_hash":null,"tool_schema_hash":"9117590821c8c73d80bb4b68b71dcb2259df65eab86b739cf13be0074f9549ff","parser_version":"2","contract_id":null,"model"…</code></div></div>
+  </div>
+<div class="ev asst">
+      <div class="ev-h"><span class="ts">08:15:52</span><span class="ty">模型输出</span>
+        <span class="dg">b3a2f72f3bd1f7bb</span></div>
+      <div class="ev-b"><div class="msg">告警规则给出了一个关键警告（R5：加倍弧段内误差 2.613e-5 &gt; 1e-5），说明 763 步的 1e-5 目标仅在末态合格，弧段中段超差。再跑一次 6125 步/圈（上限）确认能否消除 R5。
+
+</div></div>
+    </div>
+<div class="ev call">
+      <div class="ev-h"><span class="ts">08:15:52</span><span class="ty">工具调用</span>
+        <span class="nm">orbit_propagate</span><span class="dg">aa27ed69a9709396</span></div>
+      <div class="ev-b"><div class="kv"><span class="k">args</span><code>{"eccentricity":0.05,"method":"rk4","nPerOrbit":6125,"orbits":2,"semiMajorAxisKm":7000,"system":"twoBody"}</code></div>
+        <div class="kv"><span class="k">policyHash</span><code>2440d18ddde5694e1a0e604f…</code></div>
+        <div class="kv"><span class="k">定义指纹</span><code>3b01036fa25515f0cc8daece…</code></div>
+      </div></div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:52</span><span class="ty">cost/ledger</span>
+      <span class="dg">f15f4ddcf208592b</span></div>
+    <div class="ev-b"><div class="kv"><code>{"purpose":"inference","effectId":"e-8b9b8ab882f3d6d8ad35986170e73231","tokens":{"input":534,"output":187,"cacheRead":14336,"cacheWrite":0,"reasoning":0},"credi…</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:52</span><span class="ty">effect/settled</span>
+      <span class="dg">d4bbf59d0b36b6d8</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-8b9b8ab882f3d6d8ad35986170e73231","outcome":"ok","durationMs":35024}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:52</span><span class="ty">effect/intent</span>
+      <span class="dg">2df8814763af5fe7</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-eaf4d4b4d9e4aac445f8cde530c6e057","kind":"tool","tool":{"toolUseId":"t6-5b52ae2ed8da8acf58e67119fbe8751d","name":"orbit_propagate"},"replay":"saf…</code></div></div>
+  </div>
+<div class="ev result">
+      <div class="ev-h"><span class="ts">08:15:52</span><span class="ty">工具返回</span>
+        <span class="nm">场景【二体问题】a=7000 km，e=0.05，周期 5828.517 s
+方法 RK4（…</span>
+        <span class="dg">1dbf1225607cec8b</span></div>
+      <div class="ev-b"><pre class="out">场景【二体问题】a=7000 km，e=0.05，周期 5828.517 s
+方法 RK4（理论阶 4）｜每圈 6125 步｜步长 9.5159e-1 s｜共 12250 步
+位置误差（对解析解）  2.8410e-9 km
+比能量相对误差        5.8647e-15  （26.4 × ε）
+比角动量相对误差      3.0342e-15
+状态：正常</pre></div>
+    </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:52</span><span class="ty">effect/settled</span>
+      <span class="dg">9c01b59a84693f02</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-eaf4d4b4d9e4aac445f8cde530c6e057","outcome":"ok","durationMs":9}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:52</span><span class="ty">verifier/signal</span>
+      <span class="dg">7f4289bf7968fd9a</span></div>
+    <div class="ev-b"><div class="kv"><code>{"scope":"tool","tier":0,"verdict":"pass","reasons":[],"toolUseId":"t6-5b52ae2ed8da8acf58e67119fbe8751d"}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:52</span><span class="ty">verifier/signal</span>
+      <span class="dg">f185b7dc7d2852cd</span></div>
+    <div class="ev-b"><div class="kv"><code>{"scope":"step","tier":0,"verdict":"pass","reasons":[]}</code></div></div>
+  </div>
+<div class="ev step se">
+      <div class="ev-h"><span class="ts">08:15:52</span>
+        <span class="ty">步骤结束</span>
+        <span class="nm">turn 1 · step 6</span>
+        <span class="dg">0b426dd1986c828b</span></div></div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:52</span><span class="ty">budget.state</span>
+      <span class="dg">4a7a8231210ba7ec</span></div>
+    <div class="ev-b"><div class="kv"><code>{"slot":"primary","escalate":false,"creditsUsed":0,"creditsCap":4000,"lastPreflight":{"tokens":15123,"source":"estimate"}}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:52</span><span class="ty">x/core/op-mark</span>
+      <span class="dg">e918dafca40f9d3e</span></div>
+    <div class="ev-b"><div class="kv"><code>{"phase":"inference"}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:52</span><span class="ty">x/core/context-breakdown</span>
+      <span class="dg">73224a06f1001a75</span></div>
+    <div class="ev-b"><div class="kv"><code>{"sections":[{"id":"core:untrusted-envelope","order":0,"source":"core","tokens":380},{"id":"persona","order":100,"source":"@agnes/code","tokens":266},{"id":"env…</code></div></div>
+  </div>
+<div class="ev step st">
+      <div class="ev-h"><span class="ts">08:15:52</span>
+        <span class="ty">步骤开始</span>
+        <span class="nm">turn 1 · step 7</span>
+        <span class="dg">da57d00000e355f1</span></div></div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:52</span><span class="ty">request/header</span>
+      <span class="dg">edb337e4a71558d5</span></div>
+    <div class="ev-b"><div class="kv"><code>{"derived_hash":"892226765aea32a94f25607dbb2056abfa53307a07abaf1a03856632c64bb4a0","prompt_prefix_hash":"ab3a7df39e692f6e3f8e4edfdf80c49439b53e517d56337ad0fd4bd…</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:52</span><span class="ty">effect/intent</span>
+      <span class="dg">7d054a09b34875b5</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-afd43276e3c1d42e85bbeffc16e9a51e","kind":"inference","replay":"never","slot":"primary"}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:56</span><span class="ty">request/sent</span>
+      <span class="dg">e42e855c84c20973</span></div>
+    <div class="ev-b"><div class="kv"><code>{"prompt_prefix_hash":null,"tool_schema_hash":"9117590821c8c73d80bb4b68b71dcb2259df65eab86b739cf13be0074f9549ff","parser_version":"2","contract_id":null,"model"…</code></div></div>
+  </div>
+<div class="ev asst">
+      <div class="ev-h"><span class="ts">08:15:59</span><span class="ty">模型输出</span>
+        <span class="dg">baa3cdb110060f08</span></div>
+      <div class="ev-b"><div class="msg">6125 步/圈：位置误差 2.84e-9 km（远低于 1e-5），守恒量已触及浮点地板。再跑一次告警确认。
+
+</div></div>
+    </div>
+<div class="ev call">
+      <div class="ev-h"><span class="ts">08:15:59</span><span class="ty">工具调用</span>
+        <span class="nm">orbit_alarm_check</span><span class="dg">ae8e34ed46ed6388</span></div>
+      <div class="ev-b"><div class="kv"><span class="k">args</span><code>{"eccentricity":0.05,"method":"rk4","nPerOrbit":6125,"orbits":2,"semiMajorAxisKm":7000,"system":"twoBody","targetPosErrKm":0.00001,"targetRelEnergyErr":1e-8}</code></div>
+        <div class="kv"><span class="k">policyHash</span><code>2440d18ddde5694e1a0e604f…</code></div>
+        <div class="kv"><span class="k">定义指纹</span><code>038cd298ceb2208a08961021…</code></div>
+      </div></div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:59</span><span class="ty">cost/ledger</span>
+      <span class="dg">7169a9de4db22d23</span></div>
+    <div class="ev-b"><div class="kv"><code>{"purpose":"inference","effectId":"e-afd43276e3c1d42e85bbeffc16e9a51e","tokens":{"input":879,"output":187,"cacheRead":14336,"cacheWrite":0,"reasoning":0},"credi…</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:59</span><span class="ty">effect/settled</span>
+      <span class="dg">c52cf70fd2d7bdf4</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-afd43276e3c1d42e85bbeffc16e9a51e","outcome":"ok","durationMs":6876}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:59</span><span class="ty">effect/intent</span>
+      <span class="dg">af636479caca5f1a</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-e72ca5f32915ae95acf4b11123cce63b","kind":"tool","tool":{"toolUseId":"t7-de2b11b8d052ed84a4b1d8eea32c1cc2","name":"orbit_alarm_check"},"replay":"s…</code></div></div>
+  </div>
+<div class="ev result">
+      <div class="ev-h"><span class="ts">08:15:59</span><span class="ty">工具返回</span>
+        <span class="nm">场景【二体问题】a=7000 km，e=0.05，周期 5828.517 s
+RK4｜每圈 …</span>
+        <span class="dg">59aa525be386cafd</span></div>
+      <div class="ev-b"><pre class="out">场景【二体问题】a=7000 km，e=0.05，周期 5828.517 s
+RK4｜每圈 6125 步｜2 圈
+位置误差 2.841e-9 km｜比能量 5.865e-15｜实测阶 2.107（理论 4）
+触发 1 条：R2（致命 0 条，警告 1 条）：结果仍可用于交付，但需说明上述警告。
+  [R2] 观测阶明显低于理论阶（用四点阶梯全局拟合判定；步长区间或实现有问题）
+      证据：实测阶 1.973（四点阶梯全局拟合）／理论阶 4 = 0.49</pre></div>
+    </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:59</span><span class="ty">effect/settled</span>
+      <span class="dg">c84748a419fbf24b</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-e72ca5f32915ae95acf4b11123cce63b","outcome":"ok","durationMs":182}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:59</span><span class="ty">verifier/signal</span>
+      <span class="dg">5ec8d8f8d5043ab9</span></div>
+    <div class="ev-b"><div class="kv"><code>{"scope":"tool","tier":0,"verdict":"pass","reasons":[],"toolUseId":"t7-de2b11b8d052ed84a4b1d8eea32c1cc2"}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:59</span><span class="ty">verifier/signal</span>
+      <span class="dg">e7592b3cfcbbdae9</span></div>
+    <div class="ev-b"><div class="kv"><code>{"scope":"step","tier":0,"verdict":"pass","reasons":[]}</code></div></div>
+  </div>
+<div class="ev step se">
+      <div class="ev-h"><span class="ts">08:15:59</span>
+        <span class="ty">步骤结束</span>
+        <span class="nm">turn 1 · step 7</span>
+        <span class="dg">7733b5992823e917</span></div></div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:59</span><span class="ty">budget.state</span>
+      <span class="dg">512fb2b906be327c</span></div>
+    <div class="ev-b"><div class="kv"><code>{"slot":"primary","escalate":false,"creditsUsed":0,"creditsCap":4000,"lastPreflight":{"tokens":15501,"source":"estimate"}}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:59</span><span class="ty">x/core/op-mark</span>
+      <span class="dg">514bdf1a289295b5</span></div>
+    <div class="ev-b"><div class="kv"><code>{"phase":"inference"}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:59</span><span class="ty">x/core/context-breakdown</span>
+      <span class="dg">d9630eb54b7097af</span></div>
+    <div class="ev-b"><div class="kv"><code>{"sections":[{"id":"core:untrusted-envelope","order":0,"source":"core","tokens":380},{"id":"persona","order":100,"source":"@agnes/code","tokens":266},{"id":"env…</code></div></div>
+  </div>
+<div class="ev step st">
+      <div class="ev-h"><span class="ts">08:15:59</span>
+        <span class="ty">步骤开始</span>
+        <span class="nm">turn 1 · step 8</span>
+        <span class="dg">62c1724e88c49011</span></div></div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:59</span><span class="ty">request/header</span>
+      <span class="dg">713440c19052a760</span></div>
+    <div class="ev-b"><div class="kv"><code>{"derived_hash":"b21090ac890d1ae42aa26f667b68b939784cd8b0a6423941138d0cb504fe90b1","prompt_prefix_hash":"ab3a7df39e692f6e3f8e4edfdf80c49439b53e517d56337ad0fd4bd…</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:15:59</span><span class="ty">effect/intent</span>
+      <span class="dg">d9f6383076ded5b0</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-5bf0685dc23ae15f18e6fe1726899c62","kind":"inference","replay":"never","slot":"primary"}</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:16:01</span><span class="ty">request/sent</span>
+      <span class="dg">87e7f199621ddd8e</span></div>
+    <div class="ev-b"><div class="kv"><code>{"prompt_prefix_hash":null,"tool_schema_hash":"9117590821c8c73d80bb4b68b71dcb2259df65eab86b739cf13be0074f9549ff","parser_version":"2","contract_id":null,"model"…</code></div></div>
+  </div>
+<div class="ev asst">
+      <div class="ev-h"><span class="ts">08:16:15</span><span class="ty">模型输出</span>
+        <span class="dg">6d4eb04df2e68d7f</span></div>
+      <div class="ev-b"><div class="msg">两个配置结果都出来了。6125 步虽然位置误差远低于目标，但触发了 R2 警告——因为该步长已深入浮点平台区，实测阶数退化为噪声阶（1.97）而非理论 4。
+
+---
+
+## 可信度评估总结
+
+### 1. 内核积分方法与选择
+
+| 方法 | 理论阶 | 可靠性 |
+|------|--------|--------|
+| RK4 | 4 | ✅ 标定可靠（位置 R²=0.9996，能量 R²=1.0000） |
+| Heun | 2 | ✅ 可靠 |
+| Midpoint | 2 | ✅ 可靠 |
+| Leapfrog | 2 | ⚠️ 能量口径不可靠（R²=0.978 &lt; 0.999） |
+| Euler | 1 | ❌ 不可靠 |
+
+**RK4 完全适合本场景**，且是本内核中精度最高的方法。位置误差的幂律标定四项检查（R²、残差、外推、自洽性）全部通过，可信。
+
+### 2. 达到 1e-5 km 所需步数
+
+- **最小：763 步/圈**（位置口径）
+- **上限：6125 步/圈**（再缩无效，已触及浮点平台）
+- 浮点精度地板：位置 1.38e-9 km，比能量 1.47e-14
+
+### 3. 实际传播结果
+
+| 步数/圈 | 位置误差 | 比能量误差 | 比角动量误差 |
+|---------|---------|-----------|-------------|
+| 763 | 9.81e-6 km | 1.43e-11 | 7.0e-12 |
+| 6125 | 2.84e-9 km | 5.86e-15 | 3.03e-15 |
+
+### 4. 能否直…</div></div>
+    </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:16:15</span><span class="ty">cost/ledger</span>
+      <span class="dg">9c3ecb3ecc020e25</span></div>
+    <div class="ev-b"><div class="kv"><code>{"purpose":"inference","effectId":"e-5bf0685dc23ae15f18e6fe1726899c62","tokens":{"input":492,"output":945,"cacheRead":15104,"cacheWrite":0,"reasoning":0},"credi…</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:16:15</span><span class="ty">effect/settled</span>
+      <span class="dg">97ea84020c0174ad</span></div>
+    <div class="ev-b"><div class="kv"><code>{"effectId":"e-5bf0685dc23ae15f18e6fe1726899c62","outcome":"ok","durationMs":16156}</code></div></div>
+  </div>
+<div class="ev step se">
+      <div class="ev-h"><span class="ts">08:16:15</span>
+        <span class="ty">步骤结束</span>
+        <span class="nm">turn 1 · step 8</span>
+        <span class="dg">05c6dcd0dbf7d4bc</span></div></div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:16:15</span><span class="ty">verifier/signal</span>
+      <span class="dg">0a1ca32d98fb0aee</span></div>
+    <div class="ev-b"><div class="kv"><code>{"scope":"turn","tier":0,"verdict":"pass","reasons":[]}</code></div></div>
+  </div>
+<div class="ev turn">
+      <div class="ev-h"><span class="ts">08:16:15</span>
+        <span class="ty">轮次结束</span>
+        <span class="nm">turn  · completed</span>
+        <span class="dg">165abb8777025294</span></div></div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:16:15</span><span class="ty">x/host/session-title</span>
+      <span class="dg">66963afffed0befd</span></div>
+    <div class="ev-b"><div class="kv"><code>{"status":"requested","turn":1,"startSeq":7,"route":"account-acct-4fe0d957-cf49-4b29-af6b-116dc200b192","model":"agnes-3.0-flash","prompt":"帮我做一次完整的可信度评估。\n\n场景…</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:16:17</span><span class="ty">cost/ledger</span>
+      <span class="dg">25bc3d60886d6ab2</span></div>
+    <div class="ev-b"><div class="kv"><code>{"purpose":"title","sourceTurn":1,"effectId":"title:078ccfca67f4141bc128a0f41577f9dd67ae2681a8ca74c4a4fba8bb6b81c670","tokens":{"input":1627,"output":9,"cacheRe…</code></div></div>
+  </div>
+<div class="ev other">
+    <div class="ev-h"><span class="ts">08:16:17</span><span class="ty">x/host/session-title</span>
+      <span class="dg">71cda4c7c59542bd</span></div>
+    <div class="ev-b"><div class="kv"><code>{"status":"generated","turn":1,"startSeq":7,"route":"account-acct-4fe0d957-cf49-4b29-af6b-116dc200b192","model":"agnes-3.0-flash","prompt":"帮我做一次完整的可信度评估。\n\n场景…</code></div></div>
+  </div>
+</div>
+
+<div class="note" style="background:#fdf3e3;border-color:#efdcb4"><b>脱敏说明：</b>为公开分享，本页已把本地绝对路径替换为 <code>&lt;user&gt;</code> / <code>&lt;workspace&gt;</code> 占位符。<b>事件数据（时间戳、工具名、参数、返回值、完整性哈希）未作任何改动。</b>原始记录位于 <code>~/.agh/data/sessions.db</code> 的 <code>events</code> 表。</div>
+
+<footer>
+  <b>导出说明：</b>本页由 <code>export-agh-record.mjs</code> 从 <code>sessions.db</code> 生成，只做格式转换，
+  未增删或改写任何事件内容。<br>
+  <b>字段说明：</b><code>policyHash</code> 是工具策略快照的哈希；<code>定义指纹</code>标识工具实现版本——
+  二者共同说明"这次的调用行为是可追溯的"。<br>
+  <b>用途：</b>赛事提交材料中的「运行证据」部分；亦可用于答辩时回答"如何证明智能体确实在自主决策"。
+</footer>
+
+</div></body>
+</html>

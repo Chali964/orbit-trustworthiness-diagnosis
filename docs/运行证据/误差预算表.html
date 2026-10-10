@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>误差预算表</title>
+<style>
+  :root{--bg:#f6f7f9;--card:#fff;--line:#e3e6ec;--line2:#cfd5df;--ink:#1a1f29;--ink2:#3f4959;--ink3:#7b869a;
+    --brand:#1d5fd0;--brand2:#eaf1fd;--ok:#1f7a4d;--ok2:#e8f5ee;--warn:#ba7517;--warn2:#fdf3e3;--hot:#c62828}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;font-size:14.5px;line-height:1.78}
+  .wrap{max-width:1000px;margin:0 auto;padding:30px 22px 70px}
+  .hd{border-bottom:3px double var(--line2);padding-bottom:16px;margin-bottom:20px}
+  .hd .k{font-size:12px;letter-spacing:.18em;color:var(--ink3);margin-bottom:6px}
+  .hd h1{margin:0 0 10px;font-size:23px;font-weight:700}
+  .hd .m{font-size:13px;color:var(--ink2);line-height:1.9}
+  .hd .m b{color:var(--ink)}
+  .lead{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:0 10px 10px 0;padding:15px 19px;margin:18px 0 22px;font-size:14.2px}
+  .lead .t{font-weight:700;color:var(--brand);margin-bottom:5px}
+  table{width:100%;border-collapse:collapse;font-size:13.6px;background:var(--card);margin:14px 0}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:#f0f3f8;font-weight:700;color:var(--ink2);font-size:13.2px}
+  td.c{text-align:center;font-family:ui-monospace,Consolas,monospace}
+  td.n{color:var(--ink3);font-size:12.6px;width:210px}
+  tr.tot td{background:#f6f9ff;font-weight:700}
+  tr.floor td{background:var(--warn2)}
+  h2{font-size:18px;margin:30px 0 6px;padding-bottom:5px;border-bottom:1px solid var(--line2);font-weight:700}
+  .vd{display:flex;gap:16px;margin:14px 0}
+  .vcard{flex:1;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 20px}
+  .vcard .t{font-size:13px;color:var(--ink3);margin-bottom:6px}
+  .vcard .k{font-size:22px;font-weight:700;margin-bottom:6px}
+  .vcard .d{font-size:15px;color:var(--ink2)}
+  .bar-wrap{margin:16px 0}
+  .bar{display:flex;height:34px;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+  .seg{display:flex;align-items:center;justify-content:center;font-size:12.4px;font-weight:700;color:#fff}
+  .seg.t{background:var(--brand)} .seg.f{background:var(--warn);color:#3a2a00}
+  .lbar{font-size:12.6px;color:var(--ink3);margin-top:4px;display:flex;justify-content:space-between}
+  .note{background:var(--brand2);border:1px solid #cfe0fa;border-radius:9px;padding:13px 17px;font-size:13.6px;margin:14px 0}
+  .note.warn{background:var(--warn2);border-color:#efdcb4}
+  code{font-family:ui-monospace,Consolas,monospace;font-size:12.6px;background:#f3f5f9;border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  footer{margin-top:34px;padding-top:14px;border-top:1px solid var(--line);font-size:12.6px;color:var(--ink3);line-height:1.85}
+</style></head><body><div class="wrap">
+
+<div class="hd">
+  <div class="k">误差预算 · 精度瓶颈分析</div>
+  <h1>误差预算表：这个精度受什么限制？</h1>
+  <div class="m">
+    <b>场景：</b>a=7000 km、e=0.05 的近地轨道，RK4，2 圈，位置误差目标 1e-5 km<br>
+    <b>数据来源：</b>AGH 会话 <code>9b66886d</code> 中智能体调用工具得到的实测返回值（763 步 / 6125 步），
+    本页只做整理与呈现，<b>不新增计算、不调用模型</b>。
+  </div>
+</div>
+
+<div class="lead">
+  <div class="t">这张表比"准不准"多回答一件事</div>
+  "位置误差 9.81e-6 km"只是结果；<b>误差预算告诉我们这个数是由什么构成的、瓶颈在哪、想再提升还剩多少空间。</b>
+  一个关键发现：随着步长减小，<b>误差的主导来源会从截断误差转移到浮点舍入</b>——到那时继续缩步长，收益已经打折。
+</div>
+
+<h2>误差来源分解</h2>
+<table>
+  <tr>
+    <th style="width:150px">误差来源</th>
+    <th class="c" style="width:170px">763 步 / 圈</th><th class="c" style="width:170px">6125 步 / 圈</th>
+    <th class="n">说明</th>
+  </tr>
+  <tr><td>① 截断误差</td><td class="c">9.810e-6</td><td class="c">2.484e-9</td><td class="n">方法的固有误差，缩步长按 ${p} 次幂下降</td></tr>
+  <tr><td>② 浮点舍入</td><td class="c">1.3780e-9</td><td class="c">1.3780e-9</td><td class="n">双精度运算的随机累积，实测下界</td></tr>
+  <tr><td>③ 参考解舍入</td><td class="c">7.0e-13</td><td class="c">7.0e-13</td><td class="n">开普勒解析解的求解精度（推断值）</td></tr>
+  <tr class="tot"><td>合计（实测）</td><td class="c">9.8103e-6</td><td class="c">2.8410e-9</td>
+    <td class="n">与工具返回的实测值一致</td></tr>
+  <tr class="floor"><td>浮点占比</td><td class="c">0.014%</td><td class="c">48.505%</td>
+    <td class="n">超过 25% 即进入浮点主导区</td></tr>
+</table>
+
+<h2>误差构成可视化</h2>
+<div class="bar-wrap">
+    <div style="font-size:13.4px;font-weight:700;color:var(--ink2);margin-bottom:5px">763 步 / 圈（步长 7.64e+0 s）</div>
+    <div class="bar">
+      <div class="seg t" style="width:99.99%">截断 100.0%</div>
+      <div class="seg f" style="width:0.01%"></div>
+    </div>
+    <div class="lbar"><span>总误差 9.810e-6 km</span><span>步数 1526</span><span>守恒量误差 64529 × ε</span></div>
+  </div>
+<div class="bar-wrap">
+    <div style="font-size:13.4px;font-weight:700;color:var(--ink2);margin-bottom:5px">6125 步 / 圈（步长 9.52e-1 s）</div>
+    <div class="bar">
+      <div class="seg t" style="width:51.49%">截断 51.5%</div>
+      <div class="seg f" style="width:48.51%">浮点 48.5%</div>
+    </div>
+    <div class="lbar"><span>总误差 2.841e-9 km</span><span>步数 12250</span><span>守恒量误差 26 × ε</span></div>
+  </div>
+
+<h2>瓶颈判断</h2>
+<div class="vd">
+  <div class="vcard">
+    <div class="t">763 步 / 圈（末态恰好达标）</div>
+    <div class="k" style="color:#1d5fd0">瓶颈：截断误差</div>
+    <div class="d">缩步长仍能换来精度提升——0.014% 的误差来自浮点，几乎全部是截断误差。
+      想更准，<b>缩步长有效</b>。</div>
+  </div>
+  <div class="vcard">
+    <div class="t">6125 步 / 圈（触及浮点平台）</div>
+    <div class="k" style="color:#ba7517">瓶颈：浮点舍入</div>
+    <div class="d">缩步长只能换来约一半的收益——已有 <b>48.5%</b> 的误差来自浮点，
+      缩步长只能换回约一半的精度提升。</div>
+  </div>
+</div>
+
+<div class="note warn">
+  <div class="t">这张表解释了 R2 告警的成因</div>
+  智能体在 6125 步配置上触发了 R2（观测阶低于理论阶）。当时它把这个判为
+  <b>「浮点平台效应，非实现缺陷」</b>——<b>误差预算给出了独立的定量佐证</b>：
+  该配置下 48.5% 的误差已来自机器精度，此时实测收敛阶退化到 2 附近是必然的，
+  与实现质量无关。两份证据互相印证。
+</div>
+
+<h2>对工程的直接回答</h2>
+<table>
+  <tr><th style="width:230px">问题</th><th>依据</th></tr>
+  <tr><td>该用多少步长</td><td>763 步/圈即可让末态达标（9.81e-6 km &lt; 1e-5 km）</td></tr>
+  <tr><td>想更准该动什么</td><td><b>缩步长</b>——此阶段 0.014% 的误差来自浮点，截断仍占绝对主导</td></tr>
+  <tr><td>什么时候该停</td><td>浮点占比超过约 25% 之后，继续缩步长的收益开始打折；本次实测在 6125 步处达到 48.5%</td></tr>
+  <tr><td>为什么不无限缩小步长</td><td>浮点地板 1.378e-9 km 是硬下界，缩步长无法突破</td></tr>
+</table>
+
+<footer>
+  <b>分解口径（如实说明）：</b>
+  ① 截断误差按「总² − 地板²」开方得到，依据是两种误差机制独立、按步数随机累积（各按 √N 增长，故平方和成立）。<br>
+  ② 浮点舍入为实测下界：固定步长、仅改变初始相位，重复 20000 步/圈量测所得，取中位数。
+  守恒量口径的散布范围为 6.11e-15 ～ 2.13e-14，说明舍入区是随机的、不存在可拟合的幂律。<br>
+  ③ 参考解舍入为<b>推断值</b>（按双精度迭代精度 × 轨道量级估计），<b>未单独实测</b>；
+  其量级比浮点地板小约四个数量级，在本表所有配置下均可忽略。<br>
+  <b>适用边界：</b>本表只对<b>本场景、本方法</b>成立。换轨道或换积分器需重新标定——
+  截断项依赖标定式 <code>E(h) ≈ 5.5486e-16 × h^4.998（守恒量口径，h 单位为秒）</code>，浮点项依赖机器精度与累加步数。
+</footer>
+
+</div></body></html>

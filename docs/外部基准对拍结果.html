@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>与外部权威基准对拍</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#fff; --line:#e3e6ec; --line2:#cfd5df;
+    --ink:#1a1f29; --ink2:#3f4959; --ink3:#7b869a;
+    --brand:#1d5fd0; --brand2:#eaf1fd; --brand3:#cfe0fa;
+    --hot:#c62828; --hot2:#fdecec; --hot3:#f4cccc;
+    --ok:#1f7a4d; --ok2:#e8f5ee; --ok3:#b6ddc7;
+    --warn:#9a6200; --warn2:#fdf3e3; --warn3:#efdcb4;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:15.5px;line-height:1.88}
+  .wrap{max-width:1010px;margin:0 auto;padding:30px 22px 80px}
+  .doc-head{border-bottom:3px double var(--line2);padding-bottom:16px;margin-bottom:22px}
+  .doc-head .kicker{font-size:12.4px;letter-spacing:.18em;color:var(--ink3);margin-bottom:8px}
+  .doc-head h1{margin:0 0 10px;font-size:26px;line-height:1.38;font-weight:700}
+  .doc-head .meta{font-size:13.4px;color:var(--ink2);line-height:1.95}
+  .doc-head .meta b{color:var(--ink)}
+
+  h2{font-size:20px;margin:42px 0 6px;padding-bottom:7px;border-bottom:2px solid var(--line2);font-weight:700}
+  h2 .num{color:var(--brand);margin-right:9px}
+  h3{font-size:16.8px;margin:28px 0 8px;font-weight:700;
+    background:var(--brand2);border-left:4px solid var(--brand);border-radius:0 6px 6px 0;padding:7px 14px}
+  p{margin:10px 0}
+
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.6px;background:var(--card)}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:#f0f3f8;font-weight:700;color:var(--ink2);font-size:13.2px}
+  td.c,th.c{text-align:center}
+  td.num,th.num{text-align:right;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.9px}
+  caption{caption-side:top;text-align:left;font-size:13px;color:var(--ink3);padding-bottom:5px}
+
+  .note{background:var(--brand2);border:1px solid var(--brand3);border-radius:9px;padding:12px 17px;font-size:14.4px;margin:13px 0}
+  .note .t{font-weight:700;color:var(--brand);margin-bottom:3px}
+  .note.hot{background:var(--hot2);border-color:var(--hot3)} .note.hot .t{color:var(--hot)}
+  .note.ok{background:var(--ok2);border-color:var(--ok3)} .note.ok .t{color:var(--ok)}
+  .note.warn{background:var(--warn2);border-color:var(--warn3)} .note.warn .t{color:var(--warn)}
+
+  .lead{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--ok);
+    border-radius:0 10px 10px 0;padding:16px 20px;margin:20px 0 26px}
+  .lead .t{font-weight:700;color:var(--ok);margin-bottom:7px}
+  .lead .say{background:#f8fafc;border-left:3px solid var(--ok3);border-radius:0 6px 6px 0;
+    padding:12px 16px;margin:10px 0 0;font-size:15px}
+
+  .q{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin:13px 0}
+  .q .qq{font-weight:700;font-size:15.4px;margin-bottom:9px;padding-left:26px;position:relative}
+  .q .qq::before{content:'问';position:absolute;left:0;top:1px;font-size:11.6px;color:#fff;
+    background:var(--hot);border-radius:4px;padding:1px 7px}
+  .q .aa{padding-left:26px;position:relative;font-size:14.6px;line-height:1.85}
+  .q .aa::before{content:'答';position:absolute;left:0;top:1px;font-size:11.6px;color:#fff;
+    background:var(--ok);border-radius:4px;padding:1px 7px}
+
+  code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.9px;
+    background:#f3f5f9;border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  footer{margin-top:44px;padding-top:15px;border-top:1px solid var(--line);font-size:12.8px;color:var(--ink3);line-height:1.9}
+  @media print{body{background:#fff}.note,.q,.lead,table{break-inside:avoid}h2,h3{break-after:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="doc-head">
+  <div class="kicker">验证材料 · 外部基准</div>
+  <h1>与外部权威基准对拍</h1>
+  <div class="meta">
+    <b>用途：</b>证明「我们的实现与行业公开基准一致」，而不只是「自己跟自己一致」<br>
+    <b>基准来源：</b>Orekit 官方测试套件 · Curtis《Orbital Mechanics for Engineering Students》教材例题<br>
+    <b>脚本：</b><code>agh-orbit-plugin/test-external-benchmark.mjs</code>（<b>8 项断言全部通过</b>）<br>
+    <b>编制：</b>2026 年 10 月 5 日
+  </div>
+</div>
+
+<div class="lead">
+  <div class="t">一句话结论</div>
+  <b>与 Orekit 官方测试的期望值对拍，位置与速度的相对偏差均为 1.2×10⁻¹⁵——已到双精度浮点极限，逐位相同。</b>
+  <div class="say">
+    「此前我们的证据都是<b>自洽</b>的：自己写的解析解 vs 自己写的积分器。
+    这次补上了<b>外部参照</b>——同样的输入，Orekit 给出什么，我们就给出什么。」
+  </div>
+</div>
+
+<h2><span class="num">一</span>对拍前的一个说明：我们验证的是什么</h2>
+
+<p>本项目主张「<b>判据是确定性算法 + 真值独立</b>」。要支撑这个主张，需要两类证据：</p>
+
+<table>
+  <caption>表 1　两类证据的分工</caption>
+  <tr><th style="width:180px">证据类型</th><th style="width:250px">回答什么问题</th><th>本项目对应材料</th></tr>
+  <tr>
+    <td><b>内部自洽</b></td>
+    <td>系统内部是否说得通？</td>
+    <td>解析解 vs 数值解的对拍 · 收敛阶测试 · 守恒量 · 480 单元统计 · 置信区间</td>
+  </tr>
+  <tr style="background:#e8f5ee">
+    <td><b>外部一致</b>（本文）</td>
+    <td><b>和行业公认的实现比，结果一样吗？</b></td>
+    <td>与 Orekit 官方测试期望值对拍 · 与 Curtis 教材例题对拍</td>
+  </tr>
+</table>
+
+<div class="note warn">
+  <div class="t">★ 边界要说清楚：本文对拍的是「解析解 + 要素转换」，不是「数值积分器」</div>
+  第 ① 组对拍走的是<b>解析路径</b>（开普勒方程 → 闭式位置速度），第 ② 组用的是解析式复核。<br>
+  <b>数值积分器本身由另一套机制验证</b>：收敛阶测试（实测阶 vs 理论阶）+ 与解析真值的逐点误差。
+  两者合起来才覆盖完整链条——本文不越界声称"积分器也经过外部对拍"。
+</div>
+
+<h2><span class="num">二</span>基准一：Orekit 官方测试套件</h2>
+
+<h3>2.1 为什么选它</h3>
+
+<p><b>Orekit</b> 是欧洲空间局生态中广泛使用的开源航天动力学库，其官方测试套件里的期望值是<b>逐位写在源码里的硬编码常量</b>——
+不是运行时算出来的，而是开发时确定的。这使它们成为理想的独立参照。</p>
+
+<p>选用的测试是 <code>KeplerianOrbitTest.testKeplerianToCartesian</code>：给 6 个经典轨道要素，验证算出的位置速度。</p>
+
+<h3>2.2 输入</h3>
+
+<table>
+  <caption>表 2　Orekit 测试的输入（a 已换算为 km）</caption>
+  <tr><th style="width:200px">量</th><th class="num" style="width:200px">值</th><th>备注</th></tr>
+  <tr><td>半长轴 a</td><td class="num">24464.56 km</td><td>原值 24464560.0 m</td></tr>
+  <tr><td>偏心率 e</td><td class="num">0.7311</td><td>大偏心率椭圆</td></tr>
+  <tr><td>倾角 i</td><td class="num">0.122138 rad</td><td>≈ 6.998°</td></tr>
+  <tr><td>近地点幅角 ω</td><td class="num">3.10686 rad</td><td>≈ 178.0°</td></tr>
+  <tr><td>升交点赤经 Ω</td><td class="num">1.00681 rad</td><td>≈ 57.7°</td></tr>
+  <tr><td>平近点角 M</td><td class="num">0.048363 rad</td><td><b>MEAN</b> anomaly（不是真近点角）</td></tr>
+  <tr style="background:#e8f5ee">
+    <td>引力常数 μ</td><td class="num">398600.47 km³/s²</td>
+    <td><b>由对拍反推确认</b>：候选值 3.986004415e14 会带来 3.6×10⁻⁸ 的速度偏差，
+        而 3.9860047e14 给出 1.2×10⁻¹⁵，故后者才是测试所用值</td>
+  </tr>
+</table>
+
+<h3>2.3 结果：逐位相同</h3>
+
+<table>
+  <caption>表 3　位置对拍（单位：米）</caption>
+  <tr><th class="c" style="width:60px">分量</th><th class="num" style="width:250px">本实现</th><th class="num" style="width:250px">Orekit 期望值</th><th class="c">一致</th></tr>
+  <tr><td class="c">x</td><td class="num">−1076225.324680</td><td class="num">−1076225.324680</td><td class="c">✓</td></tr>
+  <tr><td class="c">y</td><td class="num">−6765896.364328</td><td class="num">−6765896.364328</td><td class="c">✓</td></tr>
+  <tr><td class="c">z</td><td class="num">−332308.783350</td><td class="num">−332308.783350</td><td class="c">✓</td></tr>
+  <tr style="background:#e8f5ee">
+    <td class="c" colspan="3"><b>相对偏差</b></td><td class="c"><b>1.165×10⁻¹⁵</b></td>
+  </tr>
+</table>
+
+<table>
+  <caption>表 4　速度对拍（单位：米/秒）</caption>
+  <tr><th class="c" style="width:60px">分量</th><th class="num" style="width:250px">本实现</th><th class="num" style="width:250px">Orekit 期望值</th><th class="c">一致</th></tr>
+  <tr><td class="c">x</td><td class="num">9356.857752</td><td class="num">9356.857752</td><td class="c">✓</td></tr>
+  <tr><td class="c">y</td><td class="num">−3312.347750</td><td class="num">−3312.347750</td><td class="c">✓</td></tr>
+  <tr><td class="c">z</td><td class="num">−1188.015775</td><td class="num">−1188.015775</td><td class="c">✓</td></tr>
+  <tr style="background:#e8f5ee">
+    <td class="c" colspan="3"><b>相对偏差</b></td><td class="c"><b>1.184×10⁻¹⁵</b></td>
+  </tr>
+</table>
+
+<div class="note ok">
+  <div class="t">这个数字是什么意思</div>
+  <b>1.2×10⁻¹⁵ 是双精度浮点的分辨率（机器 ε ≈ 2.2×10⁻¹⁶ 的几倍），也就是说「已经无法再接近了」。</b><br>
+  这不是"我们的精度很高"——而是"两个实现在数学上是一致的，差异只剩浮点舍入"。
+  对于「实现是否正确」这个问题，这是能给的最强回答。
+</div>
+
+<p>另外自查了内核的开普勒方程求解器：</p>
+<pre style="background:#1e2230;color:#e6e9f0;border-radius:8px;padding:12px 16px;font-size:12.9px;overflow-x:auto">内核 solveKepler 残差 |E − e·sinE − M| = 1.388×10⁻¹⁷</pre>
+<p>残差比双精度分辨率还小一个量级，说明迭代收敛充分。</p>
+
+<h2><span class="num">三</span>基准二：Curtis 教材例题</h2>
+
+<h3>3.1 选用理由与输入</h3>
+
+<p>Curtis《Orbital Mechanics for Engineering Students》Example 2.3 是一道<b>纯二体、数值积分</b>的标准题，
+教材给出了明确的数值答案，且初始条件以<b>位置速度</b>形式给出（与我们的内核状态量一致）。</p>
+
+<table>
+  <caption>表 5　教材例题的输入与答案</caption>
+  <tr><th style="width:180px">项</th><th>内容</th></tr>
+  <tr><td><b>初始位置</b></td><td class="num">r₀ = 8000 <b>i</b> + 6000 <b>k</b> km（|r₀| = 10000 km）</td></tr>
+  <tr><td><b>初始速度</b></td><td class="num">v₀ = 7 <b>j</b> km/s</td></tr>
+  <tr><td><b>积分时长</b></td><td>4 小时（教材用 RKF4(5) 自适应步长）</td></tr>
+  <tr><td><b>教材常数</b></td><td>μ = 398600 km³/s²，地球半径 6378 km（<b>与本项目默认值不同，对拍时按教材取值</b>）</td></tr>
+  <tr style="background:#e8f5ee"><td><b>教材答案</b></td><td>最小高度 3622 km（在起点）· 最大高度 9560 km（约 2 h 后）· 远地点速度 4.39 km/s</td></tr>
+</table>
+
+<h3>3.2 结果</h3>
+
+<table>
+  <caption>表 6　与教材答案的对比</caption>
+  <tr><th style="width:190px">量</th><th class="num" style="width:170px">本实现</th><th class="num" style="width:150px">教材</th><th>判断</th></tr>
+  <tr style="background:#e8f5ee">
+    <td>最小高度</td><td class="num">3622.00 km</td><td class="num">3622 km</td>
+    <td><b>完全一致</b></td>
+  </tr>
+  <tr>
+    <td>最大高度</td><td class="num">9572.52 km</td><td class="num">9560 km</td>
+    <td>相差 12.5 km（见下方说明）</td>
+  </tr>
+  <tr style="background:#e8f5ee">
+    <td><b>远地点速度</b></td><td class="num">4.3886 km/s</td><td class="num">4.39 km/s</td>
+    <td><b>一致</b></td>
+  </tr>
+  <tr>
+    <td>最大高度出现时刻</td><td class="num">2.0429 h</td><td>「2 h 后」</td>
+    <td>本实现恰为半周期 T/2 = 2.0429 h，教材为近似表述</td>
+  </tr>
+</table>
+
+<div class="note">
+  <div class="t">关于「最大高度相差 12.5 km」</div>
+  <b>远地点速度更能说明问题</b>：教材给 4.39 km/s，本实现 4.3886 km/s——若真如教材所写 r_max 对应 15938 km，
+  速度应为 4.3920 km/s。<b>两者四舍五入都是 4.39，所以速度这个量对不出差异。</b><br><br>
+  而本实现的最大高度可由解析式独立复核：<code>r_max = a(1+e) = 12975.2604 × 1.2293026 = 15950.52 km</code>，
+  对应高度 9572.52 km。<b>数值扫描结果与解析式一致到 1e-6</b>，说明本实现内部自洽。<br>
+  教材取 4 位有效数字，此处差异更可能来自教材取整或其积分器步长带来的偏差。
+</div>
+
+<h2><span class="num">四</span>一组刻意没做的对拍（以及为什么）</h2>
+
+<div class="note warn">
+  <div class="t">Orekit 官方传播教程（固定步长 RK4，10 s，传播 6000 s）为何未列为对拍项</div>
+  该教程的初始条件含 <b>倾角 i = 7°</b>，而本内核的状态量是<b>轨道平面内的二维坐标</b>（nq = 2）。<br><br>
+  <b>这不是能力缺失</b>——任何二体轨道都在一个平面内，平面内运动加上一次旋转就与三维完全等价
+  （第 ② 节的对拍正是这么做的）。<br><br>
+  <b>但若要做这组对拍，必须先把初始状态投影到轨道平面，那一步会引入我们自己的实现</b>——
+  于是对拍结果将不再纯粹反映内核，说服力反而下降。<b>故不列为对拍项，并在此说明理由。</b>
+</div>
+
+<h2><span class="num">五</span>答辩话术</h2>
+
+<div class="q">
+  <div class="qq">你们的实现怎么证明是对的？</div>
+  <div class="aa">
+    <div class="say">
+      「分两类证据。<br><br>
+      <b>一类是内部自洽</b>：解析解与数值解对拍、收敛阶实测、守恒量检验，加上约 480 个配置单元的误报漏报统计。<br><br>
+      <b>另一类是外部一致</b>——这是更缺的一环：<b>我们把同样的输入喂给我们的实现，看输出是否与行业公认的实现相同。</b><br>
+      对照 <b>Orekit</b> 官方测试套件里逐位写死的期望值，<b>位置和速度的相对偏差都是 1.2×10⁻¹⁵</b>——
+      这已经是双精度浮点的极限，<b>逐位相同</b>。<br>
+      另外对照 Curtis 教材的一道标准例题，最小高度、远地点速度都吻合。<br><br>
+      <b>要说清边界</b>：这两组对拍走的是<b>解析路径</b>，验证的是要素转换与解析解；
+      <b>数值积分器本身</b>由收敛阶测试和逐点误差另外覆盖。」
+    </div>
+  </div>
+</div>
+
+<div class="q">
+  <div class="qq">为什么你们自己写转换，而不是直接用 Orekit？</div>
+  <div class="aa">
+    <div class="say">
+      「两个原因。<br><br>
+      <b>第一是运行环境</b>：Orekit 是 Java 库，而本作品要作为 AGH 的后端插件运行在 Node 环境里，
+      自包含、零外部依赖是它能被智能体直接调用的前提。<br><br>
+      <b>第二，也是更重要的——自己写才需要外部对拍。</b>
+      如果我们直接用 Orekit，那"实现是否正确"就成了对 Orekit 的信任问题；
+      现在我们自己实现，并且<b>用 Orekit 的期望值把它验证到浮点极限</b>，
+      这恰好构成了一个完整的验证闭环。」
+    </div>
+  </div>
+</div>
+
+<footer>
+  <b>基准来源：</b>
+  ① Orekit 官方测试 <code>KeplerianOrbitTest.testKeplerianToCartesian</code>
+  （orekit.org/site-orekit-13.0/xref-test/org/orekit/orbits/KeplerianOrbitTest.html），期望值为源码内硬编码常量；
+  ② Curtis, H. D., <i>Orbital Mechanics for Engineering Students</i>, Example 2.3。<br>
+  <b>复现方式：</b><code>node agh-orbit-plugin/test-external-benchmark.mjs</code>（退出码 0 即全部通过，当前 8/8）。<br>
+  <b>配套材料：</b>《判据依据对照表-NASA-STD-7009》（判据出处）·《应用场景与精度边界说明》（精度量级与扩展代价）·
+  《与成熟航天软件的定位对照》（与 STK/GMAT 的分工）·《本轮优化详解》（统计置信区间等）。
+</footer>
+
+</div>
+</body>
+</html>

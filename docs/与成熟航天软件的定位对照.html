@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>与成熟航天软件的定位对照</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#fff; --line:#e3e6ec; --line2:#cfd5df;
+    --ink:#1a1f29; --ink2:#3f4959; --ink3:#7b869a;
+    --brand:#1d5fd0; --brand2:#eaf1fd; --brand3:#cfe0fa;
+    --hot:#c62828; --hot2:#fdecec; --hot3:#f4cccc;
+    --ok:#1f7a4d; --ok2:#e8f5ee; --ok3:#b6ddc7;
+    --warn:#9a6200; --warn2:#fdf3e3; --warn3:#efdcb4;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:15.5px;line-height:1.88}
+  .wrap{max-width:1010px;margin:0 auto;padding:32px 22px 90px}
+  .doc-head{border-bottom:3px double var(--line2);padding-bottom:18px;margin-bottom:24px}
+  .doc-head .kicker{font-size:12.4px;letter-spacing:.18em;color:var(--ink3);margin-bottom:8px}
+  .doc-head h1{margin:0 0 12px;font-size:26px;line-height:1.4;font-weight:700}
+  .doc-head .meta{font-size:13.4px;color:var(--ink2);line-height:1.95}
+  .doc-head .meta b{color:var(--ink)}
+
+  .lead{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--brand);
+    border-radius:0 10px 10px 0;padding:16px 20px;margin:20px 0 26px;font-size:15px}
+  .lead .t{font-weight:700;font-size:14px;color:var(--brand);letter-spacing:.05em;margin-bottom:7px}
+  .lead .say{background:#f8fafc;border-left:3px solid var(--ok3);border-radius:0 6px 6px 0;
+    padding:12px 16px;margin:10px 0 0;font-size:15px}
+
+  h2{font-size:20px;margin:44px 0 6px;padding-bottom:7px;border-bottom:2px solid var(--line2);font-weight:700}
+  h2 .num{color:var(--brand);margin-right:9px}
+  h3{font-size:17px;margin:28px 0 8px;font-weight:700}
+  p{margin:11px 0}
+
+  table{width:100%;border-collapse:collapse;margin:15px 0;font-size:13.7px;background:var(--card)}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:#f0f3f8;font-weight:700;color:var(--ink2);font-size:13.3px}
+  td.c,th.c{text-align:center}
+  caption{caption-side:top;text-align:left;font-size:13px;color:var(--ink3);padding-bottom:6px}
+
+  .note{background:var(--brand2);border:1px solid var(--brand3);border-radius:9px;padding:13px 17px;font-size:14.4px;margin:14px 0}
+  .note .t{font-weight:700;color:var(--brand);margin-bottom:4px}
+  .note.hot{background:var(--hot2);border-color:var(--hot3)}
+  .note.hot .t{color:var(--hot)}
+  .note.ok{background:var(--ok2);border-color:var(--ok3)}
+  .note.ok .t{color:var(--ok)}
+  .note.warn{background:var(--warn2);border-color:var(--warn3)}
+  .note.warn .t{color:var(--warn)}
+
+  .q{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin:13px 0}
+  .q .qq{font-weight:700;font-size:15.4px;margin-bottom:9px;padding-left:26px;position:relative}
+  .q .qq::before{content:'问';position:absolute;left:0;top:1px;font-size:11.6px;color:#fff;
+    background:var(--hot);border-radius:4px;padding:1px 7px}
+  .q .aa{padding-left:26px;position:relative;font-size:14.6px;line-height:1.85}
+  .q .aa::before{content:'答';position:absolute;left:0;top:1px;font-size:11.6px;color:#fff;
+    background:var(--ok);border-radius:4px;padding:1px 7px}
+  .q .say{background:#f8fafc;border-left:3px solid var(--ok3);border-radius:0 6px 6px 0;padding:11px 15px;margin:8px 0}
+
+  .yes{color:var(--ok);font-weight:700}
+  .no{color:var(--hot);font-weight:700}
+  .mid{color:var(--warn);font-weight:700}
+  code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;
+    background:#f3f5f9;border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  a{color:var(--brand);text-decoration:none;border-bottom:1px solid var(--brand3)}
+  footer{margin-top:46px;padding-top:16px;border-top:1px solid var(--line);font-size:12.8px;color:var(--ink3);line-height:1.9}
+  @media print{body{background:#fff}table,.note,.q,.lead{break-inside:avoid}h2{break-after:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="doc-head">
+  <div class="kicker">答辩材料 · 定位对照</div>
+  <h1>与成熟航天软件的定位对照</h1>
+  <div class="meta">
+    <b>用途：</b>回答「STK / GMAT 早就能做轨道仿真和误差分析，你们的差异在哪」<br>
+    <b>对照对象：</b>Ansys STK &amp; ODTK · NASA GMAT · Orekit（ESA/CS）· MONTE（JPL）· Basilisk · Poliastro<br>
+    <b>编制：</b>2026 年 10 月 4 日
+  </div>
+</div>
+
+<div class="lead">
+  <div class="t">一句话回答（答辩可直接用）</div>
+  <b>它们验证的是「工具本身对不对」，我们诊断的是「你这一次的用法可不可信」。</b>
+  <div class="say">
+    「GMAT 和 Orekit 都有完整的 V&amp;V 框架——对解析解验证、收敛性分析、跨工具比对。<b>但那是开发团队在发布前对"软件本身"做的验证，是一次性的；</b>
+    用户拿到手之后，如果自己把步长设错了、把参数传错了，它们不会告诉用户。<br><br>
+    <b>我们做的是后者：每一次运行、针对用户给的具体配置，判断结果能不能信、瓶颈在哪。</b>
+    两者不是替代关系——我们甚至可以诊断它们输出的结果。」
+  </div>
+</div>
+
+<h2><span class="num">一</span>它们是什么</h2>
+
+<table>
+  <caption>表 1　对照对象的基本情况</caption>
+  <tr><th style="width:150px">工具</th><th style="width:130px">来源</th><th>定位</th></tr>
+  <tr>
+    <td><b>STK</b>（Systems Tool Kit）</td>
+    <td>Ansys（原 AGI）</td>
+    <td>数字任务工程平台。30 余年历史，含完整力模型、三维可视化、RF/EOIR 建模、Astrogator 轨道机动</td>
+  </tr>
+  <tr>
+    <td><b>ODTK</b>（Orbit Determination Tool Kit）</td>
+    <td>Ansys</td>
+    <td>定轨测量处理，与 STK 配套</td>
+  </tr>
+  <tr>
+    <td><b>GMAT</b></td>
+    <td>NASA Goddard</td>
+    <td>开源任务分析工具，脚本驱动，含完整 V&amp;V 框架</td>
+  </tr>
+  <tr>
+    <td><b>Orekit</b></td>
+    <td>CS（法）/ ESA 生态</td>
+    <td>Java 航天动力学库，开源生态中被广泛用作精度基准</td>
+  </tr>
+  <tr>
+    <td><b>MONTE</b> · <b>Basilisk</b> · <b>Poliastro</b></td>
+    <td>JPL · AVS Lab · 社区</td>
+    <td>航天任务设计 / 动力学仿真 / Python 轨道计算</td>
+  </tr>
+</table>
+
+<div class="note hot">
+  <div class="t">★ 必须诚实的一点：能力范围差距很大</div>
+  <b>这些工具拥有完整力模型</b>——J2–J6 非球形引力、大气阻力、太阳光压、三体摄动、固体潮、章动岁差……
+  <b>我们的内核只有二体引力</b>（加一维简谐振子作为第二系统）。<br><br>
+  <b>这不是疏忽，是刻意的取舍</b>：解析真值是全部可信度主张的地基——有了精确解，才能说"你的位置误差是 9.81e-6 km"，
+  而不是"两种方法算得不一样"。<b>加入摄动则解析解不再闭合，整套双判据要重写。</b><br><br>
+  <b>所以我们不试图替代它们，也不声称精度可比。</b>
+</div>
+
+<h2><span class="num">二</span>核心区别：验证的「时机」与「对象」</h2>
+
+<table>
+  <caption>表 2　两者在"验证这件事"上的分工</caption>
+  <tr><th style="width:210px">维度</th><th style="width:290px">成熟航天软件的 V&amp;V</th><th>本系统</th></tr>
+  <tr>
+    <td><b>验证对象</b></td>
+    <td><b>工具本身</b>——"我的求解器实现对不对"</td>
+    <td><b>用户这一次的用法</b>——"你这个配置能不能信"</td>
+  </tr>
+  <tr>
+    <td><b>发生时机</b></td>
+    <td><span class="no">发布前，一次性</span>（开发团队的验证活动）</td>
+    <td><span class="yes">每次运行，针对具体配置</span></td>
+  </tr>
+  <tr>
+    <td><b>谁来判定</b></td>
+    <td>开发团队的专家</td>
+    <td><b>确定性算法</b>（LLM 只编排与解释，不打分）</td>
+  </tr>
+  <tr>
+    <td><b>用户拿到的是什么</b></td>
+    <td>一份 V&amp;V 报告（说明"工具可信"）</td>
+    <td>每次运行的<b>判定与改进方向</b>（"这次该用多少步"）</td>
+  </tr>
+  <tr>
+    <td><b>覆盖的失效</b></td>
+    <td>实现错误、算法缺陷</td>
+    <td><b>配置错误、输入错误、参数误传</b></td>
+  </tr>
+</table>
+
+<div class="note ok">
+  <div class="t">一个类比</div>
+  <b>它们的 V&amp;V ≈ 仪器出厂校准</b>（证明这台仪器是准的，一次性）。<br>
+  <b>我们的诊断 ≈ 每次测量前的现场校验</b>（确认这一次的用法能得到可信结果）。<br><br>
+  <b>仪器出厂校准得再好，也不能保证使用者这次没有把量程调错。</b>
+</div>
+
+<h3>它们确实做了很扎实的验证——这一点要承认</h3>
+
+<table>
+  <caption>表 3　它们的验证活动（如实列出）</caption>
+  <tr><th style="width:130px">工具</th><th>已验证内容</th></tr>
+  <tr>
+    <td><b>GMAT</b></td>
+    <td>对解析解验证二体传播（<b>位置误差 &lt; 1e-12</b>）；数值积分器多步验证（RK78 / RK89 / Adams-Bashforth）含<b>收敛性分析</b>；
+    与 STK、SPICE 交叉比对；对历史任务（Apollo / Voyager / Cassini）复现验证</td>
+  </tr>
+  <tr>
+    <td><b>Orekit</b></td>
+    <td>数值传播由 <b>CNES 独立验证</b>（对高精度传播器 Zoom，简单力模型下达厘米级）；力模型由 <b>美国海军研究实验室</b>对参考程序验证；
+    参考系由公开数据验证（LEO 约 10 mm、GEO 约 60 mm）</td>
+  </tr>
+  <tr>
+    <td><b>STK</b></td>
+    <td>在多个第三方基准研究中被当作参照基准；其 V&amp;V 是商业产品的一部分（未逐项公开）</td>
+  </tr>
+</table>
+
+<p><b>这些工作比我们严格得多。</b>我们没有能力、也没有必要在"验证求解器"这条线上与它们比。</p>
+
+<h2><span class="num">三</span>最接近我们的一项：ODTK 的 Missions AI+</h2>
+
+<div class="note warn">
+  <div class="t">⚠️ 主动列出这个反例，而不是等评委问</div>
+  Ansys 在 <b>2024 R2</b> 中为 ODTK 推出 <b>Missions AI+</b> 附加组件（原文）：
+  <div style="margin:10px 0;padding:10px 16px;background:#fff;border-left:3px solid var(--warn3);border-radius:0 6px 6px 0;font-size:14px">
+    「an AI-based tool ... to <b>automatically evaluate the quality of their resulting orbit</b>.
+    Combining tuned models with AI algorithms, the Missions AI+ tool encapsulates decades of subject matter knowledge
+    and experience and allows users to <b>confidently assess the quality of their orbit solutions</b>.」
+  </div>
+  <b>这是目前检索到的最接近我们定位的商业功能</b>——同样是"用 AI 辅助判断轨道结果的质量"。
+</div>
+
+<table>
+  <caption>表 4　与 Missions AI+ 的差异（三点）</caption>
+  <tr><th style="width:170px">维度</th><th style="width:300px">Missions AI+（ODTK）</th><th>本系统</th></tr>
+  <tr>
+    <td><b>判断对象</b></td>
+    <td><b>定轨解</b>的质量（由测量数据解算出的轨道）</td>
+    <td><b>仿真配置</b>的可信度（给定参数，该用多少步、能不能交付）</td>
+  </tr>
+  <tr>
+    <td><b>判定主体</b></td>
+    <td><b>AI 算法 + 调优模型</b>（原文 "Combining tuned models with AI algorithms"）</td>
+    <td><b>确定性算法</b>：LLM 不参与判定，也不给出任何数值 → 结果可复现、不随模型版本漂移</td>
+  </tr>
+  <tr>
+    <td><b>可用性</b></td>
+    <td>商业软件的<b>付费附加组件</b>，绑定 ODTK 生态</td>
+    <td>自包含内核，<b>可嵌入任意智能体工作流</b></td>
+  </tr>
+</table>
+
+<div class="note">
+  <div class="t">这个反例其实对我们有利</div>
+  <b>它证明了一件事：连 Ansys 都认为"自动评估轨道结果质量"值得投入。</b>这说明需求是真实的。<br>
+  而差异在<b>判定权归属</b>上：当判定由 AI 算法给出时，同一个输入在不同版本下是否给出同一结论？<b>我们选择把判据写成确定性算法</b>，
+  就是为了让"可复现"这件事有保证——这在 V&amp;V 语境里恰恰是最被看重的性质。
+</div>
+
+<h2><span class="num">四</span>一条支持我们的行业证据</h2>
+
+<div class="note ok">
+  <div class="t">Ansys 自己的博客承认：同厂两个产品，用着"基本相同的传播器"，结果却对不上</div>
+  原文（Ansys 关于 STK 与 ODTK 集成的说明）：
+  <div style="margin:10px 0;padding:10px 16px;background:#fff;border-left:3px solid var(--ok3);border-radius:0 6px 6px 0;font-size:14px">
+    「Users of STK and ODTK have long struggled to obtain <b>identical propagation results from these two tools</b>.
+    While both tools have been using what is essentially the same propagator,
+    <b>small differences in the settings of their force models or numerical integrators could add up over time
+    and lead to differences that are larger than acceptable.</b>」
+  </div>
+  <b>注意这句话的每一个成分</b>：<br>
+  · 两个工具用的是<b>基本相同的传播器</b>（算法不是问题所在）<br>
+  · 差异来自<b>「力模型或数值积分器的设置」</b>（即配置）<br>
+  · 差异会<b>随时间累积</b>（这正是我们 R5 规则处理的现象）<br>
+  · 最终<b>超出可接受范围</b>（正是"能不能交付"的问题）<br><br>
+  <b>这段话描述的问题，和我们在做的事是同一个问题。</b>而 Ansys 的解法是把两边设置对齐（人工流程 + 新增记录机制），
+  <b>没有人告诉使用者"你这套设置本身够不够用"。</b>
+</div>
+
+<h2><span class="num">五</span>答辩话术</h2>
+
+<div class="q">
+  <div class="qq">STK 早就能做轨道仿真和误差分析了，你们的差异在哪？</div>
+  <div class="aa">
+    <div class="say">
+      「先承认差距：<b>我们的内核只有二体引力，STK 有完整力模型，精度上没法比</b>，我们也不想替代它。<br><br>
+      但两者做的事不一样。<b>GMAT 和 Orekit 都有完整的 V&amp;V 框架——对解析解验证、收敛性分析、跨工具比对，
+      做得比我们严格得多。可那是开发团队在发布前对"软件本身"的验证，是一次性的。</b>
+      用户拿到手之后，如果自己把步长设错了，它们不会告诉用户。<br><br>
+      <b>我们做的是后者：每一次运行、针对用户给的具体配置，判断结果能不能信、瓶颈在哪、该怎么改。</b>
+      打个比方——<b>它们做的是仪器出厂校准，我们做的是每次测量前的现场校验。</b>校准得再好，也挡不住使用者把量程调错。」
+    </div>
+  </div>
+</div>
+
+<div class="q">
+  <div class="qq">那 Ansys 的 ODTK 不是已经有个 AI 工具能自动评估轨道质量了吗？</div>
+  <div class="aa">
+    <div class="say">
+      「我们知道那个——Missions AI+，2024 R2 推出的。<b>它确实是目前最接近我们定位的商业功能，我们不回避这一点。</b><br><br>
+      有三点不同：<b>第一，它评估的是定轨解的质量</b>（从测量数据解出来的轨道），<b>我们诊断的是仿真配置</b>
+      （给定参数，该用多少步、能不能交付）。<b>第二，它的判定主体是 AI 算法</b>，
+      而我们把判据写成确定性算法，<b>LLM 不参与判定、不给出任何数值</b>——所以同一个输入在不同模型版本下结论一致。
+      <b>第三，它是商业软件的付费组件，绑定 ODTK 生态</b>，我们是自包含的。<br><br>
+      <b>反过来说，它其实帮我们证明了需求是真的</b>——连 Ansys 都认为"自动评估轨道结果质量"值得投入。」
+    </div>
+  </div>
+</div>
+
+<div class="q">
+  <div class="qq">你们的精度比 STK 差好几个量级，那这个工具有什么用？</div>
+  <div class="aa">
+    <div class="say">
+      「作用不在"算得准"，在<b>"说清楚算得准不准"</b>。<br><br>
+      我们的内核确实只有二体，但正因为只有二体，<b>解析真值是精确的</b>——
+      所以位置误差可以说出确切的数字（9.81e-6 km），而不是"两种方法算得不一样"。
+      <b>这是个刻意的取舍：加摄动，解析真值就没了，而真值是全部可信度主张的地基。</b><br><br>
+      而"判断配置可不可信"这件事<b>和力模型完整度无关</b>。
+      一套三步长标定、守恒量与位置双判据、六条分级规则的机制，<b>换成完整力模型也一样能用</b>——
+      只是参考解要从解析解换成高精度数值解。<b>我们已经验证过这套机制的跨系统可迁移性</b>（二体 ↔ 简谐振子）。」
+    </div>
+  </div>
+</div>
+
+<h2><span class="num">六</span>我们不做什么（主动划界）</h2>
+
+<table>
+  <caption>表 5　边界声明</caption>
+  <tr><th style="width:200px">不做</th><th>理由</th></tr>
+  <tr><td><b>不做完整力模型</b></td><td>会让解析真值失效。我们宁可做窄而深，也不做宽而不可核</td></tr>
+  <tr><td><b>不做三维可视化 / 任务设计</b></td><td>那是 STK 的领域，与"可信度诊断"无关</td></tr>
+  <tr><td><b>不做定轨 / 测量数据处理</b></td><td>那是 ODTK 的领域</td></tr>
+  <tr><td><b>不声称精度可比</b></td><td>数量级差距是客观事实，不掩饰也不辩解</td></tr>
+</table>
+
+<footer>
+  <b>来源：</b>Ansys 官方产品页与博客（STK 能力、Missions AI+ 发布说明、STK–ODTK 集成说明）·
+  GMAT V&amp;V 框架文档 · Orekit 官方 FAQ（验证历程）· LuPNT 跨工具验证页（Orekit / GMAT 基准对照）·
+  IAF 航天动力学研讨会《Comparative Study of Spacecraft Trajectory Simulation Tools》<br>
+  <b>版本诚实性：</b>各工具的 V&amp;V 细节来自其公开文档与第三方研究，<b>未逐项核对全部内部资料</b>；
+  涉及具体能力与数值的表述以公开来源为准，<b>不使用未公开信息也不做精度推断</b>。<br>
+  <b>配套材料：</b>《判据依据对照表-NASA-STD-7009》（判据出处）·《与同期工作的关系说明》（学术新颖性口径）·
+  《新颖性核查报告-多渠道路径》。
+</footer>
+
+</div>
+</body>
+</html>

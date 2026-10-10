@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>AGH 判断审计报告</title>
+<style>
+  :root{--bg:#f6f7f9;--card:#fff;--line:#e3e6ec;--line2:#cfd5df;--ink:#1a1f29;--ink2:#3f4959;--ink3:#7b869a;
+    --brand:#1d5fd0;--ok:#1f7a4d;--ok2:#e8f5ee}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;font-size:14.5px;line-height:1.78}
+  .wrap{max-width:960px;margin:0 auto;padding:30px 22px 70px}
+  .hd{border-bottom:3px double var(--line2);padding-bottom:16px;margin-bottom:20px}
+  .hd .k{font-size:12px;letter-spacing:.18em;color:var(--ink3);margin-bottom:6px}
+  .hd h1{margin:0 0 10px;font-size:23px;font-weight:700}
+  .hd .m{font-size:13px;color:var(--ink2);line-height:1.9}
+  .intro{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:0 10px 10px 0;padding:15px 19px;margin:18px 0 24px;font-size:14px}
+  .intro .t{font-weight:700;color:var(--brand);margin-bottom:5px}
+  .sum{display:flex;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:22px}
+  .sum div{flex:1;padding:14px;text-align:center;border-right:1px solid var(--line)}
+  .sum div:last-child{border-right:none}
+  .sum .v{font-size:24px;font-weight:700;line-height:1.2}
+  .sum .l{font-size:12.5px;color:var(--ink3);margin-top:3px}
+  h2{font-size:17px;margin:28px 0 4px;padding-bottom:5px;border-bottom:1px solid var(--line2);font-weight:700}
+  .meta{font-size:13px;color:var(--ink3);margin-bottom:10px}
+  .chips{display:flex;gap:8px;margin-bottom:10px}
+  .chip{font-size:12.4px;background:#f0f3f8;border:1px solid var(--line);border-radius:14px;padding:2px 12px;color:var(--ink2)}
+  .fnd{background:var(--card);border:1px solid var(--line);border-left:4px solid;border-radius:0 8px 8px 0;padding:11px 15px;margin-bottom:8px}
+  .fh{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+  .sev{color:#fff;font-size:11.6px;font-weight:700;border-radius:4px;padding:1px 9px}
+  .kd{font-size:12.4px;font-weight:700;color:var(--brand)}
+  .tt{font-size:14px;font-weight:600;flex:1}
+  .tr{font-size:12px;color:var(--ink3);font-family:ui-monospace,Consolas,monospace}
+  .fd{font-size:13.2px;color:var(--ink2);margin-top:5px;padding-left:2px}
+  .ok-line{background:var(--ok2);border:1px solid #b6ddc7;border-radius:8px;padding:12px 16px;font-size:13.6px;color:var(--ok)}
+  code{font-family:ui-monospace,Consolas,monospace;font-size:12.6px;background:#f3f5f9;border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-size:12.4px;color:var(--ink3);line-height:1.8}
+</style></head><body><div class="wrap">
+<div class="hd">
+  <div class="k">判断审计 · 元层验证</div>
+  <h1>AGH 判断审计报告</h1>
+  <div class="m">生成时间：2026/10/2 19:03:20　|　审计会话 4 个<br>
+  数据来源：<code>~/.agh/data/sessions.db</code>　|　全部检查为确定性规则，<b>不调用任何模型</b></div>
+</div>
+
+<div class="intro">
+  <div class="t">这份报告在检查什么</div>
+  本项目在验证「仿真结果可不可信」——那么谁来验证「智能体的判断」可不可信？
+  这里把智能体<b>说出口的每句话</b>，拿<b>工具实际返回的证据</b>逐项核对。三项检查都能靠确定性规则完成，
+  因此结论不依赖任何主观判断。
+  <div style="margin-top:9px;font-size:13.4px">
+    <b>审计器本身已通过 4 项自测</b>（<code>node audit-agh-judgment.mjs --selftest</code>）：
+    注入编造数值、结论矛盾、告警漏述时均能正确报警，正常样本不误报。
+    换言之——下面的「零发现」不是因为检查没生效。
+  </div>
+  <div style="margin-top:9px;font-size:13.4px">
+    <b>A 无据数值</b>　模型报出的数字，在「工具返回 ∪ 用户输入」里找不到来源 —— 幻觉的典型信号<br>
+    <b>B 结论矛盾</b>　模型说"可信"，但工具的 <code>deliverable</code> 为 false —— 判断错误<br>
+    <b>C 告警漏述</b>　工具触发了规则，模型输出中完全未提及 —— 遗漏信号
+  </div>
+</div>
+
+<div class="sum">
+  <div><div class="v" style="color:#D9534F">0</div><div class="l">严重问题</div></div>
+  <div><div class="v" style="color:#BA7517">0</div><div class="l">提示</div></div>
+  <div><div class="v" style="color:#8B97A8">0</div><div class="l">记录</div></div>
+  <div><div class="v" style="color:#1F7A4D">4</div><div class="l">审计会话数</div></div>
+</div>
+
+
+  <h2>会话 <code>44f8336b</code></h2>
+  <div class="meta">2026-10-02T04:57:19 → 05:49:25　|　事件 30　|　轮次 1</div>
+  <div class="chips">
+    <span class="chip">无据数值 0</span>
+    <span class="chip">结论矛盾 0</span>
+    <span class="chip">告警漏述 0</span>
+  </div>
+  <div class="ok-line">三项检查全部通过：模型输出的每个数值都有来源，结论与工具判定一致，触发的规则均被提及。</div>
+  
+  <h2>会话 <code>6f16fc72</code></h2>
+  <div class="meta">2026-10-02T05:05:17 → 07:59:08　|　事件 98　|　轮次 5</div>
+  <div class="chips">
+    <span class="chip">无据数值 0</span>
+    <span class="chip">结论矛盾 0</span>
+    <span class="chip">告警漏述 0</span>
+  </div>
+  <div class="ok-line">三项检查全部通过：模型输出的每个数值都有来源，结论与工具判定一致，触发的规则均被提及。</div>
+  
+  <h2>会话 <code>67251fd9</code></h2>
+  <div class="meta">2026-10-02T07:59:41 → 08:11:22　|　事件 274　|　轮次 3</div>
+  <div class="chips">
+    <span class="chip">无据数值 0</span>
+    <span class="chip">结论矛盾 0</span>
+    <span class="chip">告警漏述 0</span>
+  </div>
+  <div class="ok-line">三项检查全部通过：模型输出的每个数值都有来源，结论与工具判定一致，触发的规则均被提及。</div>
+  
+  <h2>会话 <code>9b66886d</code></h2>
+  <div class="meta">2026-10-02T08:14:22 → 08:16:17　|　事件 159　|　轮次 1</div>
+  <div class="chips">
+    <span class="chip">无据数值 0</span>
+    <span class="chip">结论矛盾 0</span>
+    <span class="chip">告警漏述 0</span>
+  </div>
+  <div class="ok-line">三项检查全部通过：模型输出的每个数值都有来源，结论与工具判定一致，触发的规则均被提及。</div>
+  
+
+<footer>
+  <b>审计口径：</b>数值匹配采用相对容差 0.1%（容纳模型四舍五入），个位数与小整数（&lt;100 的整数）作为计数类不参与 A 项判定。<br>
+  <b>证据池构成：</b>该轮全部 <code>tool/result</code> 的结构化字段与返回文本，加上用户在同一轮的输入——引用用户给的参数不算幻觉。<br>
+  <b>局限（如实说明）：</b>本审计只能发现<b>可被数值比对捕捉</b>的问题。模型若做出证据支持但表述含糊的结论，
+  或遗漏了某项未在结构化字段中出现的细节，本报告不会报警。它是过滤网，不是完备性证明。
+</footer>
+</div></body></html>

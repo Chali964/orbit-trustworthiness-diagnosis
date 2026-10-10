@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>本轮新增代码：讲解与优化说明</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#fff; --line:#e3e6ec; --line2:#cfd5df;
+    --ink:#1a1f29; --ink2:#3f4959; --ink3:#7b869a;
+    --brand:#1d5fd0; --brand2:#eaf1fd; --brand3:#cfe0fa;
+    --hot:#c62828; --hot2:#fdecec; --hot3:#f4cccc;
+    --ok:#1f7a4d; --ok2:#e8f5ee; --ok3:#b6ddc7;
+    --warn:#9a6200; --warn2:#fdf3e3; --warn3:#efdcb4;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:15.5px;line-height:1.88}
+  .wrap{max-width:1040px;margin:0 auto;padding:30px 22px 90px}
+  .doc-head{border-bottom:3px double var(--line2);padding-bottom:16px;margin-bottom:22px}
+  .doc-head .kicker{font-size:12.4px;letter-spacing:.18em;color:var(--ink3);margin-bottom:8px}
+  .doc-head h1{margin:0 0 10px;font-size:26px;line-height:1.38;font-weight:700}
+  .doc-head .meta{font-size:13.4px;color:var(--ink2);line-height:1.95}
+  .doc-head .meta b{color:var(--ink)}
+
+  h2{font-size:20px;margin:44px 0 6px;padding-bottom:7px;border-bottom:2px solid var(--line2);font-weight:700}
+  h2 .num{color:var(--brand);margin-right:9px}
+  h3{font-size:17px;margin:30px 0 8px;font-weight:700;
+    background:var(--brand2);border-left:4px solid var(--brand);border-radius:0 6px 6px 0;padding:8px 14px}
+  h3 .sz{font-size:12.4px;color:var(--ink3);font-weight:400;margin-left:8px}
+  h4{font-size:15.2px;margin:18px 0 4px;font-weight:700;color:var(--ink2)}
+  p{margin:10px 0}
+
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.7px;background:var(--card)}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:#f0f3f8;font-weight:700;color:var(--ink2);font-size:13.3px}
+  td.c,th.c{text-align:center}
+  caption{caption-side:top;text-align:left;font-size:13px;color:var(--ink3);padding-bottom:5px}
+
+  pre{background:#1e2230;color:#e6e9f0;border-radius:8px;padding:12px 16px;
+    font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.7px;
+    line-height:1.7;overflow-x:auto;margin:11px 0}
+  pre .cm{color:#7e8aa3}
+  code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.9px;
+    background:#f3f5f9;border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+
+  .note{background:var(--brand2);border:1px solid var(--brand3);border-radius:9px;padding:12px 17px;font-size:14.4px;margin:13px 0}
+  .note .t{font-weight:700;color:var(--brand);margin-bottom:3px}
+  .note.hot{background:var(--hot2);border-color:var(--hot3)} .note.hot .t{color:var(--hot)}
+  .note.ok{background:var(--ok2);border-color:var(--ok3)} .note.ok .t{color:var(--ok)}
+  .note.warn{background:var(--warn2);border-color:var(--warn3)} .note.warn .t{color:var(--warn)}
+
+  /* 每个文件的「五段式」 */
+  .fsec{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:2px 20px 14px;margin:14px 0}
+  .fsec .row{display:flex;gap:12px;margin:8px 0;font-size:14.4px}
+  .fsec .k{flex:0 0 76px;color:var(--ink3);font-size:13px;text-align:right;padding-top:3px;font-weight:700}
+  .fsec .v{flex:1;color:var(--ink2)}
+  .fsec .v b{color:var(--ink)}
+  .fsec ol,.fsec ul{margin:6px 0;padding-left:22px}
+  .fsec li{margin:4px 0;font-size:14.3px}
+
+  .pri{display:inline-block;font-size:11.8px;border-radius:4px;padding:1px 8px;font-weight:700;margin-right:6px}
+  .pri.p1{background:var(--hot2);color:var(--hot);border:1px solid var(--hot3)}
+  .pri.p2{background:var(--warn2);color:var(--warn);border:1px solid var(--warn3)}
+  .pri.p3{background:#eef1f6;color:var(--ink3);border:1px solid var(--line)}
+
+  footer{margin-top:46px;padding-top:15px;border-top:1px solid var(--line);font-size:12.8px;color:var(--ink3);line-height:1.9}
+  @media print{body{background:#fff}.fsec,.note,table,pre{break-inside:avoid}h2,h3{break-after:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="doc-head">
+  <div class="kicker">代码走读 · 2026-10-04 / 10-05</div>
+  <h1>本轮新增代码：讲解与优化说明</h1>
+  <div class="meta">
+    <b>范围：</b>2026 年 10 月 4 日至 5 日新增/修改的全部代码<br>
+    <b>规模：</b>新建 8 个文件、约 <b>1137 行</b>；修改 2 个文件<br>
+    <b>编制：</b>2026 年 10 月 5 日
+  </div>
+</div>
+
+<div class="note">
+  <div class="t">这份文档怎么读</div>
+  第二节逐文件讲解，每个文件按同一五段式：<b>主要功能 → 执行流程 → 关键实现 → 设计意图与优点 → 优化建议</b>。
+  只想看改进项的话，直接跳到<b>第四节「优化建议汇总」</b>（按四类归并）与<b>第五节「优先级排序」</b>。
+</div>
+
+<h2><span class="num">一</span>总览：这批代码在项目里的位置</h2>
+
+<p>这两天的工作有一条共同主线：<b>把"我们的结果可信"这件事，从"自己说"变成"可以被别人查验"</b>。
+新增代码分三类，各司其职：</p>
+
+<table>
+  <caption>表 1　本轮代码的功能分类</caption>
+  <tr><th style="width:150px">类别</th><th style="width:250px">解决了什么</th><th>文件</th></tr>
+  <tr style="background:#e8f5ee">
+    <td><b>① 能力补足</b></td>
+    <td>内核缺"要素⇄状态"转换，导致无法与外部基准对话</td>
+    <td><code>orbital-elements.mjs</code></td>
+  </tr>
+  <tr style="background:#e8f5ee">
+    <td><b>② 严谨性补强</b></td>
+    <td>"零误报"的说法在统计上不成立，需要置信上界</td>
+    <td><code>confidence.mjs</code></td>
+  </tr>
+  <tr>
+    <td><b>③ 可查验性</b></td>
+    <td>让"实现对不对"能被第三方独立验证</td>
+    <td><code>test-confidence.mjs</code> · <code>test-external-benchmark.mjs</code> · <code>integrator-guide.mjs</code> · <code>verify-all.*</code></td>
+  </tr>
+  <tr>
+    <td><b>④ 修正</b></td>
+    <td>修掉两处会导致"屏幕有、文件没有"和"参数与数据矛盾"的问题</td>
+    <td><code>grid-eval.mjs</code> · <code>loop-runner.mjs</code>（修改）</td>
+  </tr>
+</table>
+
+<table>
+  <caption>表 2　文件清单与规模</caption>
+  <tr><th style="width:270px">文件</th><th class="c" style="width:80px">行数</th><th class="c" style="width:100px">类型</th><th>一句话职责</th></tr>
+  <tr><td><code>confidence.mjs</code></td><td class="c">134</td><td class="c">库</td><td>Clopper-Pearson 精确置信区间</td></tr>
+  <tr><td><code>orbital-elements.mjs</code></td><td class="c">150</td><td class="c">库</td><td>经典轨道要素 ⇄ 惯性系位置速度</td></tr>
+  <tr><td><code>test-confidence.mjs</code></td><td class="c">164</td><td class="c">验收</td><td>置信区间模块的 25 项断言</td></tr>
+  <tr><td><code>test-external-benchmark.mjs</code></td><td class="c">194</td><td class="c">验收</td><td>与 Orekit / Curtis 教材对拍（8 项）</td></tr>
+  <tr><td><code>integrator-guide.mjs</code></td><td class="c">150</td><td class="c">生成器</td><td>生成积分器选用参考表</td></tr>
+  <tr><td><code>verify-all.mjs</code></td><td class="c">146</td><td class="c">编排</td><td>串行跑全部验收并汇总</td></tr>
+  <tr><td><code>verify-all.ps1</code> / <code>.cmd</code></td><td class="c">99 / 100</td><td class="c">编排</td><td>同样的事，不依赖子进程</td></tr>
+  <tr style="background:#fdf3e3"><td><code>grid-eval.mjs</code>（修改）</td><td class="c">434</td><td class="c">工具</td><td>新增置信区间输出段 + <code>emit</code> helper</td></tr>
+  <tr style="background:#fdf3e3"><td><code>loop-runner.mjs</code>（修改）</td><td class="c">474</td><td class="c">工具</td><td>迁移场景偏心率 0.6 → 0.45（原参数物理不成立）</td></tr>
+</table>
+
+<h2><span class="num">二</span>逐文件讲解</h2>
+
+<!-- ═══════════════ confidence.mjs ═══════════════ -->
+<h3>2.1 <code>confidence.mjs</code><span class="sz">134 行 · 纯函数库</span></h3>
+
+<div class="fsec">
+  <div class="row"><span class="k">主要功能</span><span class="v">
+    计算<b>二项比例的精确置信区间</b>（Clopper-Pearson）。导出 5 个函数：
+    <code>betai</code>（正则化不完全 Beta）、<code>cpInterval</code>（双侧）、
+    <code>cpUpper</code> / <code>cpLower</code>（单侧）、<code>rateWithCI</code>（一次算全）。
+  </span></div>
+
+  <div class="row"><span class="k">执行流程</span><span class="v">
+    <b>三层递进</b>，自底向上：
+    <ol>
+      <li><code>lgamma</code>（Lanczos 近似 + 反射公式）—— 求 log Γ，避免大阶乘溢出</li>
+      <li><code>betacf</code> + <code>betai</code> —— 连分式求正则化不完全 Beta 函数 I<sub>x</sub>(a,b)</li>
+      <li><code>solveBeta</code>（二分求根）+ <code>cpInterval</code> —— 反解出置信区间端点</li>
+    </ol>
+    调用 <code>cpUpper(k, n, α)</code> 时，若 k=0 走<b>闭式</b> <code>1 − α^(1/n)</code>，否则走二分。
+  </span></div>
+
+  <div class="row"><span class="k">关键实现</span><span class="v">
+    <b>① 为什么不用正态近似。</b>我们的样本量不大（n 最小为 18），且大量情形是 k=0——正态近似
+    在 p̂=0 处会退化成"区间宽度为 0"，得出"误报率必然是零"的荒谬结论。Clopper-Pearson 是精确方法，
+    在 k=0 时仍给出正的上界（这正是我们要的）。<br>
+    <b>② 为什么"保守"是优点。</b>Clopper-Pearson 的区间比 Wilson 等近似方法略宽。
+    对我们来说这恰好正确——<b>宁可高估风险，不低估</b>。<br>
+    <b>③ k=0 与 k=n 的闭式。</b>这两种极端情形二分法也能解，但闭式更快且无误差累积。
+    注意此处有个坑：<b>双侧区间必须用 α/2 而不是 α</b>（见下方"已修的 bug"）。
+  </span></div>
+
+  <div class="row"><span class="k">设计意图与优点</span><span class="v">
+    <ol>
+      <li><b>零依赖。</b>只用 <code>Math</code>，与整个内核的"自包含"取向一致——这样它既能被 Node 调用，也能被内联进插件。</li>
+      <li><b>分层清晰。</b>数学函数（lgamma / betacf / betai）与业务函数（cpInterval / rateWithCI）分离，前者可独立测试。</li>
+      <li><b>可核验。</b>纯函数、无状态，因此可以用完全独立的实现（Python scipy）逐组对拍——实际也这么做了。</li>
+      <li><b>导出了"单侧"与"双侧"两套接口。</b>我们的场景（"至多这么高"）用单侧，但双侧留着以备他人复用。</li>
+    </ol>
+  </span></div>
+
+  <div class="row"><span class="k">优化建议</span><span class="v">
+    <ol>
+      <li><b>命名易混（建议优先）。</b><code>rateWithCI()</code> 的返回值同时含
+          <code>upper</code>/<code>lower</code>（单侧）与 <code>ci: {lo, hi}</code>（双侧），
+          两者语义不同却名字相近。建议改为 <code>oneSidedUpper</code> / <code>twoSided</code>。</li>
+      <li><b>缺大参数的验证。</b>Lanczos 近似在 <code>a+b</code> 很大时（如 1000 以上）精度未验证，
+          而对拍用例最大只到 <code>n=402</code>。建议补一组大参数用例。</li>
+      <li><b>二分迭代上限写死 200 次。</b>可接受（微秒级），但建议加一句注释说明"200 次足以到机器精度"，
+          否则读者会怀疑是否够用。</li>
+      <li><b><code>betai</code> 会抛错但缺 <code>@throws</code> 标注。</b>x 不在 [0,1] 时抛异常，
+          JSDoc 里应写明。</li>
+      <li><b><code>solveBeta</code> 未校验 <code>target</code> 落在 (0,1)。</b>传入 0 或 1 会得到边界值而非报错——
+          建议加断言。</li>
+    </ol>
+  </span></div>
+</div>
+
+<div class="note hot">
+  <div class="t">这个文件里已经修掉的一个真 bug（值得记录）</div>
+  <code>cpInterval</code> 的 <code>k=0</code> / <code>k=n</code> 分支最初写成了 <code>1 − α^(1/n)</code>，
+  但<b>双侧区间应该用 α/2</b>。结果 <code>n=20,k=0</code> 算出 0.139108（单侧值），
+  而<b>公认值是 0.168433</b>。<br>
+  <b>是靠对拍测试发现的</b>——自己跑自己的话，这个错误会一直藏着。
+</div>
+
+<!-- ═══════════════ orbital-elements.mjs ═══════════════ -->
+<h3>2.2 <code>orbital-elements.mjs</code><span class="sz">150 行 · 纯函数库</span></h3>
+
+<div class="fsec">
+  <div class="row"><span class="k">主要功能</span><span class="v">
+    <b>经典轨道要素与惯性系位置速度之间的双向转换</b>，外加一组向量工具。
+    导出 12 个符号：6 个向量运算（<code>vsub</code>/<code>vadd</code>/<code>vmul</code>/<code>vdot</code>/<code>vcross</code>/<code>vnorm</code>）、
+    <code>solveKepler</code>、<code>elementsToState</code>、<code>stateToElements</code>、
+    <code>deg</code>/<code>rad</code>/<code>vdiff</code>。
+  </span></div>
+
+  <div class="row"><span class="k">执行流程</span><span class="v">
+    <b>正向（<code>elementsToState</code>）</b>：
+    <pre>M ──牛顿迭代──▶ E ──▶ 近焦点系 (x_pf, y_pf) 与速度
+                      │
+                      └──正交旋转 R(ω, i, Ω)──▶ 惯性系 (x, y, z)</pre>
+    <b>反向（<code>stateToElements</code>）</b>：由 r、v 算 h、n、e 向量 → 套标准公式取角度 →
+    真近点角 ν 折算回平近点角 M。
+  </span></div>
+
+  <div class="row"><span class="k">关键实现</span><span class="v">
+    <b>① 牛顿迭代的初值。</b><code>E₀ = M + e·sin M</code>（Danby 建议）。对 e 接近 1 的情形，
+    常规初值 <code>E₀ = M</code> 会收敛很慢甚至发散，这个初值把迭代次数压到个位数。<br>
+    <b>② 旋转矩阵只展开两列。</b>近焦点系的 z 分量恒为 0，所以旋转时只需 R 的前两列，
+    省掉 1/3 的乘法——这是"知道问题结构"带来的简化。<br>
+    <b>③ 反向时逐步夹逼反余弦参数。</b><code>Math.acos</code> 在 |x|&gt;1 时返回 NaN，
+    浮点误差常让 <code>h_z/h</code> 变成 1.0000000000000002，所以每处都套了
+    <code>Math.max(-1, Math.min(1, ...))</code>。
+  </span></div>
+
+  <div class="row"><span class="k">设计意图与优点</span><span class="v">
+    <ol>
+      <li><b>补齐了内核真正缺的那一块。</b>内核的状态量是<b>轨道平面内的二维坐标</b>，
+          而所有外部基准（Orekit、教材）都以三维要素给输入输出。<b>没有这个转换层，就无法与外部对话。</b></li>
+      <li><b>刻意做成独立模块、不依赖内核。</b>这样它可以用在任意上下文里，
+          也让"与 Orekit 对拍"成为对<b>本文件</b>的独立检验。</li>
+      <li><b>角度单位统一用弧度并在文件头声明。</b>教材给的是度数，转换错误是这类代码最常见的 bug——
+          显式约定 + 提供 <code>deg</code>/<code>rad</code> 工具函数，是有效的防呆。</li>
+      <li><b>反向转换存在，使自检闭环成立。</b>要素 → 状态 → 要素 应当回到原值，
+          这在验收里是一条独立的断言。</li>
+    </ol>
+  </span></div>
+
+  <div class="row"><span class="k">优化建议</span><span class="v">
+    <ol>
+      <li><b>★ <code>solveKepler</code> 缺 e 的范围校验（边界情况，建议优先）。</b>
+          该函数对 <code>e ≥ 1</code>（抛物线/双曲线轨道）会静默给出错误结果——
+          牛顿迭代在 e&gt;1 时公式形式不同（要用双曲开普勒方程）。
+          <b>而内核的 <code>makeScenario</code> 是明确拒绝 e≥1 的</b>，两处行为不一致。
+          建议在这里同样抛出明确错误，或至少加注释说明适用范围。</li>
+      <li><b>★ <code>solveKepler</code> 与内核的 <code>K.solveKepler</code> 是两份实现。</b>
+          目前二者都能用，但<b>将来改一处忘另一处就会漂移</b>。
+          两条路：<br>
+          （a）本模块改为复用内核的——但会引入耦合，与"独立模块"的设计意图冲突；<br>
+          （b）<b>保持独立，但加一条"两者结果一致"的断言</b>——推荐这条，既保留独立性又防漂移。</li>
+      <li><b><code>stateToElements</code> 在 e→0 时退化未说明。</b>近圆轨道下
+          <code>argp</code> 与 <code>raan</code> 在数学上不唯一（节点线不定），
+          当前会返回接近随机的值。建议加注释，或在 e 小于阈值时标记为"未定义"。</li>
+      <li><b>导出的向量工具偏多而少用。</b>12 个导出中，
+          <code>vadd</code>/<code>vmul</code>/<code>vdiff</code> 在本项目里几乎没被用到。
+          可以考虑精简，或明确标注"供外部复用"。</li>
+    </ol>
+  </span></div>
+</div>
+
+<!-- ═══════════════ test-confidence.mjs ═══════════════ -->
+<h3>2.3 <code>test-confidence.mjs</code><span class="sz">164 行 · 验收脚本</span></h3>
+
+<div class="fsec">
+  <div class="row"><span class="k">主要功能</span><span class="v">
+    对 <code>confidence.mjs</code> 做 5 组共 <b>25 项断言</b>，其中关键一组是
+    <b>与 Python scipy 逐组对拍</b>（11 个测试点）。
+  </span></div>
+
+  <div class="row"><span class="k">执行流程</span><span class="v">
+    <pre>读 reference.json（scipy 生成）
+  ├─ 1) 11 组 (k,n) 对拍：lo / hi / 单侧上界   ← 外部参照
+  ├─ 2) k=0 闭式核对（5 组）                  ← 内部一致性
+  ├─ 3) 经典公认值（3 组，如 n=20,k=0→0.168433）
+  ├─ 4) 结构性质：对称性 / 单调性 / 区间包住点估计 / α 单调
+  └─ 5) 打印本次报告要用的实际数字（8 行）</pre>
+    最后按 <code>fail</code> 计数决定退出码。
+  </span></div>
+
+  <div class="row"><span class="k">关键实现</span><span class="v">
+    <b>① 参照值来自完全独立的实现。</b>JSON 由 Python <code>scipy.stats.beta.ppf</code> 生成，
+    与 JS 实现<b>没有任何共享代码</b>——这是"对拍"能成立的前提。<br>
+    <b>② 五类断言分层。</b>外部参照（最强）、闭式（次强）、公认值、结构性质（不依赖任何参照，纯自查）、
+    输出核对。即使外部参照文件丢了，后三类仍能跑。<br>
+    <b>③ 结构性质是"免费的"验证。</b>对称性 <code>lo(k,n) = 1 − hi(n−k,n)</code>
+    这类恒等式不需要任何外部数据就能检验实现是否自洽——是很划算的一层。<br>
+    <b>④ 抓到了真 bug。</b>第 3 组（公认值）一开始就红了：<code>n=20,k=0</code> 给出 0.139108 而非 0.168433。
+    根因是 <code>cpInterval</code> 双侧分支误用了 α。
+  </span></div>
+
+  <div class="row"><span class="k">设计意图与优点</span><span class="v">
+    <ol>
+      <li><b>测试不是"跑一遍看有没有报错"，而是与独立实现比对数值。</b>这是"验证"与"冒烟"的区别。</li>
+      <li><b>容差 1e-9 与实测偏差 5.55e-16 之间留了 7 个数量级余量。</b>
+          既能抓住真实错误，又不会因浮点抖动误报。</li>
+      <li><b>失败时输出实际值与期望值对照</b>（不是只说"不相等"），便于定位。</li>
+      <li><b>末尾直接打印报告要用的数字</b>——把"验证"和"产出材料"连起来，避免手抄出错。</li>
+    </ol>
+  </span></div>
+
+  <div class="row"><span class="k">优化建议</span><span class="v">
+    <ol>
+      <li><b>参照文件缺失时的处理不够友好。</b>当前若 <code>confidence-reference.json</code> 不存在，
+          直接 <code>exit(1)</code>，但<b>没有告诉使用者怎么重新生成它</b>。
+          建议在错误信息里附上那行 Python 命令。</li>
+      <li><b>验证词/断言数的呈现可以更明确。</b>"25 项"是人工数出来的；
+          建议脚本自己在末尾打印 <code>通过 N 项</code>（已有）并在 README 里引用这个数字。</li>
+      <li><b>容差对所有测试点统一为 1e-9，但 k=0 走闭式、理论上更精确</b>（实测偏差 1e-16）。
+          可以对两类分别设容差，让"闭式精确"这一点显式化。</li>
+      <li><b>对照组可以再扩。</b>当前最大 n=402；补几组大 n（如 2000、10000）能覆盖
+          <code>lgamma</code> 的大参数区间。</li>
+    </ol>
+  </span></div>
+</div>
+
+<!-- ═══════════════ test-external-benchmark.mjs ═══════════════ -->
+<h3>2.4 <code>test-external-benchmark.mjs</code><span class="sz">194 行 · 验收脚本</span></h3>
+
+<div class="fsec">
+  <div class="row"><span class="k">主要功能</span><span class="v">
+    把实现与<b>两个第三方公开发布的基准</b>对拍：<br>
+    ① <b>Orekit 官方测试</b> <code>KeplerianOrbitTest.testKeplerianToCartesian</code>（期望值 15 位有效数字）<br>
+    ② <b>Curtis 教材 Example 2.3</b>（最大/最小高度、远地点速度）<br>
+    共 8 项断言。
+  </span></div>
+
+  <div class="row"><span class="k">执行流程</span><span class="v">
+    <b>第 ① 组</b>（要素→状态）：
+    <pre>输入 6 个要素 + μ
+  ├─ 用【内核的】K.solveKepler 求 E       ← 刻意调用内核，才能测到它
+  ├─ 标准公式算近焦点系位置速度
+  ├─ 正交旋转到惯性系（R(ω,i,Ω)）
+  ├─ 与 Orekit 期望值逐位比对
+  └─ 自动探测 μ：试两个候选，报告更匹配的那个
+另加一条：内核 solveKepler 的残差 |E − e·sinE − M|</pre>
+    <b>第 ② 组</b>（Curtis）：由 r₀,v₀ 反推 a,e → 用内核构造等价场景 →
+    扫一圈找最近/最远点 → 与教材答案和解析式 <code>a(1+e)</code> 双重核对。<br>
+    <b>第 ③ 组</b>：<b>只打印说明，不做断言</b>——解释为何这一组不列为对拍项。
+  </span></div>
+
+  <div class="row"><span class="k">关键实现</span><span class="v">
+    <b>① 刻意调用内核的 <code>solveKepler</code> 而非自己写一份。</b>这一个选择决定了测试"测的是谁"——
+    如果用自己的实现，测的就是这个测试脚本，而不是作品。<br>
+    <b>② 自动探测 μ。</b>Orekit 测试文件里没有直接写出 μ（它来自基类），
+    于是把两个候选值都试一遍，用"哪个偏差更小"反推。<b>实测 3.9860047e14 给出 1.2e-15、
+    另一个给出 3.6e-8</b>，差 7 个数量级，判定毫无歧义。<br>
+    <b>③ 对"教材数字对不上"的处理方式。</b>Curtis 教材的最大高度是 9560 km，我们算出 9572.5 km。
+    这里<b>没有直接改容差放过去</b>，而是：先用解析式 <code>a(1+e)</code> 独立复核，
+    再核对教材另给的远地点速度（4.39 km/s，与我们一致），最后判断差异来自教材取整。
+    <b>把"对不上"变成一个可解释的结论，而不是掩盖。</b><br>
+    <b>④ 第 ③ 组只写说明、不做断言。</b>这一组本可以对拍（Orekit 传播教程），
+    但教程输入含倾角而内核是平面问题，<b>若先做投影再比对，那一步会引入自己的实现，
+    说服力反而下降</b>。于是选择"不做，并说清为什么"。
+  </span></div>
+
+  <div class="row"><span class="k">设计意图与优点</span><span class="v">
+    <ol>
+      <li><b>补上了此前最缺的一环：外部参照。</b>在此之前所有证据都是"自己写的解析解 vs 自己写的积分器"，
+          属于内部自洽；这一组才是"和行业公认实现比"。</li>
+      <li><b>选基准的眼光。</b>Orekit 的期望值是<b>源码里硬编码的常量</b>（非运行时计算），
+          作为独立参照的可信度最高。</li>
+      <li><b>坦白边界。</b>文档与脚本里都写明"本文对拍的是解析解 + 要素转换，不是数值积分器"，
+          不越界声称。</li>
+    </ol>
+  </span></div>
+
+  <div class="row"><span class="k">优化建议</span><span class="v">
+    <ol>
+      <li><b>★ 期望值的存放方式与 <code>test-confidence</code> 不一致（结构问题，建议优先）。</b>
+          本文件把 15 位有效数字<b>直接写在代码里</b>，而 <code>test-confidence.mjs</code> 放在外部 JSON。
+          抄录 15 位数字很容易出错（少一位、记错符号），且出错后<b>测试会变成"错的基准"</b>。
+          建议统一成外部数据文件，并在文件头注明来源 URL。</li>
+      <li><b>μ 的自动探测可以更明确。</b>当前逻辑是"排序取最优"，建议同时打印"两个候选的偏差比"，
+          让"判定有多确定"一目了然（现在是隐含的）。</li>
+      <li><b>第 ② 组的容差 20 km 是经验值。</b>虽然注释里说明了理由，
+          但更严谨的做法是：<b>用解析式 <code>a(1+e)</code> 作为主判定（可精确核对），
+          教材数字仅作参考</b>——实际上第 ② 组已经这么做了，可以把教材值降为"参考"标注。</li>
+      <li><b>可以补一条"跨实现"的断言。</b>既然 <code>orbital-elements.mjs</code> 与内核都有
+          <code>solveKepler</code>，可以在这里加一条两者结果一致的断言，顺带解决 2.2 里提到的漂移风险。</li>
+    </ol>
+  </span></div>
+</div>
+
+<!-- ═══════════════ integrator-guide.mjs ═══════════════ -->
+<h3>2.5 <code>integrator-guide.mjs</code><span class="sz">150 行 · 生成器</span></h3>
+
+<div class="fsec">
+  <div class="row"><span class="k">主要功能</span><span class="v">
+    生成《积分器选用参考表》——回答"给定任务和精度，该选哪个方法、每圈要多少步"。
+    输出到屏幕并写入 <code>out/integrator-guide.txt</code>。
+  </span></div>
+
+  <div class="row"><span class="k">执行流程</span><span class="v">
+    <pre>遍历 3 档精度 × 4 个场景 × 5 种方法 = 60 个组合
+  └─ 每个组合调用内核 calibrateStep(targetPosErrKm = 相对值 × a)
+       ├─ calibrationReliable=false → 记「不可预测」
+       ├─ requiredStepsPerOrbitPos=null → 记「—」
+       ├─ feasiblePos=false → 记数字 + 星号（超搜索上限）
+       └─ 否则 → 记数字
+→ 输出三张表（每档精度一张）+ 决策流程 + 陷阱说明</pre>
+  </span></div>
+
+  <div class="row"><span class="k">关键实现</span><span class="v">
+    <b>① 数据全部现场标定，没有一个经验值。</b>这是本文件最重要的设计决定：
+    表格里的每个数字都来自 <code>calibrateStep</code>，
+    <b>与 <code>orbit_calibrate_step</code> 工具用的是同一套标定逻辑</b>。
+    好处有二：一是<b>随内核自动更新</b>，不会出现"文档写 400 步、实际要 500 步"；
+    二是<b>智能体在会话里给出的建议与这张表同源</b>，不会互相打架。<br>
+    <b>② 三档精度用"相对轨道尺度"表述。</b><code>targetPosErrKm = 相对值 × 半长轴</code>。
+    若用绝对值（如"1 km"），大轨道会显得容易达标，横向比较失去意义。<br>
+    <b>③ 三种标记承载三种不同的"我不知道"。</b>
+    <code>不可预测</code>（误差非幂律）/ <code>—</code>（位置口径不可靠）/ <code>*</code>（超搜索上限），
+    各自对应工具的不同拒答理由。这一层语义是刻意保留的。<br>
+    <b>④ 档位选择的教训写进了注释。</b>第一版用 1e-9，结果 LEO 只需 7 mm，
+    导致全表几乎都是"不可达"——表格信息量反而下降。改成 1e-6/1e-8/1e-10 后才有区分度。
+  </span></div>
+
+  <div class="row"><span class="k">设计意图与优点</span><span class="v">
+    <ol>
+      <li><b>把"选型"从口头经验变成可复现的产物。</b>没有它，使用者只能猜"该用多少步"。</li>
+      <li><b>表格里的空格是设计而非缺陷。</b>文件里保留了工具"拒绝给数"的三种情形——
+          这比填上假数字更有价值，也与项目"宁可说不可用"的一贯取向一致。</li>
+      <li><b>与内核同源。</b>避免了"文档与工具说法不一"这类最伤信任的问题。</li>
+    </ol>
+  </span></div>
+
+  <div class="row"><span class="k">优化建议</span><span class="v">
+    <ol>
+      <li><b>★ <code>TRAITS</code> 表里"稳定性"一列是手写的定性描述，非实测（可读性问题）。</b>
+          表格其余部分都是实测数据，唯独这一列是人工判断——<b>混在一起容易让读者以为它也是实测的</b>。
+          建议加注"定性描述"，或干脆把这一列移出实测表格。</li>
+      <li><b>三种标记的含义只在文档里解释，代码里没有注释。</b>
+          <code>*</code> 的含义（超搜索上限）尤其容易被阅读代码的人误解为"错误"。
+          建议在生成逻辑处加一行注释。</li>
+      <li><b><code>TARGETS</code> 档位的选取依据只写在文档里。</b>
+          建议在代码注释里也留一句（"第一版用 1e-9 导致表格无区分度，故改为三档"），
+          否则后来者可能又改回 1e-9。</li>
+      <li><b>可以输出 <code>--json</code>。</b>当前只有人读的文本格式，
+          若能让机器读，就能被 <code>verify-all</code> 或其他工具消费。</li>
+    </ol>
+  </span></div>
+</div>
+
+<!-- ═══════════════ verify-all ═══════════════ -->
+<h3>2.6 <code>verify-all.mjs</code> / <code>.ps1</code> / <code>.cmd</code><span class="sz">146 / 99 / 100 行 · 编排</span></h3>
+
+<div class="fsec">
+  <div class="row"><span class="k">主要功能</span><span class="v">
+    一条命令跑完全部验收项并汇总结果。做成<b>三种形态</b>以适配不同环境。
+  </span></div>
+
+  <div class="row"><span class="k">执行流程</span><span class="v">
+    <pre>读参数（--full 含慢项 / --json 机器可读）
+→ 依次运行 8 个（或 10 个）脚本
+    ├─ 记录退出码与耗时
+    └─ 从输出里抓「通过 N 项」摘要（正则，失败不影响结果）
+→ 打印总表 + 失败清单 + 退出码</pre>
+  </span></div>
+
+  <div class="row"><span class="k">关键实现</span><span class="v">
+    <b>① 三种形态是环境逼出来的。</b>本机沙箱下 <code>spawnSync</code> 报
+    <code>EBUSY</code>——<b>连 <code>cmd.exe</code> 都起不来</b>，说明该环境禁止一切子进程。
+    Node 版功能最全（有 <code>--json</code>、耗时、摘要），
+    <code>.ps1</code> / <code>.cmd</code> 版由 shell 自己串行，不依赖 spawn。<br>
+    <b>② 退出码语义正确。</b>全部通过才 0，任一失败即 1——这样才能被 CI 或上层脚本判定。<br>
+    <b>③ 摘要提取用"尽力而为"策略。</b>正则匹配不到摘要不报错，只少显示一行——
+    <b>不让"锦上添花的信息"影响"核心结论"</b>。<br>
+    <b>④ 脚本清单同时出现在三个文件里</b>（各形态一份）。这是当前的显式重复（见优化建议）。
+  </span></div>
+
+  <div class="row"><span class="k">设计意图与优点</span><span class="v">
+    <ol>
+      <li><b>降低"愿意自己验一遍"的门槛。</b>评委或队友不用逐个敲 10 条命令——
+          这是决定他们会不会真去验证的关键。</li>
+      <li><b>区分快慢两集。</b>默认只跑快速集（约 10 秒），慢项要显式加 <code>--full</code>。
+          避免"第一次体验就要等几分钟"。</li>
+      <li><b>跨环境可用。</b>三种形态覆盖了正常终端、受限环境、纯批处理三种场景。</li>
+    </ol>
+  </span></div>
+
+  <div class="row"><span class="k">优化建议</span><span class="v">
+    <ol>
+      <li><b>★ 脚本清单在三处重复（结构问题，建议优先）。</b>
+          <code>.mjs</code>、<code>.ps1</code>、<code>.cmd</code> 各维护一份清单，
+          <b>新增一个验收脚本要改三处</b>——这正是本项目已经反复踩过的"清单漏更新"陷阱。
+          建议：用一个 <code>suites.json</code> 作为单一来源，三份脚本都读它
+          （<code>.cmd</code> 读 JSON 稍麻烦，可退化为读一个纯文本清单）。</li>
+      <li><b><code>.mjs</code> 里应提示 spawn 可能失败。</b>当前 EBUSY 时只报"未通过"，
+          使用者不知道"换个形态就能跑"。建议检测到 <code>r.error</code> 时打印
+          "当前环境的子进程受限，请改用同目录的 verify-all.ps1"。</li>
+      <li><b>超时 900 秒是硬编码。</b>慢项（网格统计）在慢机器上可能超。
+          建议参数化为 <code>--timeout</code>。</li>
+      <li><b><code>--json</code> 的 schema 未文档化。</b>既然提供了机器可读输出，
+          应在文件头用注释写明字段含义。</li>
+      <li><b>可以并行化。</b>快速集 8 项互相独立，理论上可并行（Node 有 worker_threads）。
+          但当前总耗时 7.4 秒，收益有限，<b>优先级低</b>。</li>
+    </ol>
+  </span></div>
+</div>
+
+<!-- ═══════════════ grid-eval 修改 ═══════════════ -->
+<h3>2.7 <code>grid-eval.mjs</code> 的两处修改<span class="sz">434 行 · 已有工具</span></h3>
+
+<div class="fsec">
+  <div class="row"><span class="k">改了什么</span><span class="v">
+    <b>① 新增置信区间输出段</b>（在跨场景汇总之后），输出 95% / 99% 两档单侧上界，
+    分误报、漏报两组。<br>
+    <b>② 新增 <code>emit</code> helper</b>：<code>(s) => { console.log(s); lines.push(s) }</code>，
+    让新加的输出<b>同时进屏幕和留档文件</b>。<br>
+    <b>③ 把 <code>const lines = []</code> 的声明提前</b>到 <code>emit</code> 之前（修 TDZ 错误）。
+  </span></div>
+
+  <div class="row"><span class="k">为什么改</span><span class="v">
+    <b>③ 是为了 ②</b>，<b>② 是为了 ①</b>——一个连锁的修正链：<br>
+    原本 <code>lines</code> 声明在文件末尾附近（只为"把汇总表写进文件"服务）。
+    加入置信区间时我用了 <code>console.log</code>，结果<b>屏幕上能看到、写进 <code>out/grid-eval.txt</code> 却没有</b>。
+    改用 <code>emit</code> 后触发 <code>Cannot access 'lines' before initialization</code>——
+    因为声明在调用之后，撞上了 <code>const</code> 的暂时性死区。于是把声明提前。
+  </span></div>
+
+  <div class="row"><span class="k">设计意图与优点</span><span class="v">
+    <ol>
+      <li><b><code>emit</code> 这个抽象是对的。</b>"同时写屏幕和文件"是一个真实的重复需求，
+          抽成一个 helper 后，新增输出不会再漏掉一半。</li>
+      <li><b>改动局限在输出层</b>，没有触碰计算逻辑——统计口径本身未变，风险可控。</li>
+      <li><b>顺带暴露了流程缺口</b>：语法检查（<code>--check</code>）全过，
+          <b>只有真跑一遍看退出码才发现 TDZ 错误</b>。这强化了"必须实跑验证"的纪律。</li>
+    </ol>
+  </span></div>
+
+  <div class="row"><span class="k">优化建议</span><span class="v">
+    <ol>
+      <li><b>★ 其他脚本可能有同样的"屏幕有、文件没有"问题（建议优先排查）。</b>
+          <code>emit</code> 只在 <code>grid-eval.mjs</code> 里有。
+          <b>建议扫一遍所有写留档的脚本</b>（<code>loop-runner</code>、<code>diagnose</code> 等），
+          确认"屏幕输出"与"文件留档"内容一致。这次就是靠交叉检查才发现 <code>grid-eval</code> 的缺口。</li>
+      <li><b>把 <code>lines</code> + <code>emit</code> 抽成小工具模块。</b>
+          既然多个脚本都需要，可以做成 <code>log-util.mjs</code>，导出
+          <code>makeEmitter()</code>，一次性解决"声明位置"和"重复实现"两个问题。</li>
+      <li><b><code>emit</code> 定义在模块中部，位置不显眼。</b>
+          建议移到文件头部的工具区，或加注释说明"为什么这个声明必须靠前"（TDZ 容易再犯）。</li>
+    </ol>
+  </span></div>
+</div>
+
+<!-- ═══════════════ loop-runner 修改 ═══════════════ -->
+<h3>2.8 <code>loop-runner.mjs</code> 的参数修正<span class="sz">474 行 · 已有工具</span></h3>
+
+<div class="fsec">
+  <div class="row"><span class="k">改了什么</span><span class="v">
+    迁移场景 <code>GOAL_D</code> 的偏心率从 <b>0.6 改为 0.45</b>，
+    并加了三行注释说明为什么。<b>计算逻辑一行未动。</b><br>
+    连带效果：该目标的实测步数从 12003 步降到 <b>5162 步</b>。
+  </span></div>
+
+  <div class="row"><span class="k">为什么改</span><span class="v">
+    <b>原参数物理上不成立。</b><code>a = 12000 km、e = 0.6</code> 对应的近地点地心距是
+    12000 × (1 − 0.6) = <b>4800 km，低于地球半径 6371 km</b>——<b>轨道在地球内部</b>。<br>
+    <b>发现途径不是人眼检查</b>：是在给内核加上"近地点必须高于地表"的物理校验之后，
+    <code>grid-eval.mjs</code> 直接跑不动了（它用的正是这个场景被新校验拦下），顺着报错追下去才发现的。
+  </span></div>
+
+  <div class="row"><span class="k">设计意图与优点</span><span class="v">
+    <ol>
+      <li><b>换成 0.45 比原来更严苛。</b>近地点地心距 6600 km（高度仅 229 km），
+          比原来"更难的题"——<b>这不是降低标准，而是换成物理上成立且更严格的题</b>。</li>
+      <li><b>注释写清了来龙去脉</b>（原值是什么、为什么错、新值怎么选的），
+          后来者不会再改回去。</li>
+      <li><b>这次修正本身就是"验证严谨性"的证据</b>：我们不仅检查数值方法，
+          还会检查<b>测试用例本身是否成立</b>，而且是自查发现的。</li>
+    </ol>
+  </span></div>
+
+  <div class="row"><span class="k">优化建议</span><span class="v">
+    <ol>
+      <li><b>★ <code>loop-runner.mjs</code> 不写留档文件（可维护性问题）。</b>
+          <code>out/loop-runner.txt</code> 一直靠人工重定向生成，
+          这也是它<b>长期停留在旧内容</b>（10-01 的 e=0.6 数据）而没人发现的原因。
+          建议像 <code>grid-eval</code> 那样自己写 <code>out/</code>。</li>
+      <li><b>参数分散在多个 <code>GOAL_</code> 常量里，没有集中校验。</b>
+          既然内核已有物理校验，建议在脚本启动时<b>一次性把所有目标过一遍校验</b>，
+          出问题时立刻报错，而不是跑到中途才失败。</li>
+      <li><b>可以把"迁移场景"的参数提成配置文件。</b>
+          这类场景会随覆盖范围调整（我们已经从 5 个加到 6 个），
+          集中在配置里比散在代码里更好维护。</li>
+    </ol>
+  </span></div>
+</div>
+
+<h2><span class="num">三</span>横向观察：这批代码的共同取向</h2>
+
+<table>
+  <caption>表 3　四个反复出现的设计取向</caption>
+  <tr><th style="width:190px">取向</th><th>具体体现</th></tr>
+  <tr>
+    <td><b>① 数据必须可溯源</b></td>
+    <td>参考表由 <code>calibrateStep</code> 现场标定而非抄经验值；
+        置信区间与 scipy 对拍；对拍的 μ 由偏差反推确认。
+        <b>没有一个数字是"我觉得应该这样"。</b></td>
+  </tr>
+  <tr>
+    <td><b>② 说不清就说不清</b></td>
+    <td>参考表保留三种"拒答"标记；<code>test-external-benchmark</code> 第 ③ 组
+        宁可不做也要说清为什么；内核在标定不可靠时拒绝返回步数。
+        <b>留空比填假数字更被优先选择。</b></td>
+  </tr>
+  <tr>
+    <td><b>③ 用独立实现交叉验证</b></td>
+    <td>置信区间 vs scipy；实现 vs Orekit；平面解 vs 解析式；Python vs JavaScript。
+        <b>凡是"自己说自己对"的地方，都尽量找一个外部的东西来比。</b></td>
+  </tr>
+  <tr>
+    <td><b>④ 把"顺手发现的问题"也记下来</b></td>
+    <td>这个文件里的 bug（双侧误用 α）、<code>e=0.6</code> 参数错误、硬编码路径、
+        TDZ 错误——<b>四处自己的错误全部如实记录并写进材料</b>。</td>
+  </tr>
+</table>
+
+<h2><span class="num">四</span>优化建议汇总</h2>
+
+<h4>4.1 可读性</h4>
+<table>
+  <tr><th style="width:240px">问题</th><th style="width:150px">位置</th><th>建议</th></tr>
+  <tr><td><code>rateWithCI</code> 返回值命名易混</td><td><code>confidence.mjs</code></td>
+      <td><code>upper</code>/<code>lower</code>（单侧）与 <code>ci</code>（双侧）语义不同却名字相近，
+          改为 <code>oneSidedUpper</code>/<code>twoSided</code></td></tr>
+  <tr><td><code>TRAITS</code> 的"稳定性"列是手写的</td><td><code>integrator-guide.mjs</code></td>
+      <td>与实测表格混排易被误认为实测，加注"定性描述"</td></tr>
+  <tr><td>三种标记（<code>不可预测</code>/<code>—</code>/<code>*</code>）代码里无注释</td>
+      <td><code>integrator-guide.mjs</code></td><td>在生成逻辑处加注释</td></tr>
+  <tr><td><code>emit</code> 定义在中部、缺"为何靠前"的说明</td><td><code>grid-eval.mjs</code></td>
+      <td>移到工具区，或加注释（TDZ 容易再犯）</td></tr>
+  <tr><td><code>betai</code> 缺 <code>@throws</code></td><td><code>confidence.mjs</code></td>
+      <td>补 JSDoc</td></tr>
+</table>
+
+<h4>4.2 结构</h4>
+<table>
+  <tr><th style="width:240px">问题</th><th style="width:150px">位置</th><th>建议</th></tr>
+  <tr style="background:#fdecec"><td><b>脚本清单在三处重复</b></td>
+      <td><code>verify-all.*</code> ×3</td>
+      <td>用单一来源（<code>suites.json</code> 或纯文本清单）生成三份——
+          <b>这正是本项目反复踩过的"清单漏更新"陷阱</b></td></tr>
+  <tr style="background:#fdecec"><td><b>期望值存放方式不一致</b></td>
+      <td><code>test-confidence</code> 用 JSON；<code>test-external-benchmark</code> 内嵌</td>
+      <td>统一成外部数据文件，并在文件头注明来源</td></tr>
+  <tr style="background:#fdecec"><td><b><code>solveKepler</code> 有两份实现</b></td>
+      <td><code>orbital-elements.mjs</code> 与内核</td>
+      <td>保持独立（设计意图），但<b>加一条两者一致性的断言</b>防漂移</td></tr>
+  <tr><td><code>lines</code> + <code>emit</code> 只在 <code>grid-eval</code> 有</td>
+      <td>全项目</td>
+      <td>抽成 <code>log-util.mjs</code> 供所有写留档的脚本复用</td></tr>
+</table>
+
+<h4>4.3 性能</h4>
+<table>
+  <tr><th style="width:240px">问题</th><th style="width:150px">位置</th><th>建议</th></tr>
+  <tr><td><code>solveBeta</code> 固定 200 次二分</td><td><code>confidence.mjs</code></td>
+      <td>微秒级，<b>不是瓶颈</b>；加注释说明即可，不必改</td></tr>
+  <tr><td><code>verify-all</code> 串行跑 8 项</td><td><code>verify-all.mjs</code></td>
+      <td>总耗时 7.4 秒，并行收益有限，<b>优先级低</b></td></tr>
+  <tr><td><code>grid-eval</code> 约 216 百万步</td><td><code>grid-eval.mjs</code></td>
+      <td>计算密集但一次性，<b>不是瓶颈</b></td></tr>
+  <tr><td colspan="3" style="background:#f4f6f9;color:var(--ink3)">
+      <b>结论：性能层面没有需要动作的问题。</b>这三个文件都不在关键路径上。</td></tr>
+</table>
+
+<h4>4.4 边界情况</h4>
+<table>
+  <tr><th style="width:240px">问题</th><th style="width:150px">位置</th><th>建议</th></tr>
+  <tr style="background:#fdecec"><td><b><code>solveKepler</code> 对 e≥1 静默出错</b></td>
+      <td><code>orbital-elements.mjs</code></td>
+      <td>抛物线/双曲线需用不同的开普勒方程形式；<b>内核是明确拒绝 e≥1 的，两处行为不一致</b>。
+          建议同样抛出明确错误</td></tr>
+  <tr><td><code>stateToElements</code> 在 e→0 时退化</td><td><code>orbital-elements.mjs</code></td>
+      <td>近圆轨道下 <code>argp</code>/<code>raan</code> 数学上不唯一，建议注释说明或标记"未定义"</td></tr>
+  <tr><td><code>solveBeta</code> 未校验 <code>target ∈ (0,1)</code></td><td><code>confidence.mjs</code></td>
+      <td>传 0 或 1 会得边界值而非报错，建议加断言</td></tr>
+  <tr><td>参照文件缺失时无重新生成提示</td><td><code>test-confidence.mjs</code></td>
+      <td>错误信息里附上生成命令</td></tr>
+  <tr><td><code>verify-all.mjs</code> spawn 失败无提示</td><td><code>verify-all.mjs</code></td>
+      <td>检测到 <code>r.error</code> 时提示改用 <code>.ps1</code></td></tr>
+</table>
+
+<h2><span class="num">五</span>优先级排序</h2>
+
+<p>把上面的建议按"影响 × 成本"排一下。<b>只列建议现在就做的</b>：</p>
+
+<table>
+  <caption>表 4　建议的处理顺序</caption>
+  <tr><th class="c" style="width:70px">优先级</th><th style="width:290px">做什么</th><th>为什么</th></tr>
+  <tr style="background:#fdecec">
+    <td class="c"><span class="pri p1">P1</span></td>
+    <td><b>给 <code>solveKepler</code> 加 e≥1 校验</b>（<code>orbital-elements.mjs</code>）</td>
+    <td><b>唯一的"会静默出错"项。</b>其他问题最多是难看或不便，这个是<b>给出错误结果而不报错</b>——
+        与本项目"不返回假数字"的原则直接冲突；而且内核已有正确行为，两处不一致。</td>
+  </tr>
+  <tr style="background:#fdecec">
+    <td class="c"><span class="pri p1">P2</span></td>
+    <td><b>统一 <code>verify-all</code> 三份清单</b>为单一来源</td>
+    <td>本项目<b>已经因为"清单漏更新"踩过三次坑</b>（README 脚本清单、sync-all 同步清单、
+        这次的三份清单）。现在改成本最低（只有 8 个条目）。</td>
+  </tr>
+  <tr style="background:#fdf3e3">
+    <td class="c"><span class="pri p2">P3</span></td>
+    <td><b>把 <code>test-external-benchmark</code> 的期望值移到外部文件</b></td>
+    <td>15 位数字抄在代码里，抄错会变成"错的基准"；且与 <code>test-confidence</code> 的做法不一致。</td>
+  </tr>
+  <tr style="background:#fdf3e3">
+    <td class="c"><span class="pri p2">P4</span></td>
+    <td><b>排查其他脚本的"屏幕有、文件没有"问题</b></td>
+    <td>已在 <code>grid-eval</code> 证实存在；<code>loop-runner</code> 的留档已长期未更新，
+        怀疑同类问题。</td>
+  </tr>
+  <tr>
+    <td class="c"><span class="pri p3">P5</span></td>
+    <td>加"两份 <code>solveKepler</code> 结果一致"的断言</td>
+    <td>防漂移，成本极低（一条断言）。</td>
+  </tr>
+  <tr>
+    <td class="c"><span class="pri p3">P6</span></td>
+    <td>其余可读性/注释类改进</td>
+    <td>无功能影响，可随下次改动顺带做。</td>
+  </tr>
+</table>
+
+<div class="note ok">
+  <div class="t">一句话总结</div>
+  本轮代码的<b>功能与验证是扎实的</b>（外部对拍到浮点极限、置信区间与 scipy 一致、参考表全部现场标定）；
+  <b>主要短板集中在"登记性"层面</b>——清单重复、期望值存放不一致、个别边界未校验。
+  这些都不是设计缺陷，而是<b>"东西多了之后，配套的登记没跟上"</b>这一类的工程债。
+  <b>它的特征是：功能全对，但改一处会漏另一处。</b>
+</div>
+
+<footer>
+  <b>说明：</b>本文的行数统计含空行与注释；"主要功能/执行流程/关键实现"基于源码实读，
+  "优化建议"中的问题均已核实存在（如 <code>solveKepler</code> 无 e 范围校验、三份清单重复等）。
+  <b>未建议改动的地方</b>（如 <code>solveBeta</code> 的迭代次数、并行化）也说明了不动的理由，
+  以免把"看着可以优化"当成"需要优化"。
+</footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>全范围新颖性核查 · 轨道仿真可信度诊断系统</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#fff; --line:#e3e6ec; --line2:#cfd5df;
+    --ink:#1a1f29; --ink2:#3f4959; --ink3:#7b869a;
+    --brand:#1d5fd0; --brand2:#eaf1fd; --brand3:#cfe0fa;
+    --hot:#c62828; --hot2:#fdecec; --hot3:#f4cccc;
+    --ok:#1f7a4d; --ok2:#e8f5ee; --ok3:#b6ddc7;
+    --warn:#9a6200; --warn2:#fdf3e3; --warn3:#efdcb4;
+    --vio:#5b3fa8; --vio2:#efecfa; --vio3:#cec4ef;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:15.5px;line-height:1.88}
+  .wrap{max-width:1040px;margin:0 auto;padding:32px 22px 90px}
+  .doc-head{border-bottom:3px double var(--line2);padding-bottom:18px;margin-bottom:24px}
+  .doc-head .kicker{font-size:12.4px;letter-spacing:.18em;color:var(--ink3);margin-bottom:8px}
+  .doc-head h1{margin:0 0 12px;font-size:26px;line-height:1.4;font-weight:700}
+  .doc-head .meta{font-size:13.4px;color:var(--ink2);line-height:1.95}
+  .doc-head .meta b{color:var(--ink)}
+
+  .headline{background:var(--hot2);border:1px solid var(--hot3);border-radius:10px;padding:18px 22px;margin:20px 0 26px}
+  .headline .t{font-weight:700;font-size:15px;color:var(--hot);margin-bottom:8px;letter-spacing:.04em}
+  .headline p{margin:8px 0;font-size:15.2px}
+  .headline p:first-of-type{margin-top:0}
+  .headline p:last-child{margin-bottom:0}
+
+  h2{font-size:20px;margin:44px 0 6px;padding-bottom:7px;border-bottom:2px solid var(--line2);font-weight:700}
+  h2 .num{color:var(--brand);margin-right:9px}
+  h3{font-size:17px;margin:28px 0 8px;font-weight:700}
+  h4{font-size:15.5px;margin:20px 0 6px;font-weight:700;color:var(--ink2)}
+  p{margin:11px 0}
+
+  table{width:100%;border-collapse:collapse;margin:15px 0;font-size:13.8px;background:var(--card)}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:#f0f3f8;font-weight:700;color:var(--ink2);font-size:13.3px}
+  td.c,th.c{text-align:center;white-space:nowrap}
+  caption{caption-side:top;text-align:left;font-size:13px;color:var(--ink3);padding-bottom:6px}
+
+  .note{background:var(--brand2);border:1px solid var(--brand3);border-radius:9px;padding:13px 17px;font-size:14.4px;margin:14px 0}
+  .note .t{font-weight:700;color:var(--brand);margin-bottom:4px}
+  .note.hot{background:var(--hot2);border-color:var(--hot3)}
+  .note.hot .t{color:var(--hot)}
+  .note.ok{background:var(--ok2);border-color:var(--ok3)}
+  .note.ok .t{color:var(--ok)}
+  .note.warn{background:var(--warn2);border-color:var(--warn3)}
+  .note.warn .t{color:var(--warn)}
+
+  .tag{display:inline-block;font-size:11.6px;padding:1px 9px;border-radius:20px;border:1px solid;line-height:1.7;white-space:nowrap}
+  .t-ok{color:var(--ok);border-color:var(--ok3);background:var(--ok2)}
+  .t-hot{color:var(--hot);border-color:var(--hot3);background:var(--hot2)}
+  .t-warn{color:var(--warn);border-color:var(--warn3);background:var(--warn2)}
+  .t-info{color:var(--brand);border-color:var(--brand3);background:var(--brand2)}
+
+  code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13.1px;
+    background:#f3f5f9;border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  a{color:var(--brand);text-decoration:none;border-bottom:1px solid var(--brand3)}
+  a:hover{border-bottom-color:var(--brand)}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin:13px 0}
+  .card.overlap{border-left:4px solid var(--hot)}
+  .card.partial{border-left:4px solid var(--warn)}
+  .card.channel{border-left:4px solid var(--brand)}
+  .card .h{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+  .card .ttl{font-size:16px;font-weight:700;line-height:1.5}
+  .card .meta{font-size:12.6px;color:var(--ink3);white-space:nowrap;padding-top:3px}
+  .card .body{font-size:14.2px;line-height:1.8}
+  .card .quote{margin:9px 0;padding:9px 14px;background:#f8fafc;border-left:3px solid var(--line2);
+    border-radius:0 6px 6px 0;font-size:13.6px;color:var(--ink2);font-style:italic}
+  .card .cmp{margin-top:10px;padding-top:9px;border-top:1px dashed var(--line);font-size:13.6px}
+  .card .cmp b{color:var(--ink)}
+
+  footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);font-size:12.8px;color:var(--ink3);line-height:1.9}
+  @media print{body{background:#fff}.card,table,.note,.headline{break-inside:avoid}h2{break-after:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="doc-head">
+  <div class="kicker">新颖性核查 · 多渠道路径</div>
+  <h1>全范围查重与新颖性核查</h1>
+  <div class="meta">
+    <b>核查对象：</b>轨道仿真可信度诊断系统（AGH 智能体驱动的仿真可信度校验）<br>
+    <b>核查日期：</b>2026 年 10 月 3 日　|　<b>覆盖渠道：</b>5 类（学术预印本 / 同行评审期刊 / 会议论文 / 商业产品 / 标准规范 / 开源仓库）<br>
+    <b>检索轮次：</b>8 轮 / 约 30 组关键词（含中英文、同义表述、方法术语、产品名）
+  </div>
+</div>
+
+<div class="headline">
+  <div class="t">★ 结论先行：想法不新，且已有直接竞争的研究工作</div>
+  <p>「<b>用 LLM 智能体自动完成仿真可信度验证</b>」这个想法，<b>在 2026 年已经是活跃研究领域</b>，至少有 <b>4 篇直接相关的论文</b>，
+  其中 <b>Judge Agent（arXiv 2603.25780）的问题陈述与我们的几乎逐字相同</b>：</p>
+  <p style="padding-left:16px;border-left:3px solid var(--hot3)">
+    「LLMs can generate scientific simulation code, but the generated code <b>silently fails</b> on most non-textbook problems.」<br>
+    「classical mathematical validation — <b>well-posedness, convergence, and error certification</b> — can be fully automated by a Judge Agent.」
+  </p>
+  <p>对比我们的表述：「数值仿真的失效不产生错误提示」「把成熟的 V&amp;V 方法做成智能体可自主跑完的闭环」。
+  <b>问题诊断与解法方向高度重合。</b></p>
+  <p><b>但这不等于"项目没有价值"。</b>差异存在于<b>验证对象、判据设计与工程完整性</b>三个层面，本报告第四节会逐条界定。
+  需要警惕的是<b>答辩时被问到"你和 Judge Agent 有什么区别"时必须答得出来</b>——这是本次核查最重要的产出。</p>
+</div>
+
+<h2><span class="num">一</span>核查范围与渠道</h2>
+
+<table>
+  <caption>表 1　五类渠道与实际检索手段</caption>
+  <tr><th style="width:150px">渠道</th><th style="width:250px">具体来源</th><th>检索要点</th></tr>
+  <tr>
+    <td><b>① 学术预印本</b></td>
+    <td>arXiv（cs.SE / cs.LG / cs.AI）</td>
+    <td>检索 <code>LLM agent verification validation simulation</code>、<code>silent failure numerical</code>、<code>judge agent</code></td>
+  </tr>
+  <tr>
+    <td><b>② 同行评审期刊</b></td>
+    <td>Neurocomputing、Springer / ICCS、ScienceDirect</td>
+    <td>检索 <code>self-validation simulation models LLM</code>、<code>credibility scoring simulation</code></td>
+  </tr>
+  <tr>
+    <td><b>③ 会议论文</b></td>
+    <td>ICCS 2026（国际计算科学会议）</td>
+    <td>检索会议 proceedings 中"credibility / V&amp;V + LLM"主题</td>
+  </tr>
+  <tr>
+    <td><b>④ 商业产品</b></td>
+    <td>STK（Ansys）、GMAT（NASA）、Orekit、MONTE（JPL）、Basilisk、Poliastro、COMSOL</td>
+    <td>核查这些成熟工具<b>是否已内置"自动可信度诊断"功能</b></td>
+  </tr>
+  <tr>
+    <td><b>⑤ 标准规范</b></td>
+    <td>NASA-STD-7009B、ASME V&amp;V 10/20、AIAA G-077、NUREG-2121</td>
+    <td>核查标准中是否已定义"自动化可信度评估"</td>
+  </tr>
+  <tr>
+    <td><b>⑥ 开源仓库</b></td>
+    <td>GitHub（另有专题报告《GitHub查重报告》）</td>
+    <td>本次不重复，结论见那份报告：未见功能重复实现</td>
+  </tr>
+</table>
+
+<h2><span class="num">二</span>检索关键词设计</h2>
+
+<p>一个想法会以<b>很多不同的说法</b>出现。只按自己的措辞去找，必然找不到——所以按"同一件事的不同表述"分别检索。</p>
+
+<table>
+  <caption>表 2　同一件事的六种说法（这是本次核查能查到的关键）</caption>
+  <tr><th style="width:170px">角度</th><th>用过的检索表述</th></tr>
+  <tr><td><b>按问题描述</b></td><td><code>silent failure simulation</code>、<code>错误不会自己报错</code>、<code>results look plausible but wrong</code></td></tr>
+  <tr><td><b>按方法名</b></td><td><code>code verification</code>、<code>order of accuracy testing</code>、<code>convergence study automation</code>、<code>error certification</code></td></tr>
+  <tr><td><b>按学科术语</b></td><td><code>V&amp;V</code>、<code>credibility assessment</code>、<code>simulation trustworthiness</code>、<code>uncertainty quantification</code></td></tr>
+  <tr><td><b>按技术栈</b></td><td><code>LLM agent</code>、<code>neuro-symbolic</code>、<code>multi-agent framework</code>、<code>judge agent</code></td></tr>
+  <tr><td><b>按标准名</b></td><td><code>NASA-STD-7009</code>、<code>ASME V&amp;V 20</code>、<code>GCI</code>、<code>Richardson extrapolation</code>、<code>manufactured solutions</code></td></tr>
+  <tr><td><b>按产品名</b></td><td><code>STK</code>、<code>GMAT</code>、<code>Orekit</code>、<code>Basilisk</code> + <code>automated verification</code></td></tr>
+</table>
+
+<h2><span class="num">三</span>判断标准：什么算"重复"</h2>
+
+<p>「有人做过」是个模糊的说法。<b>先把标准定下来，结论才有意义。</b>本次核查用四级判据：</p>
+
+<table>
+  <caption>表 3　四级相似度判据（逐级放宽）</caption>
+  <tr><th class="c" style="width:70px">级别</th><th style="width:190px">判据</th><th>若命中意味着</th></tr>
+  <tr style="background:#fdecec">
+    <td class="c"><b>L1</b><br>实质重复</td>
+    <td>问题陈述、方法路径、应用场景<b>三者全部重合</b>，且已产出可运行系统</td>
+    <td><b>项目无独立价值</b>，必须换题或彻底重定位</td>
+  </tr>
+  <tr style="background:#fdf3e3">
+    <td class="c"><b>L2</b><br>高度重叠</td>
+    <td>问题陈述与方法路径重合，<b>但验证对象或判据设计不同</b>；或仅停留在论文/原型阶段</td>
+    <td><b>仍可做，但必须能清楚说出差异</b>；答辩会被追问</td>
+  </tr>
+  <tr style="background:#fdf3e3">
+    <td class="c"><b>L3</b><br>方法组件重合</td>
+    <td>使用了同样的成熟方法（如观察阶测试），但<b>组合方式或应用场景不同</b></td>
+    <td>正常。成熟方法本就该复用，<b>但不能把方法本身说成创新</b></td>
+  </tr>
+  <tr style="background:#e8f5ee">
+    <td class="c"><b>L4</b><br>仅领域相关</td>
+    <td>同领域（航天/数值），但<b>要解决的问题不同</b></td>
+    <td>不构成威胁，属正常领域生态</td>
+  </tr>
+</table>
+
+<div class="note">
+  <div class="t">补充判据：时间与可及性</div>
+  即使命中 L1/L2，还要看<b>是否已公开可得、是否已有可运行实现、发表时间距我们开始做的时间</b>。
+  <b>本次核查中所有 L2 级工作都发表于 2026 年 3 月之后</b>，与我们的开发期（2026 年 9 月末起）重叠——<b>严格说属于同期工作，不构成"抄袭"，但也无法主张"独立首创"。</b>
+</div>
+
+<h2><span class="num">四</span>核查结果：按相似度分档</h2>
+
+<h3>（一）L2 高度重叠 —— 必须正面回应的四篇</h3>
+
+<div class="card overlap">
+  <div class="h">
+    <span class="ttl">① <a href="https://arxiv.org/abs/2603.25780" target="_blank">A Judge Agent Closes the Reliability Gap in AI-Generated Scientific Simulation</a></span>
+    <span class="meta">arXiv 2603.25780 · 2026-03 · 单作者</span>
+  </div>
+  <div class="body">
+    <div class="quote">「LLMs can generate scientific simulation code, but the generated code <b>silently fails</b> on most non-textbook problems. We show that classical mathematical validation — <b>well-posedness, convergence, and error certification</b> — can be fully automated by a Judge Agent, reducing the silent-failure rate from <b>42% to 1.5%</b> across 134 test cases spanning 12 scientific domains.」</div>
+    <b>它做了什么：</b>Plan / Judge / Execute 三个智能体。Plan 把自然语言需求转成结构化规格（<code>spec.md</code>），<b>Judge 验证规格是否属于"可仿真类 S"</b>并用经典数值分析手段做验证，Execute 生成并运行求解器代码。提出了形式化理论（simulability class 𝔖，四个条件 S1–S4）。
+    <div class="cmp">
+      <b>与我们的重合点（这是最严重的）：</b><br>
+      · <b>问题陈述几乎逐字相同</b>——"silent failure" vs 我们的"错误不会自己报错"<br>
+      · <b>解法路径相同</b>——用 LLM 智能体自动化"经典数值验证"<br>
+      · <b>多智能体架构</b>——他们的 Plan/Judge/Execute vs 我们的"智能体 + 工具"分工<br>
+      · <b>都用"验证过的正确性"作为核心卖点</b>
+    </div>
+    <div class="cmp">
+      <b>差异（可守的部分）：</b><br>
+      · <b>验证对象不同</b>：他们验证的是 <b>AI 自己生成的仿真代码</b>（"你写的这段代码对不对"）；我们验证的是 <b>用户已有的仿真配置</b>（"你这套参数可不可信、该用多少步"）——<b>出发点是"生成侧"还是"使用侧"</b><br>
+      · <b>判据形式不同</b>：他们的判据是"理论充分性"（良态性、可近似性、可认证性，偏概念层）；我们是<b>六条可触发的分级规则</b>（偏工程层，区分致命/警告两级）<br>
+      · <b>误差归因</b>：我们有<b>误差预算三分解</b>（截断/浮点/参考解 + 瓶颈判定），论文摘要中未见同类<br>
+      · <b>他们未涉及平台约束</b>（我们的 AGH 底座与 Agnes 模型限制是赛事硬约束）
+    </div>
+  </div>
+</div>
+
+<div class="card overlap">
+  <div class="h">
+    <span class="ttl">② <a href="https://doi.org/10.1007/978-3-032-29924-6_7" target="_blank">AutoCred：LLM-Assisted Credibility Scoring for Simulation Models</a></span>
+    <span class="meta">ICCS 2026（Springer）· 同行评审会议</span>
+  </div>
+  <div class="body">
+    <div class="quote">「Simulation credibility assessment traditionally relies on substantial <b>human expert involvement</b>, making the process time-consuming and difficult to scale. We propose <b>AutoCred</b>, an LLM-assisted framework that automates credibility assessment… generates credibility indicators with normalized weights, and produces <b>deterministic scripts</b> for diagnostic visualizations… A <b>meta-validation module</b> iteratively checks internal consistency among assumptions, indicators, weights, and scores.」</div>
+    <b>它做了什么：</b>输入仿真时间序列 + 问题描述 → LLM 构造概念模型 → 生成可信度指标与权重 → 生成诊断可视化脚本 → 从图中提取洞察并打分 → 元验证模块检查内部一致性。
+    <div class="cmp">
+      <b>重合点：</b>① <b>动机完全相同</b>（可信度评估依赖人工、慢、难扩展）；② <b>LLM 全程参与</b>；③ <b>有"元验证"模块</b>——这与我们的"判断可审计"<b>思路同源</b>。
+    </div>
+    <div class="cmp">
+      <b>差异（关键）：</b><br>
+      · <b>验证的是不同层面</b>：AutoCred 输入是<b>时间序列输出数据</b>，评的是"<b>模型是否符合其宣称用途</b>"——这是 V&amp;V 里的 <b>Validation</b> 层面（模型 vs 现实）；我们评的是"<b>数值实现与精度是否可信</b>"——<b>Verification</b> 层面（算法 vs 解析解）<br>
+      · <b>判定权的归属不同</b>：AutoCred 的<b>指标与权重由 LLM 生成</b>，评分也由 LLM 给（虽有权重归一化，仍是模型判断）；我们的<b>判据是领域成熟方法硬编码的确定性算法</b>，LLM 只做编排与解释，<b>不打分</b><br>
+      · <b>我们不需要"元验证模块"来保证一致性</b>——因为判定本身就是确定性的；我们的审计是"核对 LLM 有没有说错"，不是"检查指标是否自洽"
+    </div>
+  </div>
+</div>
+
+<div class="card overlap">
+  <div class="h">
+    <span class="ttl">③ <a href="https://doi.org/10.1016/j.neucom.2025.132030" target="_blank">Creation, evaluation and self-validation of simulation models with LLMs</a></span>
+    <span class="meta">Neurocomputing 663 (2026) · Elsevier 同行评审</span>
+  </div>
+  <div class="body">
+    <div class="quote">「<b>LLM agents are employed to generate simulation models and perform self-evaluation through a predefined set of validation methods</b>, assessing models for parameterization errors… parameterized models with <b>ground truth solutions</b>, allowing evaluation for executability and correctness.」</div>
+    <b>它做了什么：</b>面向机械工程（多体动力学），用 LLM 智能体生成仿真模型，再用<b>预定义的验证方法集</b>做自评估；用带真值的参数化模型做基准测试。作者来自因斯布鲁克大学，是 EXUDYN 多体动力学开源框架的开发者。
+    <div class="cmp">
+      <b>重合点：</b>① <b>"LLM 智能体 + 预定义验证方法集 + 真值对照"</b>——这和我们的架构几乎一样；② 面向动力学仿真。
+    </div>
+    <div class="cmp">
+      <b>差异：</b><br>
+      · <b>目的不同</b>：他们做的是<b>LLM 能力测评基准</b>（"哪个 LLM 能写对仿真代码"），是<b>评测工具</b>；我们是<b>给设计师用的诊断服务</b>（"我这套配置能不能交付"）<br>
+      · <b>学科不同</b>：多体动力学 vs 轨道动力学；<b>真值性质不同</b>：他们的真值是"专家写的参考模型"，我们的是<b>解析解（数学精确）</b>——这决定了我们的判据可以更硬<br>
+      · <b>无分级报警设计</b>
+    </div>
+  </div>
+</div>
+
+<div class="card overlap">
+  <div class="h">
+    <span class="ttl">④ <a href="https://arxiv.org/abs/2604.02478" target="_blank">AIVV：Neuro-Symbolic LLM Agent-Integrated V&amp;V</a></span>
+    <span class="meta">arXiv 2604.02478 · 2026-04</span>
+  </div>
+  <div class="body">
+    <div class="quote">「full Verification and Validation (V&amp;V) operations are still managed by <b>Human-in-the-Loop (HITL)</b> analysis, resulting in an <b>unsustainable manual workload</b>. AIVV deploys LLMs as a <b>deliberative outer loop</b>… escalates mathematically flagged anomalies to a <b>role-specialized LLM council</b>.」</div>
+    <b>它做了什么：</b>先用数学方法标出异常，再把异常升级给"角色分工的 LLM 委员会"做语义级判断（区分真故障与噪声引起的伪故障），产出可执行的 V&amp;V 制品。在无人水下航行器（UUV）时间序列仿真器上验证。
+    <div class="cmp">
+      <b>重合点：</b>动机相同（V&amp;V 人工负担不可持续）；架构相似（<b>数学方法负责筛选 + LLM 负责语义判断</b>）。
+    </div>
+    <div class="cmp">
+      <b>差异：</b>他们做的是<b>故障检测与分类</b>（anomaly classification，判别"是不是真故障"）；我们做的是<b>数值精度可信度诊断</b>（收敛阶、步长标定、浮点下界）。<b>问题域不同</b>——他们在"故障诊断"，我们在"数值验证"。
+    </div>
+  </div>
+</div>
+
+<h3>（二）L3 方法组件重合 —— 说明"方法层不是创新"</h3>
+
+<table>
+  <caption>表 4　成熟方法已有标准实现（我们用了它们，但不能说是我们发明的）</caption>
+  <tr><th style="width:230px">方法</th><th style="width:250px">已有实现 / 标准</th><th>对我们的意义</th></tr>
+  <tr>
+    <td><b>观察阶测试</b><br><span style="font-size:12.5px;color:var(--ink3)">order-of-accuracy testing</span></td>
+    <td><code>SciML/DiffEqDevTools.jl</code> 的 <code>test_convergence</code>（53★）；NASA-STD-7009B 明确把它列为 Code Verification 的核心手段</td>
+    <td><b>我们做的"观察阶测试"不新</b>。文档里已写明"方法层是成熟学科"，这个处理是对的，继续保持</td>
+  </tr>
+  <tr>
+    <td><b>守恒量校验</b></td>
+    <td><code>rikusalminen/twobody</code>（43★）的测试框架验证能量与角动量守恒；各类轨道库的"oracle tests"</td>
+    <td>同上。<b>但"守恒量达标 ≠ 位置精度高"这个陷阱的显式处理（规则 R1）</b>，在检索中<b>未见有人做成自动报警</b>——这是我们的差异点</td>
+  </tr>
+  <tr>
+    <td><b>跨工具交叉验证</b></td>
+    <td>GMAT 的 V&amp;V 框架（对标 STK、SPICE、MATLAB，容差 1 km / 1 m）；<code>ssmichael1/satkit</code>（91★）对标 GMAT 25 条轨迹</td>
+    <td>成熟做法。我们用的是"对解析解"而非"对另一软件"，<b>真值更硬</b>——这是可主张的优势</td>
+  </tr>
+  <tr>
+    <td><b>可信度分级</b></td>
+    <td><b>NASA-STD-7009B</b>：六个可信度因子，每个 0–4 分，加权出总分；高分才允许用于高风险决策</td>
+    <td><b>重要</b>：分级的思想来自标准。<b>但标准是"人工评分框架"，我们是"自动触发的六条规则"</b>——差异在自动化与可触发性</td>
+  </tr>
+  <tr>
+    <td><b>形式化可验证性理论</b></td>
+    <td>Judge Agent 的 simulability class 𝔖（S1–S4 四条件）；Lax-Richtmyer 收敛理论</td>
+    <td><b>我们没有任何形式化理论</b>。这是与 Judge Agent 相比的明显短板，但赛事不要求理论创新</td>
+  </tr>
+</table>
+
+<h3>（三）L4 仅领域相关 —— 商业产品与工具生态</h3>
+
+<div class="card channel">
+  <div class="h"><span class="ttl">商业航天软件：<a href="https://deepwiki.com/rockstorm101/GMAT/6.3-verification-and-validation" target="_blank">GMAT</a> / STK / Orekit / MONTE / Basilisk</span><span class="meta">均无"自动可信度诊断"</span></div>
+  <div class="body">
+    <b>核查结论：</b>这些成熟工具<b>都提供数值积分器、都做 V&amp;V，但 V&amp;V 是"人工流程 + 自动化测试脚本"，不是"智能体自主诊断"</b>。<br>
+    以 GMAT 为例，它的 V&amp;V 框架包含：解析解对比（容差 &lt;1e-12 位置误差）、跨工具交叉验证、回归测试、代码覆盖率分析——<b>但这些都是研发团队内部的固定流水线，不对用户开放为"诊断服务"</b>。
+    <div class="cmp">
+      <b>行业观察（来自一篇 2026 年工具对比文章，值得一提）：</b>
+      <div class="quote">「Engineers should <b>inspect residuals, conservation behavior, convergence, and comparison cases</b> instead of trusting a single plotted trajectory.」</div>
+      这句话描述的正是我们做的事——<b>说明行业承认这个问题存在且重要，但把它留给了工程师手工完成</b>。这恰恰是我们切入的缝隙。
+    </div>
+  </div>
+</div>
+
+<div class="card channel">
+  <div class="h"><span class="ttl">标准规范：<a href="https://standards.nasa.gov/standard/nasa/nasa-std-7009" target="_blank">NASA-STD-7009B</a> / <a href="https://novasolver.jp/en/vv/index.html" target="_blank">ASME V&amp;V 20</a> / AIAA G-077</span><span class="meta">定义了"该评什么"，未定义"怎么自动评"</span></div>
+  <div class="body">
+    <b>NASA-STD-7009B</b> 定义了六个可信度因子与 0–4 级评分，<b>明确要求"在关键决策中评估 M&amp;S 的可信度"</b>。<br>
+    <b>ASME V&amp;V 20</b> 定义了验证度量（area metric 等）。<br>
+    <b>关键差异：</b>这些标准回答的是"<b>应该评估哪些维度</b>"，<b>但没有回答"如何自动完成评估"</b>——标准的实施仍然依赖专家人工操作。我们的工具本质上是在<b>把标准里的一条条要求变成可自动触发的检查</b>。
+    <div class="cmp">
+      <b>这带来一个正向价值：</b>我们的六条规则<b>可以逐条对应到 NASA-STD-7009B 的可信度因子</b>。这在答辩时是一个有力论据——<b>"我们不是在自创判据，而是把标准里的要求自动化了"</b>。
+    </div>
+  </div>
+</div>
+
+<h3>（四）L4 领域内其他 LLM 应用</h3>
+
+<table>
+  <caption>表 5　航天 + LLM 的其他尝试（要解决的问题不同）</caption>
+  <tr><th style="width:260px">工作</th><th>做了什么</th><th>与我们的关系</th></tr>
+  <tr>
+    <td><b>HELIOS</b>（LLM 驱动的间接轨迹优化智能体）</td>
+    <td>五阶段：约束解析 → PMP 推导 → <b>SymPy 符号验证</b> → C++ 代码生成 → 数值求解</td>
+    <td>也是"LLM + 验证"，但目标是<b>轨迹优化</b>（找一个最优解），我们是<b>可信度诊断</b>（判断一个解能不能信）</td>
+  </tr>
+  <tr>
+    <td><b>Gravity-Bench</b>（ICML 2025）</td>
+    <td>用二体引力系统做基准，评估 AI 智能体"发现引力物理规律"的能力；含 expert reference solutions 与 ground truth 验证</td>
+    <td><b>同样用二体问题 + 真值</b>，但目的是<b>测 AI 的能力</b>，不是给工程用的诊断工具</td>
+  </tr>
+  <tr>
+    <td><b>AstroReason-Bench</b></td>
+    <td>评估 LLM 智能体在航天任务规划（DSN 调度、重访优化、区域覆盖）上的表现</td>
+    <td>纯基准测评，不是工程工具</td>
+  </tr>
+  <tr>
+    <td><b>LinkedIn 上的个人项目</b>（"Natural Language Astrodynamics Engine"）</td>
+    <td>声称"可能是第一个用自主 AI 智能体搭建的航天动力学引擎"，多智能体 + NASA JPL Horizons 数据 + Hohmann 转移计算</td>
+    <td><b>注意</b>：这是个人发布、非学术成果、无同行评审。<b>它做的是"用自然语言算轨道"</b>（生成 + 计算），不是可信度诊断。<b>不构成实质重叠，但说明"AI + 航天"的叙事也有人在用</b></td>
+  </tr>
+</table>
+
+<h2><span class="num">五</span>最终结论</h2>
+
+<table>
+  <caption>表 6　四级判据的判定结果</caption>
+  <tr><th class="c" style="width:80px">级别</th><th class="c" style="width:110px">是否命中</th><th>说明</th></tr>
+  <tr style="background:#e8f5ee">
+    <td class="c"><b>L1</b></td><td class="c"><span class="tag t-ok">未命中</span></td>
+    <td><b>没有找到"问题陈述 + 方法路径 + 应用场景"三者全合的已发表实现。</b>最接近的 Judge Agent 在"验证对象"上不同（生成侧 vs 使用侧）</td>
+  </tr>
+  <tr style="background:#fdf3e3">
+    <td class="c"><b>L2</b></td><td class="c"><span class="tag t-hot">命中 4 篇</span></td>
+    <td><b>Judge Agent、AutoCred、Möltner et al.、AIVV</b>——问题陈述与方法路径与我们高度重叠，<b>差异需要主动讲清楚</b></td>
+  </tr>
+  <tr style="background:#fdf3e3">
+    <td class="c"><b>L3</b></td><td class="c"><span class="tag t-warn">大量命中</span></td>
+    <td>观察阶测试、守恒量校验、跨工具交叉验证、可信度分级——<b>全部是成熟方法或已有标准</b>，不能主张创新</td>
+  </tr>
+  <tr style="background:#e8f5ee">
+    <td class="c"><b>L4</b></td><td class="c"><span class="tag t-info">正常</span></td>
+    <td>STK/GMAT/Orekit 等商业工具、NASA-STD-7009B 等标准，以及若干 LLM + 航天的其他尝试——<b>领域生态，非竞争</b></td>
+  </tr>
+</table>
+
+<div class="note ok">
+  <div class="t">可以主张的四个差异点（按可靠程度排序）</div>
+  <b>① 验证对象不同——从"使用侧"而非"生成侧"。</b><br>
+  Judge Agent 验证"AI 生成的代码对不对"；我们验证"用户已有的配置可不可信、该用多少步、能不能交付"。<b>前者是给 AI 开发者用的，后者是给设计师用的。</b>这是最硬的区别。<br><br>
+  <b>② 判据是确定性算法，LLM 不打分。</b><br>
+  AutoCred 的指标与权重由 LLM 生成、评分也由 LLM 给出；我们<b>把判据写死在代码里</b>（标定式 + 四重检验 + 六条规则），<b>LLM 只负责编排与解释</b>。<br>
+  这一点的价值：<b>判定结果可复现、可审计、不随模型版本漂移。</b><br><br>
+  <b>③ 误差预算三分解与瓶颈判定。</b><br>
+  把总误差拆成截断 / 浮点 / 参考解三部分，并判定"瓶颈在哪、还能不能更好"。<b>在所有检索到的相关工作中均未见同类</b>。<br><br>
+  <b>④ "守恒量达标但位置超差"被做成自动报警（规则 R1）。</b><br>
+  这个陷阱在文献中被广泛讨论（MNRAS、arXiv 1709.04845 等），<b>但把它形式化为"自动触发的致命级规则"，检索中未见先例</b>。
+</div>
+
+<div class="note hot">
+  <div class="t">必须承认的三个短板（答辩时不要硬撑）</div>
+  <b>① 没有形式化理论。</b>Judge Agent 提出了 simulability class 𝔖（四个条件），我们只有工程规则。<b>被问到"你们的判据为什么是这六条"时，诚实的答案是"来自领域成熟方法与标准"</b>，而不是编一套理论。<br><br>
+  <b>② 不是首创。</b>"用 LLM 智能体自动化仿真验证"在 2026 年已是活跃方向，同期至少四篇论文。<b>不能声称灵感独有</b>。<br><br>
+  <b>③ 覆盖面窄。</b>只做二体 + 简谐振子，不含 J2 摄动。Judge Agent 覆盖 12 个科学领域；Möltner 等覆盖多体动力学。<b>我们的深度换来了广度上的劣势</b>——这个取舍是刻意的（解析真值是地基），但要有意识地讲出来。
+</div>
+
+<h2><span class="num">六</span>结论建议</h2>
+
+<div class="note ok">
+  <div class="t">技术选型与功能定位：<b>不需要调整</b></div>
+  <p><b>理由一：没有命中 L1（实质重复）。</b>项目仍具备独立价值，不必换题。</p>
+  <p><b>理由二：赛事考的不是"想法首创"。</b>评分权重里"创新性与发展价值"占 15%，其余 85% 考的是
+  <b>问题价值、任务完成度、AGH 执行闭环、技术深度、验证严谨性</b>——这些正是我们的强项。<b>"把成熟方法做成可靠的工程系统"本身就是评分项里的分。</b></p>
+  <p><b>理由三：同期论文反而给了我们三样东西</b>——可引用的动机佐证（"silent failure"已有论文背书）、可对照的差异清单、以及"这个方向被认可"的信号。</p>
+</div>
+
+<div class="note warn">
+  <div class="t">但要做三件具体的事</div>
+  <b>① 准备一个"与 Judge Agent 的区别"的问答。</b><br>
+  这是本次核查最重要的产出。<b>建议的回答框架</b>：<br>
+  「Judge Agent 解决的是"AI 写出来的代码可不可信"，面向 AI 开发者；我们解决的是"设计师手上这套仿真配置可不可信、该用多少步"，面向使用者。
+  另外它用 LLM 判定，我们把判据写成确定性算法，LLM 只做编排——<b>我们的判定结果可复现、不随模型版本漂移</b>。」<br><br>
+  <b>② 把六条规则对应到 NASA-STD-7009B 的可信度因子。</b><br>
+  这一条能把"我们的判据是自己想的"变成"<b>我们是把标准里的要求自动化了</b>"。<b>成本低、收益高</b>，值得花一小时做一张对照表。<br><br>
+  <b>③ 主动说出短板，别等被问。</b><br>
+  在作品说明书的"已知限制"里加一句：<b>"本工作不提出新的验证理论——理论上限由 Judge Agent（2026）等同期工作界定；我们的贡献在工程实现的完整性与可复现性。"</b><br>
+  <b>自己先说，比被问出来强。</b>
+</div>
+
+<div class="note">
+  <div class="t">★ 本次核查的局限（如实说明）</div>
+  <b>① 检索基于公开网络搜索，非系统综述。</b>未使用 Web of Science / Scopus 等专业数据库做引文追溯，<b>可能遗漏未被广泛索引的工作</b>。<br>
+  <b>② 未做全文精读。</b>四篇 L2 论文基于摘要与部分正文判断，<b>其方法细节可能还有我们尚未识别的重合</b>。建议进一步精读 Judge Agent 与 AutoCred 两篇。<br>
+  <b>③ 中文数据库未覆盖。</b>未检索 CNKI、万方等，<b>国内是否有人做同类工作无法确认</b>。<br>
+  <b>④ 时间窗限制。</b>2026 年 3 月之后的 arXiv 预印本更新频繁，<b>核查结果有时效性</b>，建议提交前再查一次。<br>
+  <b>⑤ 判断标准中的"重合"为主观语义判断</b>，未做量化相似度计算。
+</div>
+
+<footer>
+  <b>核查方法：</b>8 轮定向检索，覆盖学术预印本（arXiv）、同行评审期刊（Neurocomputing / Springer ICCS）、会议论文、商业产品官网与文档、权威标准文本，
+  关键词按"问题描述 / 方法名 / 学科术语 / 技术栈 / 标准名 / 产品名"六个角度分别设计，共约 30 组检索式。<br>
+  <b>与前期查重的关系：</b>本文聚焦<b>研究成果与现有产品</b>层面；<b>开源仓库</b>层面的查重见另一份《GitHub查重报告-轨道仿真可信度诊断系统》（结论：未见功能重复实现）。<br>
+  <b>结论档位：</b>「未命中 L1」基于上述检索范围，<b>不等于全网不存在</b>。已列出的五项局限请务必阅读。
+</footer>
+
+</div>
+</body>
+</html>

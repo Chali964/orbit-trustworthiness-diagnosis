@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>轨道诊断图 · 效果总览</title>
+<style>
+  :root{--bg:#f6f7f9;--card:#fff;--line:#e3e6ec;--ink:#1a1f29;--ink2:#3f4959;--ink3:#7b869a;--brand:#1d5fd0;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:15.5px;line-height:1.8}
+  .wrap{max-width:1000px;margin:0 auto;padding:30px 20px 80px}
+  h1{font-size:25px;margin:0 0 8px}
+  .kick{font-size:12.4px;letter-spacing:.16em;color:var(--ink3);margin-bottom:6px}
+  .sub{color:var(--ink2);font-size:14px;margin-bottom:26px}
+  .case{background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:18px 20px 22px;margin:22px 0;box-shadow:0 1px 3px rgba(20,30,50,.04)}
+  .case h2{font-size:17px;margin:0 0 4px}
+  .case .note{font-size:14px;color:var(--ink2);margin:0 0 14px}
+  .case .fig{background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .case .fig svg{display:block;width:100%;height:auto}
+  .meta{font-size:12.5px;color:var(--ink3);margin-top:10px}
+  hr{border:0;border-top:1px solid var(--line);margin:34px 0}
+</style></head><body><div class="wrap">
+<div class="kick">AGH 功能增强 · 诊断图</div>
+<h1>轨道诊断图 · 效果总览</h1>
+<div class="sub">新增的图片显示模块效果预览。每张图的标注编号（①②③…）与图注说明一一对应。</div>
+
+<div class="case">
+<h2>① 参数误传：把「轨道高度」当成「半长轴」</h2>
+<p class="note">a=700 km 远小于地球半径，轨道整体落在地球内部。绿色为目标（修正后）轨道。</p>
+<div class="fig"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 520" width="860" height="520" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif">
+<rect width="860" height="520" fill="#ffffff"/>
+<text x="56" y="32" font-size="17" font-weight="700" fill="#1a1f29">参数诊断：传入的轨道 vs 本意应有的轨道</text>
+<text x="56" y="52" font-size="12.5" fill="#7b869a">绘图区等比缩放；焦点在原点，近地点位于 +x 方向（与内核相位约定一致）</text>
+<rect x="56" y="64" width="748" height="282" rx="8" fill="#f7f9fc" stroke="#d8dee8"/>
+<circle cx="430" cy="205" r="35.25" fill="none" stroke="#e8edf4" stroke-width="1" stroke-dasharray="3 4"/>
+<circle cx="430" cy="205" r="70.50" fill="none" stroke="#e8edf4" stroke-width="1" stroke-dasharray="3 4"/>
+<circle cx="430" cy="205" r="105.75" fill="none" stroke="#e8edf4" stroke-width="1" stroke-dasharray="3 4"/>
+<circle cx="430" cy="205" r="141.00" fill="none" stroke="#e8edf4" stroke-width="1" stroke-dasharray="3 4"/>
+<line x1="64" y1="205" x2="796" y2="205" stroke="#e8edf4" stroke-width="1"/>
+<line x1="430" y1="72" x2="430" y2="338" stroke="#e8edf4" stroke-width="1"/>
+<circle cx="430" cy="205" r="78.42" fill="#cfdbe8" stroke="#8aa4bf" stroke-width="1.6"/>
+<circle cx="430" cy="205" r="43.13" fill="#b9cadd" opacity="0.55"/>
+<text x="430" y="209" font-size="12" fill="#4a5b6e" text-anchor="middle" font-weight="700">地球</text>
+<path d="M560.56,205.00 L560.53,203.03 L560.44,201.06 L560.29,199.09 L560.08,197.12 L559.81,195.16 L559.48,193.21 L559.10,191.26 L558.65,189.33 L558.15,187.40 L557.59,185.49 L556.97,183.59 L556.30,181.71 L555.56,179.84 L554.77,177.99 L553.93,176.15 L553.03,174.34 L552.08,172.55 L551.07,170.78 L550.01,169.03 L548.89,167.31 L547.73,165.62 L546.51,163.95 L545.25,162.31 L543.93,160.69 L542.57,159.11 L541.16,157.56 L539.70,156.05 L538.20,154.56 L536.65,153.11 L535.06,151.70 L533.43,150.32 L531.76,148.98 L530.04,147.68 L528.29,146.42 L526.50,145.20 L524.68,144.02 L522.82,142.88 L520.92,141.78 L519.00,140.73 L517.04,139.72 L515.05,138.76 L513.03,137.84 L510.99,136.97 L508.92,136.14 L506.83,135.36 L504.71,134.63 L502.57,133.95 L500.41,133.31 L498.24,132.73 L496.05,132.19 L493.84,131.71 L491.61,131.27 L489.38,130.89 L487.13,130.55 L484.88,130.27 L482.62,130.04 L480.35,129.86 L478.07,129.73 L475.80,129.65 L473.52,129.62 L471.24,129.65 L468.96,129.73 L466.69,129.86 L464.42,130.04 L462.16,130.27 L459.90,130.55 L457.66,130.89 L455.42,131.27 L453.20,131.71 L450.99,132.19 L448.80,132.73 L446.62,133.31 L444.46,133.95 L442.33,134.63 L440.21,135.36 L438.12,136.14 L436.05,136.97 L434.00,137.84 L431.99,138.76 L430.00,139.72 L428.04,140.73 L426.11,141.78 L424.22,142.88 L422.36,144.02 L420.53,145.20 L418.74,146.42 L416.99,147.68 L415.28,148.98 L413.61,150.32 L411.97,151.70 L410.38,153.11 L408.84,154.56 L407.34,156.05 L405.88,157.56 L404.47,159.11 L403.10,160.69 L401.79,162.31 L400.52,163.95 L399.31,165.62 L398.14,167.31 L397.03,169.03 L395.97,170.78 L394.96,172.55 L394.01,174.34 L393.11,176.15 L392.26,177.99 L391.47,179.84 L390.74,181.71 L390.07,183.59 L389.45,185.49 L388.89,187.40 L388.38,189.33 L387.94,191.26 L387.55,193.21 L387.23,195.16 L386.96,197.12 L386.75,199.09 L386.60,201.06 L386.51,203.03 L386.48,205.00 L386.51,206.97 L386.60,208.94 L386.75,210.91 L386.96,212.88 L387.23,214.84 L387.55,216.79 L387.94,218.74 L388.38,220.67 L388.89,222.60 L389.45,224.51 L390.07,226.41 L390.74,228.29 L391.47,230.16 L392.26,232.01 L393.11,233.85 L394.01,235.66 L394.96,237.45 L395.97,239.22 L397.03,240.97 L398.14,242.69 L399.31,244.38 L400.52,246.05 L401.79,247.69 L403.10,249.31 L404.47,250.89 L405.88,252.44 L407.34,253.95 L408.84,255.44 L410.38,256.89 L411.97,258.30 L413.61,259.68 L415.28,261.02 L416.99,262.32 L418.74,263.58 L420.53,264.80 L422.36,265.98 L424.22,267.12 L426.11,268.22 L428.04,269.27 L430.00,270.28 L431.99,271.24 L434.00,272.16 L436.05,273.03 L438.12,273.86 L440.21,274.64 L442.33,275.37 L444.46,276.05 L446.62,276.69 L448.80,277.27 L450.99,277.81 L453.20,278.29 L455.42,278.73 L457.66,279.11 L459.90,279.45 L462.16,279.73 L464.42,279.96 L466.69,280.14 L468.96,280.27 L471.24,280.35 L473.52,280.38 L475.80,280.35 L478.07,280.27 L480.35,280.14 L482.62,279.96 L484.88,279.73 L487.13,279.45 L489.38,279.11 L491.61,278.73 L493.84,278.29 L496.05,277.81 L498.24,277.27 L500.41,276.69 L502.57,276.05 L504.71,275.37 L506.83,274.64 L508.92,273.86 L510.99,273.03 L513.03,272.16 L515.05,271.24 L517.04,270.28 L519.00,269.27 L520.92,268.22 L522.82,267.12 L524.68,265.98 L526.50,264.80 L528.29,263.58 L530.04,262.32 L531.76,261.02 L533.43,259.68 L535.06,258.30 L536.65,256.89 L538.20,255.44 L539.70,253.95 L541.16,252.44 L542.57,250.89 L543.93,249.31 L545.25,247.69 L546.51,246.05 L547.73,244.38 L548.89,242.69 L550.01,240.97 L551.07,239.22 L552.08,237.45 L553.03,235.66 L553.93,233.85 L554.77,232.01 L555.56,230.16 L556.30,228.29 L556.97,226.41 L557.59,224.51 L558.15,222.60 L558.65,220.67 L559.10,218.74 L559.48,216.79 L559.81,214.84 L560.08,212.88 L560.29,210.91 L560.44,208.94 L560.53,206.97 L560.56,205.00" fill="none" stroke="#1f7a4d" stroke-width="2.6"/>
+<path d="M442.92,205.00 L442.92,204.80 L442.91,204.61 L442.90,204.41 L442.88,204.22 L442.85,204.03 L442.82,203.83 L442.78,203.64 L442.74,203.45 L442.69,203.26 L442.63,203.07 L442.57,202.88 L442.50,202.69 L442.43,202.51 L442.35,202.33 L442.27,202.14 L442.18,201.96 L442.09,201.79 L441.99,201.61 L441.88,201.44 L441.77,201.27 L441.65,201.10 L441.53,200.94 L441.41,200.77 L441.28,200.61 L441.14,200.46 L441.00,200.30 L440.86,200.15 L440.71,200.01 L440.56,199.86 L440.40,199.72 L440.24,199.59 L440.07,199.45 L439.90,199.33 L439.73,199.20 L439.55,199.08 L439.37,198.96 L439.19,198.85 L439.00,198.74 L438.81,198.64 L438.62,198.54 L438.42,198.44 L438.22,198.35 L438.02,198.26 L437.81,198.18 L437.61,198.11 L437.40,198.03 L437.18,197.97 L436.97,197.90 L436.76,197.85 L436.54,197.79 L436.32,197.74 L436.10,197.70 L435.88,197.66 L435.66,197.63 L435.43,197.60 L435.21,197.58 L434.98,197.56 L434.76,197.55 L434.53,197.54 L434.31,197.54 L434.08,197.54 L433.86,197.55 L433.63,197.56 L433.41,197.58 L433.18,197.60 L432.96,197.63 L432.74,197.66 L432.52,197.70 L432.30,197.74 L432.08,197.79 L431.86,197.85 L431.65,197.90 L431.43,197.97 L431.22,198.03 L431.01,198.11 L430.80,198.18 L430.60,198.26 L430.40,198.35 L430.20,198.44 L430.00,198.54 L429.81,198.64 L429.62,198.74 L429.43,198.85 L429.24,198.96 L429.06,199.08 L428.89,199.20 L428.71,199.33 L428.54,199.45 L428.38,199.59 L428.22,199.72 L428.06,199.86 L427.90,200.01 L427.76,200.15 L427.61,200.30 L427.47,200.46 L427.34,200.61 L427.21,200.77 L427.08,200.94 L426.96,201.10 L426.85,201.27 L426.74,201.44 L426.63,201.61 L426.53,201.79 L426.44,201.96 L426.35,202.14 L426.26,202.33 L426.19,202.51 L426.11,202.69 L426.05,202.88 L425.99,203.07 L425.93,203.26 L425.88,203.45 L425.84,203.64 L425.80,203.83 L425.77,204.03 L425.74,204.22 L425.72,204.41 L425.70,204.61 L425.69,204.80 L425.69,205.00 L425.69,205.20 L425.70,205.39 L425.72,205.59 L425.74,205.78 L425.77,205.97 L425.80,206.17 L425.84,206.36 L425.88,206.55 L425.93,206.74 L425.99,206.93 L426.05,207.12 L426.11,207.31 L426.19,207.49 L426.26,207.67 L426.35,207.86 L426.44,208.04 L426.53,208.21 L426.63,208.39 L426.74,208.56 L426.85,208.73 L426.96,208.90 L427.08,209.06 L427.21,209.23 L427.34,209.39 L427.47,209.54 L427.61,209.70 L427.76,209.85 L427.90,209.99 L428.06,210.14 L428.22,210.28 L428.38,210.41 L428.54,210.55 L428.71,210.67 L428.89,210.80 L429.06,210.92 L429.24,211.04 L429.43,211.15 L429.62,211.26 L429.81,211.36 L430.00,211.46 L430.20,211.56 L430.40,211.65 L430.60,211.74 L430.80,211.82 L431.01,211.89 L431.22,211.97 L431.43,212.03 L431.65,212.10 L431.86,212.15 L432.08,212.21 L432.30,212.26 L432.52,212.30 L432.74,212.34 L432.96,212.37 L433.18,212.40 L433.41,212.42 L433.63,212.44 L433.86,212.45 L434.08,212.46 L434.31,212.46 L434.53,212.46 L434.76,212.45 L434.98,212.44 L435.21,212.42 L435.43,212.40 L435.66,212.37 L435.88,212.34 L436.10,212.30 L436.32,212.26 L436.54,212.21 L436.76,212.15 L436.97,212.10 L437.18,212.03 L437.40,211.97 L437.61,211.89 L437.81,211.82 L438.02,211.74 L438.22,211.65 L438.42,211.56 L438.62,211.46 L438.81,211.36 L439.00,211.26 L439.19,211.15 L439.37,211.04 L439.55,210.92 L439.73,210.80 L439.90,210.67 L440.07,210.55 L440.24,210.41 L440.40,210.28 L440.56,210.14 L440.71,209.99 L440.86,209.85 L441.00,209.70 L441.14,209.54 L441.28,209.39 L441.41,209.23 L441.53,209.06 L441.65,208.90 L441.77,208.73 L441.88,208.56 L441.99,208.39 L442.09,208.21 L442.18,208.04 L442.27,207.86 L442.35,207.67 L442.43,207.49 L442.50,207.31 L442.57,207.12 L442.63,206.93 L442.69,206.74 L442.74,206.55 L442.78,206.36 L442.82,206.17 L442.85,205.97 L442.88,205.78 L442.90,205.59 L442.91,205.39 L442.92,205.20 L442.92,205.00" fill="none" stroke="#c62828" stroke-width="3.4" opacity="0.95"/>
+<circle cx="434.31" cy="205" r="4.8" fill="#c62828" stroke="#ffffff" stroke-width="1.5"/>
+<rect x="580" y="72" width="206" height="64" rx="7" fill="#ffffff" opacity="0.94" stroke="#d8dee8"/>
+<line x1="590" y1="86" x2="616" y2="86" stroke="#1f7a4d" stroke-width="3"/>
+<text x="624" y="90" font-size="12.5" fill="#3f4959">目标（正确）轨道</text>
+<line x1="590" y1="108" x2="616" y2="108" stroke="#c62828" stroke-width="3"/>
+<text x="624" y="112" font-size="12.5" fill="#3f4959">实际（传入）轨道</text>
+<rect x="70" y="78" width="320" height="120" rx="7" fill="#ffffff" opacity="0.95" stroke="#d8dee8"/>
+<text x="82" y="102" font-size="12.5" font-weight="700" fill="#1f7a4d">目标轨道</text>
+<text x="82" y="117" font-size="12" fill="#3f4959" font-family="ui-monospace,Menlo,Consolas,monospace">a = 7071.0 km，e = 0.5</text>
+<text x="82" y="132" font-size="11.5" fill="#7b869a">近地点 3535.5 / 远地点 10606.5 km</text>
+<text x="82" y="150" font-size="12.5" font-weight="700" fill="#c62828">实际轨道</text>
+<text x="82" y="165" font-size="12" fill="#3f4959" font-family="ui-monospace,Menlo,Consolas,monospace">a = 700.0 km，e = 0.5</text>
+<text x="82" y="180" font-size="11.5" fill="#7b869a">近地点 350.0 / 远地点 1050.0 km</text>
+<line x1="480.3" y1="179.0" x2="434.3" y2="205.0" stroke="#1d5fd0" stroke-width="1.3" stroke-dasharray="4 3"/>
+<circle cx="434.3" cy="205.0" r="3.4" fill="#1d5fd0"/>
+<circle cx="480.3" cy="179.0" r="11.5" fill="#1d5fd0" stroke="#ffffff" stroke-width="1.7"/>
+<text x="480.3" y="183.0" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">1</text>
+<line x1="523.3" y1="168.4" x2="477.3" y2="142.4" stroke="#1d5fd0" stroke-width="1.3" stroke-dasharray="4 3"/>
+<circle cx="477.3" cy="142.4" r="3.4" fill="#1d5fd0"/>
+<circle cx="523.3" cy="168.4" r="11.5" fill="#1d5fd0" stroke="#ffffff" stroke-width="1.7"/>
+<text x="523.3" y="172.4" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+<line x1="498.0" y1="88.0" x2="452.0" y2="89.6" stroke="#1d5fd0" stroke-width="1.3" stroke-dasharray="4 3"/>
+<circle cx="452.0" cy="89.6" r="3.4" fill="#1d5fd0"/>
+<circle cx="498.0" cy="88.0" r="11.5" fill="#1d5fd0" stroke="#ffffff" stroke-width="1.7"/>
+<text x="498.0" y="92.0" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">3</text>
+<line x1="542.0" y1="133.8" x2="496.0" y2="107.8" stroke="#1d5fd0" stroke-width="1.3" stroke-dasharray="4 3"/>
+<circle cx="496.0" cy="107.8" r="3.4" fill="#1d5fd0"/>
+<circle cx="542.0" cy="133.8" r="11.5" fill="#1d5fd0" stroke="#ffffff" stroke-width="1.7"/>
+<text x="542.0" y="137.8" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">4</text>
+<line x1="575.2" y1="116.0" x2="529.2" y2="142.0" stroke="#1d5fd0" stroke-width="1.3" stroke-dasharray="4 3"/>
+<circle cx="529.2" cy="142.0" r="3.4" fill="#1d5fd0"/>
+<circle cx="575.2" cy="116.0" r="11.5" fill="#1d5fd0" stroke="#ffffff" stroke-width="1.7"/>
+<text x="575.2" y="120.0" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">5</text>
+<rect x="56" y="356" width="748" height="150" rx="8" fill="#fbfcfe" stroke="#d8dee8"/>
+<text x="70" y="376" font-size="13" fill="#9a6200" font-weight="700">①</text>
+<text x="92" y="376" font-size="13" fill="#3f4959">传入参数：a = 700.0 km，e = 0.5 → 近地点地心距 350.0 km</text>
+<text x="70" y="397" font-size="13" fill="#c62828" font-weight="700">②</text>
+<text x="92" y="397" font-size="13" fill="#3f4959">地球平均半径 6371 km。近地点 350.0 km 低于该值 → 轨道完全落在地球内部，无物理意义</text>
+<text x="70" y="418" font-size="13" fill="#1f7a4d" font-weight="700">③</text>
+<text x="92" y="418" font-size="13" fill="#3f4959">若本意是「轨道高度 700.0 km」，则半长轴应为 7071.0 km（高度 + 地球半径）</text>
+<text x="70" y="439" font-size="13" fill="#1f7a4d" font-weight="700">④</text>
+<text x="92" y="439" font-size="13" fill="#3f4959">修正后近地点地心距 3535.5 km，轨道在地表以上</text>
+<text x="70" y="460" font-size="13" fill="#3f4959" font-weight="700">⑤</text>
+<text x="92" y="460" font-size="13" fill="#3f4959">半长轴 700 km 小于地球半径 6371 km，最常见的成因是把「轨道高度」当成了「半长轴」。若本意是</text>
+<text x="92" y="478" font-size="13" fill="#3f4959">高度 700 km，则半长轴应为 700+6371 = 7071 km。</text>
+</svg></div>
+<div class="meta">文件：out/plots/param-mistake.svg　｜　尺寸：13.0 KB</div>
+</div>
+<div class="case">
+<h2>② 偏心率过大：近地点降入地球内部</h2>
+<p class="note">a 本身合理，但 e=0.6 使近地点降到 4800 km（< 6371 km）。</p>
+<div class="fig"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 520" width="860" height="520" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif">
+<rect width="860" height="520" fill="#ffffff"/>
+<text x="56" y="32" font-size="17" font-weight="700" fill="#1a1f29">参数诊断：传入的轨道 vs 本意应有的轨道</text>
+<text x="56" y="52" font-size="12.5" fill="#7b869a">绘图区等比缩放；焦点在原点，近地点位于 +x 方向（与内核相位约定一致）</text>
+<rect x="56" y="64" width="748" height="261" rx="8" fill="#f7f9fc" stroke="#d8dee8"/>
+<circle cx="430" cy="194.5" r="32.63" fill="none" stroke="#e8edf4" stroke-width="1" stroke-dasharray="3 4"/>
+<circle cx="430" cy="194.5" r="65.25" fill="none" stroke="#e8edf4" stroke-width="1" stroke-dasharray="3 4"/>
+<circle cx="430" cy="194.5" r="97.88" fill="none" stroke="#e8edf4" stroke-width="1" stroke-dasharray="3 4"/>
+<circle cx="430" cy="194.5" r="130.50" fill="none" stroke="#e8edf4" stroke-width="1" stroke-dasharray="3 4"/>
+<line x1="64" y1="194.5" x2="796" y2="194.5" stroke="#e8edf4" stroke-width="1"/>
+<line x1="430" y1="72" x2="430" y2="317" stroke="#e8edf4" stroke-width="1"/>
+<circle cx="430" cy="194.5" r="40.10" fill="#cfdbe8" stroke="#8aa4bf" stroke-width="1.6"/>
+<circle cx="430" cy="194.5" r="22.05" fill="#b9cadd" opacity="0.55"/>
+<text x="430" y="198.5" font-size="12" fill="#4a5b6e" text-anchor="middle" font-weight="700">地球</text>
+<path d="M540.24,194.50 L540.21,192.74 L540.13,190.99 L540.01,189.24 L539.82,187.49 L539.59,185.75 L539.31,184.01 L538.97,182.28 L538.59,180.56 L538.15,178.84 L537.66,177.14 L537.13,175.45 L536.54,173.77 L535.91,172.11 L535.22,170.46 L534.49,168.83 L533.71,167.22 L532.88,165.63 L532.01,164.05 L531.09,162.50 L530.12,160.97 L529.11,159.46 L528.05,157.97 L526.96,156.51 L525.81,155.08 L524.63,153.67 L523.41,152.29 L522.14,150.94 L520.84,149.62 L519.50,148.33 L518.12,147.08 L516.70,145.85 L515.25,144.66 L513.76,143.50 L512.24,142.38 L510.69,141.29 L509.11,140.24 L507.49,139.23 L505.85,138.25 L504.18,137.32 L502.48,136.42 L500.75,135.56 L499.00,134.74 L497.23,133.97 L495.43,133.23 L493.62,132.54 L491.78,131.89 L489.93,131.28 L488.05,130.71 L486.17,130.19 L484.26,129.72 L482.35,129.29 L480.42,128.90 L478.48,128.56 L476.53,128.26 L474.57,128.01 L472.61,127.80 L470.64,127.64 L468.67,127.52 L466.69,127.45 L464.72,127.43 L462.74,127.45 L460.76,127.52 L458.79,127.64 L456.82,127.80 L454.86,128.01 L452.90,128.26 L450.95,128.56 L449.02,128.90 L447.09,129.29 L445.17,129.72 L443.27,130.19 L441.38,130.71 L439.51,131.28 L437.65,131.89 L435.82,132.54 L434.00,133.23 L432.20,133.97 L430.43,134.74 L428.68,135.56 L426.96,136.42 L425.26,137.32 L423.59,138.25 L421.94,139.23 L420.33,140.24 L418.74,141.29 L417.19,142.38 L415.67,143.50 L414.18,144.66 L412.73,145.85 L411.32,147.08 L409.94,148.33 L408.59,149.62 L407.29,150.94 L406.03,152.29 L404.80,153.67 L403.62,155.08 L402.48,156.51 L401.38,157.97 L400.32,159.46 L399.31,160.97 L398.35,162.50 L397.43,164.05 L396.55,165.63 L395.73,167.22 L394.94,168.83 L394.21,170.46 L393.53,172.11 L392.89,173.77 L392.31,175.45 L391.77,177.14 L391.28,178.84 L390.85,180.56 L390.46,182.28 L390.13,184.01 L389.84,185.75 L389.61,187.49 L389.43,189.24 L389.30,190.99 L389.22,192.74 L389.20,194.50 L389.22,196.26 L389.30,198.01 L389.43,199.76 L389.61,201.51 L389.84,203.25 L390.13,204.99 L390.46,206.72 L390.85,208.44 L391.28,210.16 L391.77,211.86 L392.31,213.55 L392.89,215.23 L393.53,216.89 L394.21,218.54 L394.94,220.17 L395.73,221.78 L396.55,223.37 L397.43,224.95 L398.35,226.50 L399.31,228.03 L400.32,229.54 L401.38,231.03 L402.48,232.49 L403.62,233.92 L404.80,235.33 L406.03,236.71 L407.29,238.06 L408.59,239.38 L409.94,240.67 L411.32,241.92 L412.73,243.15 L414.18,244.34 L415.67,245.50 L417.19,246.62 L418.74,247.71 L420.33,248.76 L421.94,249.77 L423.59,250.75 L425.26,251.68 L426.96,252.58 L428.68,253.44 L430.43,254.26 L432.20,255.03 L434.00,255.77 L435.82,256.46 L437.65,257.11 L439.51,257.72 L441.38,258.29 L443.27,258.81 L445.17,259.28 L447.09,259.71 L449.02,260.10 L450.95,260.44 L452.90,260.74 L454.86,260.99 L456.82,261.20 L458.79,261.36 L460.76,261.48 L462.74,261.55 L464.72,261.57 L466.69,261.55 L468.67,261.48 L470.64,261.36 L472.61,261.20 L474.57,260.99 L476.53,260.74 L478.48,260.44 L480.42,260.10 L482.35,259.71 L484.26,259.28 L486.17,258.81 L488.05,258.29 L489.93,257.72 L491.78,257.11 L493.62,256.46 L495.43,255.77 L497.23,255.03 L499.00,254.26 L500.75,253.44 L502.48,252.58 L504.18,251.68 L505.85,250.75 L507.49,249.77 L509.11,248.76 L510.69,247.71 L512.24,246.62 L513.76,245.50 L515.25,244.34 L516.70,243.15 L518.12,241.92 L519.50,240.67 L520.84,239.38 L522.14,238.06 L523.41,236.71 L524.63,235.33 L525.81,233.92 L526.96,232.49 L528.05,231.03 L529.11,229.54 L530.12,228.03 L531.09,226.50 L532.01,224.95 L532.88,223.37 L533.71,221.78 L534.49,220.17 L535.22,218.54 L535.91,216.89 L536.54,215.23 L537.13,213.55 L537.66,211.86 L538.15,210.16 L538.59,208.44 L538.97,206.72 L539.31,204.99 L539.59,203.25 L539.82,201.51 L540.01,199.76 L540.13,198.01 L540.21,196.26 L540.24,194.50" fill="none" stroke="#1f7a4d" stroke-width="2.6"/>
+<path d="M550.83,194.50 L550.81,192.92 L550.73,191.34 L550.60,189.76 L550.42,188.18 L550.19,186.61 L549.90,185.05 L549.57,183.49 L549.18,181.94 L548.75,180.40 L548.26,178.86 L547.72,177.34 L547.14,175.83 L546.50,174.33 L545.82,172.85 L545.08,171.38 L544.30,169.93 L543.48,168.49 L542.60,167.07 L541.68,165.67 L540.72,164.29 L539.70,162.93 L538.65,161.59 L537.55,160.28 L536.41,158.99 L535.23,157.72 L534.00,156.48 L532.74,155.26 L531.44,154.07 L530.09,152.91 L528.71,151.78 L527.30,150.68 L525.85,149.60 L524.36,148.56 L522.84,147.55 L521.29,146.57 L519.70,145.62 L518.09,144.71 L516.44,143.83 L514.77,142.99 L513.07,142.18 L511.35,141.40 L509.60,140.67 L507.83,139.97 L506.03,139.31 L504.21,138.68 L502.38,138.10 L500.52,137.55 L498.65,137.04 L496.76,136.57 L494.86,136.14 L492.94,135.75 L491.01,135.40 L489.08,135.10 L487.13,134.83 L485.17,134.60 L483.21,134.41 L481.24,134.27 L479.26,134.17 L477.29,134.10 L475.31,134.08 L473.34,134.10 L471.36,134.17 L469.39,134.27 L467.42,134.41 L465.46,134.60 L463.50,134.83 L461.55,135.10 L459.61,135.40 L457.68,135.75 L455.77,136.14 L453.86,136.57 L451.98,137.04 L450.10,137.55 L448.25,138.10 L446.41,138.68 L444.60,139.31 L442.80,139.97 L441.03,140.67 L439.28,141.40 L437.55,142.18 L435.85,142.99 L434.18,143.83 L432.54,144.71 L430.92,145.62 L429.34,146.57 L427.79,147.55 L426.27,148.56 L424.78,149.60 L423.33,150.68 L421.91,151.78 L420.53,152.91 L419.19,154.07 L417.89,155.26 L416.62,156.48 L415.40,157.72 L414.21,158.99 L413.07,160.28 L411.98,161.59 L410.92,162.93 L409.91,164.29 L408.94,165.67 L408.02,167.07 L407.15,168.49 L406.32,169.93 L405.54,171.38 L404.81,172.85 L404.12,174.33 L403.49,175.83 L402.90,177.34 L402.36,178.86 L401.88,180.40 L401.44,181.94 L401.06,183.49 L400.72,185.05 L400.44,186.61 L400.21,188.18 L400.02,189.76 L399.90,191.34 L399.82,192.92 L399.79,194.50 L399.82,196.08 L399.90,197.66 L400.02,199.24 L400.21,200.82 L400.44,202.39 L400.72,203.95 L401.06,205.51 L401.44,207.06 L401.88,208.60 L402.36,210.14 L402.90,211.66 L403.49,213.17 L404.12,214.67 L404.81,216.15 L405.54,217.62 L406.32,219.07 L407.15,220.51 L408.02,221.93 L408.94,223.33 L409.91,224.71 L410.92,226.07 L411.98,227.41 L413.07,228.72 L414.21,230.01 L415.40,231.28 L416.62,232.52 L417.89,233.74 L419.19,234.93 L420.53,236.09 L421.91,237.22 L423.33,238.32 L424.78,239.40 L426.27,240.44 L427.79,241.45 L429.34,242.43 L430.92,243.38 L432.54,244.29 L434.18,245.17 L435.85,246.01 L437.55,246.82 L439.28,247.60 L441.03,248.33 L442.80,249.03 L444.60,249.69 L446.41,250.32 L448.25,250.90 L450.10,251.45 L451.98,251.96 L453.86,252.43 L455.77,252.86 L457.68,253.25 L459.61,253.60 L461.55,253.90 L463.50,254.17 L465.46,254.40 L467.42,254.59 L469.39,254.73 L471.36,254.83 L473.34,254.90 L475.31,254.92 L477.29,254.90 L479.26,254.83 L481.24,254.73 L483.21,254.59 L485.17,254.40 L487.13,254.17 L489.08,253.90 L491.01,253.60 L492.94,253.25 L494.86,252.86 L496.76,252.43 L498.65,251.96 L500.52,251.45 L502.38,250.90 L504.21,250.32 L506.03,249.69 L507.83,249.03 L509.60,248.33 L511.35,247.60 L513.07,246.82 L514.77,246.01 L516.44,245.17 L518.09,244.29 L519.70,243.38 L521.29,242.43 L522.84,241.45 L524.36,240.44 L525.85,239.40 L527.30,238.32 L528.71,237.22 L530.09,236.09 L531.44,234.93 L532.74,233.74 L534.00,232.52 L535.23,231.28 L536.41,230.01 L537.55,228.72 L538.65,227.41 L539.70,226.07 L540.72,224.71 L541.68,223.33 L542.60,221.93 L543.48,220.51 L544.30,219.07 L545.08,217.62 L545.82,216.15 L546.50,214.67 L547.14,213.17 L547.72,211.66 L548.26,210.14 L548.75,208.60 L549.18,207.06 L549.57,205.51 L549.90,203.95 L550.19,202.39 L550.42,200.82 L550.60,199.24 L550.73,197.66 L550.81,196.08 L550.83,194.50" fill="none" stroke="#c62828" stroke-width="3.4" opacity="0.95"/>
+<circle cx="460.21" cy="194.5" r="4.8" fill="#c62828" stroke="#ffffff" stroke-width="1.5"/>
+<rect x="580" y="72" width="206" height="64" rx="7" fill="#ffffff" opacity="0.94" stroke="#d8dee8"/>
+<line x1="590" y1="86" x2="616" y2="86" stroke="#1f7a4d" stroke-width="3"/>
+<text x="624" y="90" font-size="12.5" fill="#3f4959">目标（正确）轨道</text>
+<line x1="590" y1="108" x2="616" y2="108" stroke="#c62828" stroke-width="3"/>
+<text x="624" y="112" font-size="12.5" fill="#3f4959">实际（传入）轨道</text>
+<rect x="70" y="78" width="320" height="120" rx="7" fill="#ffffff" opacity="0.95" stroke="#d8dee8"/>
+<text x="82" y="102" font-size="12.5" font-weight="700" fill="#1f7a4d">目标轨道</text>
+<text x="82" y="117" font-size="12" fill="#3f4959" font-family="ui-monospace,Menlo,Consolas,monospace">a = 12000.0 km，e = 0.4597016666666666</text>
+<text x="82" y="132" font-size="11.5" fill="#7b869a">近地点 6483.6 / 远地点 17516.4 km</text>
+<text x="82" y="150" font-size="12.5" font-weight="700" fill="#c62828">实际轨道</text>
+<text x="82" y="165" font-size="12" fill="#3f4959" font-family="ui-monospace,Menlo,Consolas,monospace">a = 12000.0 km，e = 0.6</text>
+<text x="82" y="180" font-size="11.5" fill="#7b869a">近地点 4800.0 / 远地点 19200.0 km</text>
+<line x1="506.2" y1="168.5" x2="460.2" y2="194.5" stroke="#1d5fd0" stroke-width="1.3" stroke-dasharray="4 3"/>
+<circle cx="460.2" cy="194.5" r="3.4" fill="#1d5fd0"/>
+<circle cx="506.2" cy="168.5" r="11.5" fill="#1d5fd0" stroke="#ffffff" stroke-width="1.7"/>
+<text x="506.2" y="172.5" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">1</text>
+<line x1="500.2" y1="188.5" x2="454.2" y2="162.5" stroke="#1d5fd0" stroke-width="1.3" stroke-dasharray="4 3"/>
+<circle cx="454.2" cy="162.5" r="3.4" fill="#1d5fd0"/>
+<circle cx="500.2" cy="188.5" r="11.5" fill="#1d5fd0" stroke="#ffffff" stroke-width="1.7"/>
+<text x="500.2" y="192.5" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+<line x1="494.6" y1="88.0" x2="448.6" y2="97.0" stroke="#1d5fd0" stroke-width="1.3" stroke-dasharray="4 3"/>
+<circle cx="448.6" cy="97.0" r="3.4" fill="#1d5fd0"/>
+<circle cx="494.6" cy="88.0" r="11.5" fill="#1d5fd0" stroke="#ffffff" stroke-width="1.7"/>
+<text x="494.6" y="92.0" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">3</text>
+<line x1="531.8" y1="138.4" x2="485.8" y2="112.4" stroke="#1d5fd0" stroke-width="1.3" stroke-dasharray="4 3"/>
+<circle cx="485.8" cy="112.4" r="3.4" fill="#1d5fd0"/>
+<circle cx="531.8" cy="138.4" r="11.5" fill="#1d5fd0" stroke="#ffffff" stroke-width="1.7"/>
+<text x="531.8" y="142.4" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">4</text>
+<line x1="559.8" y1="115.3" x2="513.8" y2="141.3" stroke="#1d5fd0" stroke-width="1.3" stroke-dasharray="4 3"/>
+<circle cx="513.8" cy="141.3" r="3.4" fill="#1d5fd0"/>
+<circle cx="559.8" cy="115.3" r="11.5" fill="#1d5fd0" stroke="#ffffff" stroke-width="1.7"/>
+<text x="559.8" y="119.3" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">5</text>
+<rect x="56" y="335" width="748" height="171" rx="8" fill="#fbfcfe" stroke="#d8dee8"/>
+<text x="70" y="355" font-size="13" fill="#9a6200" font-weight="700">①</text>
+<text x="92" y="355" font-size="13" fill="#3f4959">传入参数：a = 12000.0 km，e = 0.6 → 近地点地心距 4800.0 km</text>
+<text x="70" y="376" font-size="13" fill="#c62828" font-weight="700">②</text>
+<text x="92" y="376" font-size="13" fill="#3f4959">地球平均半径 6371 km。近地点 4800.0 km 低于该值 → 轨道完全落在地球内部，无物理意义</text>
+<text x="70" y="397" font-size="13" fill="#1f7a4d" font-weight="700">③</text>
+<text x="92" y="397" font-size="13" fill="#3f4959">若本意是「轨道高度 12000.0 km」，则半长轴应为 12000.0 km（高度 + 地球半径）</text>
+<text x="70" y="418" font-size="13" fill="#1f7a4d" font-weight="700">④</text>
+<text x="92" y="418" font-size="13" fill="#3f4959">修正后近地点地心距 6483.6 km，轨道在地表以上</text>
+<text x="70" y="439" font-size="13" fill="#3f4959" font-weight="700">⑤</text>
+<text x="92" y="439" font-size="13" fill="#3f4959">半长轴 12000 km 本身合理，但偏心率 0.6 使近地点降到 4800.0 km（低于地表）。在 </text>
+<text x="92" y="457" font-size="13" fill="#3f4959">a = 12000 km 下，偏心率须小于 0.4691 才能让近地点高于地表。</text>
+</svg></div>
+<div class="meta">文件：out/plots/ecc-too-large.svg　｜　尺寸：13.0 KB</div>
+</div>
+<div class="case">
+<h2>③ 误差预算：截断主导（763 步/圈）</h2>
+<p class="note">瓶颈在截断，缩步长有效。</p>
+<div class="fig"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 504" width="860" height="504" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif">
+<rect width="860" height="504" fill="#ffffff"/>
+<text x="20" y="32" font-size="17" font-weight="700" fill="#1a1f29">误差预算：总量分解与瓶颈</text>
+<text x="20" y="52" font-size="12.5" fill="#7b869a">按占总误差的份额排列；条形长度已对总误差归一</text>
+<rect x="20" y="68" width="630" height="309" rx="8" fill="#f7f9fc" stroke="#d8dee8"/>
+<text x="256" y="118" font-size="13.5" fill="#3f4959" text-anchor="end" font-weight="700">截断误差</text>
+<text x="256" y="134" font-size="11.5" fill="#7b869a" text-anchor="end">步长有限导致的离散化误差</text>
+<rect x="270" y="108" width="420" height="22" rx="5" fill="#eef2f7"/>
+<rect x="270" y="108" width="420.00" height="22" rx="5" fill="#c62828" opacity="0.9"/>
+<text x="700" y="124" font-size="12.5" fill="#3f4959" font-family="ui-monospace,Menlo,Consolas,monospace">9.81e-6 km</text>
+<text x="700" y="138" font-size="11.5" fill="#7b869a" font-family="ui-monospace,Menlo,Consolas,monospace">占 100.00%</text>
+<text x="256" y="170" font-size="13.5" fill="#3f4959" text-anchor="end" font-weight="700">浮点地板</text>
+<text x="256" y="186" font-size="11.5" fill="#7b869a" text-anchor="end">双精度舍入的累积下界</text>
+<rect x="270" y="160" width="420" height="22" rx="5" fill="#eef2f7"/>
+<rect x="270" y="160" width="2.00" height="22" rx="5" fill="#1d5fd0" opacity="0.9"/>
+<text x="700" y="176" font-size="12.5" fill="#3f4959" font-family="ui-monospace,Menlo,Consolas,monospace">1.51e-9 km</text>
+<text x="700" y="190" font-size="11.5" fill="#7b869a" font-family="ui-monospace,Menlo,Consolas,monospace">占 0.015%</text>
+<text x="256" y="222" font-size="13.5" fill="#3f4959" text-anchor="end" font-weight="700">参考解舍入</text>
+<text x="256" y="238" font-size="11.5" fill="#7b869a" text-anchor="end">解析真值自身的精度</text>
+<rect x="270" y="212" width="420" height="22" rx="5" fill="#eef2f7"/>
+<rect x="270" y="212" width="2.00" height="22" rx="5" fill="#9a6200" opacity="0.9"/>
+<text x="700" y="228" font-size="12.5" fill="#3f4959" font-family="ui-monospace,Menlo,Consolas,monospace">7.00e-13 km</text>
+<text x="700" y="242" font-size="11.5" fill="#7b869a" font-family="ui-monospace,Menlo,Consolas,monospace">占 0.0000071%</text>
+<rect x="20" y="391" width="630" height="125" rx="8" fill="#fbfcfe" stroke="#d8dee8"/>
+<text x="34" y="411" font-size="13" fill="#3f4959" font-weight="700">①</text>
+<text x="56" y="411" font-size="12.5" fill="#3f4959">总位置误差 9.810e-6 km 由三项构成</text>
+<text x="34" y="432" font-size="13" fill="#c62828" font-weight="700">②</text>
+<text x="56" y="432" font-size="12.5" fill="#3f4959">截断项 9.810e-6 km（占 99.98%）</text>
+<text x="34" y="453" font-size="13" fill="#3f4959" font-weight="700">③</text>
+<text x="56" y="453" font-size="12.5" fill="#3f4959">浮点地板 1.505e-9 km（占 0.015%）—— 双精度下的下界，</text>
+<text x="56" y="470" font-size="12.5" fill="#3f4959">缩步长也无法降低</text>
+<text x="34" y="474" font-size="13" fill="#9a6200" font-weight="700">④</text>
+<text x="56" y="474" font-size="12.5" fill="#3f4959">当前瓶颈：截断误差</text>
+<text x="34" y="495" font-size="13" fill="#1f7a4d" font-weight="700">⑤</text>
+<text x="56" y="495" font-size="12.5" fill="#3f4959">瓶颈为截断误差（浮点仅占 0.015%）。缩步长仍然有效：步数增至约 1309 步/圈（1</text>
+<text x="56" y="512" font-size="12.5" fill="#3f4959">.72 倍），预计位置误差降至 9.81e-7 km。</text>
+</svg></div>
+<div class="meta">文件：out/plots/error-budget.svg　｜　尺寸：3.7 KB</div>
+</div>
+<div class="case">
+<h2>④ 误差预算：浮点主导（6125 步/圈）</h2>
+<p class="note">瓶颈已转移到浮点，再缩步长收益递减。</p>
+<div class="fig"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 525" width="860" height="525" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif">
+<rect width="860" height="525" fill="#ffffff"/>
+<text x="20" y="32" font-size="17" font-weight="700" fill="#1a1f29">误差预算：总量分解与瓶颈</text>
+<text x="20" y="52" font-size="12.5" fill="#7b869a">按占总误差的份额排列；条形长度已对总误差归一</text>
+<rect x="20" y="68" width="630" height="309" rx="8" fill="#f7f9fc" stroke="#d8dee8"/>
+<text x="256" y="118" font-size="13.5" fill="#3f4959" text-anchor="end" font-weight="700">截断误差</text>
+<text x="256" y="134" font-size="11.5" fill="#7b869a" text-anchor="end">步长有限导致的离散化误差</text>
+<rect x="270" y="108" width="420" height="22" rx="5" fill="#eef2f7"/>
+<rect x="270" y="108" width="356.19" height="22" rx="5" fill="#c62828" opacity="0.9"/>
+<text x="700" y="124" font-size="12.5" fill="#3f4959" font-family="ui-monospace,Menlo,Consolas,monospace">2.41e-9 km</text>
+<text x="700" y="138" font-size="11.5" fill="#7b869a" font-family="ui-monospace,Menlo,Consolas,monospace">占 84.81%</text>
+<text x="256" y="170" font-size="13.5" fill="#3f4959" text-anchor="end" font-weight="700">浮点地板</text>
+<text x="256" y="186" font-size="11.5" fill="#7b869a" text-anchor="end">双精度舍入的累积下界</text>
+<rect x="270" y="160" width="420" height="22" rx="5" fill="#eef2f7"/>
+<rect x="270" y="160" width="222.56" height="22" rx="5" fill="#1d5fd0" opacity="0.9"/>
+<text x="700" y="176" font-size="12.5" fill="#3f4959" font-family="ui-monospace,Menlo,Consolas,monospace">1.51e-9 km</text>
+<text x="700" y="190" font-size="11.5" fill="#7b869a" font-family="ui-monospace,Menlo,Consolas,monospace">占 52.99%</text>
+<text x="256" y="222" font-size="13.5" fill="#3f4959" text-anchor="end" font-weight="700">参考解舍入</text>
+<text x="256" y="238" font-size="11.5" fill="#7b869a" text-anchor="end">解析真值自身的精度</text>
+<rect x="270" y="212" width="420" height="22" rx="5" fill="#eef2f7"/>
+<rect x="270" y="212" width="2.00" height="22" rx="5" fill="#9a6200" opacity="0.9"/>
+<text x="700" y="228" font-size="12.5" fill="#3f4959" font-family="ui-monospace,Menlo,Consolas,monospace">7.00e-13 km</text>
+<text x="700" y="242" font-size="11.5" fill="#7b869a" font-family="ui-monospace,Menlo,Consolas,monospace">占 0.025%</text>
+<rect x="20" y="391" width="630" height="125" rx="8" fill="#fbfcfe" stroke="#d8dee8"/>
+<text x="34" y="411" font-size="13" fill="#3f4959" font-weight="700">①</text>
+<text x="56" y="411" font-size="12.5" fill="#3f4959">总位置误差 2.841e-9 km 由三项构成</text>
+<text x="34" y="432" font-size="13" fill="#3f4959" font-weight="700">②</text>
+<text x="56" y="432" font-size="12.5" fill="#3f4959">截断项 2.409e-9 km（占 47.01%）</text>
+<text x="34" y="453" font-size="13" fill="#c62828" font-weight="700">③</text>
+<text x="56" y="453" font-size="12.5" fill="#3f4959">浮点地板 1.505e-9 km（占 52.990%）—— 双精度下的下界，</text>
+<text x="56" y="470" font-size="12.5" fill="#3f4959">缩步长也无法降低</text>
+<text x="34" y="474" font-size="13" fill="#9a6200" font-weight="700">④</text>
+<text x="56" y="474" font-size="12.5" fill="#3f4959">当前瓶颈：浮点地板</text>
+<text x="34" y="495" font-size="13" fill="#1f7a4d" font-weight="700">⑤</text>
+<text x="56" y="495" font-size="12.5" fill="#3f4959">瓶颈已转移到浮点舍入（占 53.0%）。继续缩步长收益递减 —— 理论上误差最多压到浮点地</text>
+<text x="56" y="512" font-size="12.5" fill="#3f4959">板 1.505e-9 km，但需步长趋于无限小，实际不可行。建议停止减小步长，</text>
+<text x="56" y="529" font-size="12.5" fill="#3f4959">或改用更高阶的方法。</text>
+</svg></div>
+<div class="meta">文件：out/plots/error-budget-float.svg　｜　尺寸：3.8 KB</div>
+</div>
+<div class="case">
+<h2>⑤ 误差沿弧段：末态合格但中段超差（R5）</h2>
+<p class="note">只看末态会漏报 —— 这正是 R5 规则要抓的情形。</p>
+<div class="fig"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 460" width="860" height="460" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif">
+<rect width="860" height="460" fill="#ffffff"/>
+<text x="76" y="32" font-size="17" font-weight="700" fill="#1a1f29">位置误差沿弧段的分布</text>
+<text x="76" y="52" font-size="12.5" fill="#7b869a">纵轴为对数刻度；横轴为弧段推进（圈）</text>
+<rect x="76" y="66" width="574" height="246" rx="8" fill="#f7f9fc" stroke="#d8dee8"/>
+<line x1="80" y1="302.00" x2="646" y2="302.00" stroke="#e8edf4" stroke-width="1"/>
+<text x="68" y="306.00" font-size="11.5" fill="#7b869a" text-anchor="end" font-family="ui-monospace,Menlo,Consolas,monospace">1e-6</text>
+<line x1="80" y1="226.89" x2="646" y2="226.89" stroke="#e8edf4" stroke-width="1"/>
+<text x="68" y="230.89" font-size="11.5" fill="#7b869a" text-anchor="end" font-family="ui-monospace,Menlo,Consolas,monospace">1e-5</text>
+<line x1="80" y1="140.07" x2="646" y2="140.07" stroke="#e8edf4" stroke-width="1"/>
+<text x="68" y="144.07" font-size="11.5" fill="#7b869a" text-anchor="end" font-family="ui-monospace,Menlo,Consolas,monospace">1e-4</text>
+<text x="84.00" y="330" font-size="11.5" fill="#7b869a" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace">1.0</text>
+<text x="223.50" y="330" font-size="11.5" fill="#7b869a" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace">2.3</text>
+<text x="363.00" y="330" font-size="11.5" fill="#7b869a" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace">3.5</text>
+<text x="502.50" y="330" font-size="11.5" fill="#7b869a" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace">4.8</text>
+<text x="642.00" y="330" font-size="11.5" fill="#7b869a" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace">6.0</text>
+<text x="363" y="348" font-size="12" fill="#7b869a" text-anchor="middle">弧段推进（圈）</text>
+<line x1="80" y1="140.07" x2="646" y2="140.07" stroke="#7b869a" stroke-width="1.6" stroke-dasharray="6 4"/>
+<text x="642" y="134.07" font-size="11.5" fill="#7b869a" text-anchor="end">位置阈值 = 1.00e-4 km</text>
+<path d="M84.00,245.07 L90.97,238.54 L97.95,231.77 L104.92,224.84 L111.90,217.81 L118.88,210.77 L125.85,203.77 L132.82,196.84 L139.80,190.04 L146.78,183.38 L153.75,176.90 L160.73,170.61 L167.70,164.53 L174.68,158.66 L181.65,153.03 L188.63,147.63 L195.60,142.48 L202.57,137.57 L209.55,132.92 L216.53,128.51 L223.50,124.37 L230.47,120.48 L237.45,116.85 L244.42,113.49 L251.40,110.39 L258.38,107.55 L265.35,104.97 L272.33,102.66 L279.30,100.61 L286.27,98.83 L293.25,97.31 L300.23,96.06 L307.20,95.08 L314.17,94.36 L321.15,93.91 L328.13,93.72 L335.10,93.80 L342.07,94.15 L349.05,94.76 L356.02,95.64 L363.00,96.78 L369.97,98.19 L376.95,99.87 L383.93,101.81 L390.90,104.01 L397.88,106.48 L404.85,109.22 L411.82,112.22 L418.80,115.48 L425.78,119.00 L432.75,122.78 L439.72,126.82 L446.70,131.12 L453.68,135.68 L460.65,140.49 L467.63,145.54 L474.60,150.84 L481.57,156.38 L488.55,162.15 L495.53,168.15 L502.50,174.36 L509.47,180.77 L516.45,187.36 L523.42,194.11 L530.40,200.99 L537.38,207.96 L544.35,215.00 L551.33,222.03 L558.30,229.01 L565.28,235.86 L572.25,242.49 L579.22,248.83 L586.20,254.77 L593.17,260.25 L600.15,265.19 L607.13,269.54 L614.10,273.29 L621.08,276.44 L628.05,279.02 L635.02,281.10 L642.00,282.74" fill="none" stroke="#c62828" stroke-width="2.4"/>
+<circle cx="84.00" cy="245.07" r="2.4" fill="#c62828"/>
+<circle cx="90.97" cy="238.54" r="2.4" fill="#c62828"/>
+<circle cx="97.95" cy="231.77" r="2.4" fill="#c62828"/>
+<circle cx="104.92" cy="224.84" r="2.4" fill="#c62828"/>
+<circle cx="111.90" cy="217.81" r="2.4" fill="#c62828"/>
+<circle cx="118.88" cy="210.77" r="2.4" fill="#c62828"/>
+<circle cx="125.85" cy="203.77" r="2.4" fill="#c62828"/>
+<circle cx="132.82" cy="196.84" r="2.4" fill="#c62828"/>
+<circle cx="139.80" cy="190.04" r="2.4" fill="#c62828"/>
+<circle cx="146.78" cy="183.38" r="2.4" fill="#c62828"/>
+<circle cx="153.75" cy="176.90" r="2.4" fill="#c62828"/>
+<circle cx="160.73" cy="170.61" r="2.4" fill="#c62828"/>
+<circle cx="167.70" cy="164.53" r="2.4" fill="#c62828"/>
+<circle cx="174.68" cy="158.66" r="2.4" fill="#c62828"/>
+<circle cx="181.65" cy="153.03" r="2.4" fill="#c62828"/>
+<circle cx="188.63" cy="147.63" r="2.4" fill="#c62828"/>
+<circle cx="195.60" cy="142.48" r="2.4" fill="#c62828"/>
+<circle cx="202.57" cy="137.57" r="2.4" fill="#c62828"/>
+<circle cx="209.55" cy="132.92" r="2.4" fill="#c62828"/>
+<circle cx="216.53" cy="128.51" r="2.4" fill="#c62828"/>
+<circle cx="223.50" cy="124.37" r="2.4" fill="#c62828"/>
+<circle cx="230.47" cy="120.48" r="2.4" fill="#c62828"/>
+<circle cx="237.45" cy="116.85" r="2.4" fill="#c62828"/>
+<circle cx="244.42" cy="113.49" r="2.4" fill="#c62828"/>
+<circle cx="251.40" cy="110.39" r="2.4" fill="#c62828"/>
+<circle cx="258.38" cy="107.55" r="2.4" fill="#c62828"/>
+<circle cx="265.35" cy="104.97" r="2.4" fill="#c62828"/>
+<circle cx="272.33" cy="102.66" r="2.4" fill="#c62828"/>
+<circle cx="279.30" cy="100.61" r="2.4" fill="#c62828"/>
+<circle cx="286.27" cy="98.83" r="2.4" fill="#c62828"/>
+<circle cx="293.25" cy="97.31" r="2.4" fill="#c62828"/>
+<circle cx="300.23" cy="96.06" r="2.4" fill="#c62828"/>
+<circle cx="307.20" cy="95.08" r="2.4" fill="#c62828"/>
+<circle cx="314.17" cy="94.36" r="2.4" fill="#c62828"/>
+<circle cx="321.15" cy="93.91" r="2.4" fill="#c62828"/>
+<circle cx="328.13" cy="93.72" r="2.4" fill="#c62828"/>
+<circle cx="335.10" cy="93.80" r="2.4" fill="#c62828"/>
+<circle cx="342.07" cy="94.15" r="2.4" fill="#c62828"/>
+<circle cx="349.05" cy="94.76" r="2.4" fill="#c62828"/>
+<circle cx="356.02" cy="95.64" r="2.4" fill="#c62828"/>
+<circle cx="363.00" cy="96.78" r="2.4" fill="#c62828"/>
+<circle cx="369.97" cy="98.19" r="2.4" fill="#c62828"/>
+<circle cx="376.95" cy="99.87" r="2.4" fill="#c62828"/>
+<circle cx="383.93" cy="101.81" r="2.4" fill="#c62828"/>
+<circle cx="390.90" cy="104.01" r="2.4" fill="#c62828"/>
+<circle cx="397.88" cy="106.48" r="2.4" fill="#c62828"/>
+<circle cx="404.85" cy="109.22" r="2.4" fill="#c62828"/>
+<circle cx="411.82" cy="112.22" r="2.4" fill="#c62828"/>
+<circle cx="418.80" cy="115.48" r="2.4" fill="#c62828"/>
+<circle cx="425.78" cy="119.00" r="2.4" fill="#c62828"/>
+<circle cx="432.75" cy="122.78" r="2.4" fill="#c62828"/>
+<circle cx="439.72" cy="126.82" r="2.4" fill="#c62828"/>
+<circle cx="446.70" cy="131.12" r="2.4" fill="#c62828"/>
+<circle cx="453.68" cy="135.68" r="2.4" fill="#c62828"/>
+<circle cx="460.65" cy="140.49" r="2.4" fill="#c62828"/>
+<circle cx="467.63" cy="145.54" r="2.4" fill="#c62828"/>
+<circle cx="474.60" cy="150.84" r="2.4" fill="#c62828"/>
+<circle cx="481.57" cy="156.38" r="2.4" fill="#c62828"/>
+<circle cx="488.55" cy="162.15" r="2.4" fill="#c62828"/>
+<circle cx="495.53" cy="168.15" r="2.4" fill="#c62828"/>
+<circle cx="502.50" cy="174.36" r="2.4" fill="#c62828"/>
+<circle cx="509.47" cy="180.77" r="2.4" fill="#c62828"/>
+<circle cx="516.45" cy="187.36" r="2.4" fill="#c62828"/>
+<circle cx="523.42" cy="194.11" r="2.4" fill="#c62828"/>
+<circle cx="530.40" cy="200.99" r="2.4" fill="#c62828"/>
+<circle cx="537.38" cy="207.96" r="2.4" fill="#c62828"/>
+<circle cx="544.35" cy="215.00" r="2.4" fill="#c62828"/>
+<circle cx="551.33" cy="222.03" r="2.4" fill="#c62828"/>
+<circle cx="558.30" cy="229.01" r="2.4" fill="#c62828"/>
+<circle cx="565.28" cy="235.86" r="2.4" fill="#c62828"/>
+<circle cx="572.25" cy="242.49" r="2.4" fill="#c62828"/>
+<circle cx="579.22" cy="248.83" r="2.4" fill="#c62828"/>
+<circle cx="586.20" cy="254.77" r="2.4" fill="#c62828"/>
+<circle cx="593.17" cy="260.25" r="2.4" fill="#c62828"/>
+<circle cx="600.15" cy="265.19" r="2.4" fill="#c62828"/>
+<circle cx="607.13" cy="269.54" r="2.4" fill="#c62828"/>
+<circle cx="614.10" cy="273.29" r="2.4" fill="#c62828"/>
+<circle cx="621.08" cy="276.44" r="2.4" fill="#c62828"/>
+<circle cx="628.05" cy="279.02" r="2.4" fill="#c62828"/>
+<circle cx="635.02" cy="281.10" r="2.4" fill="#c62828"/>
+<circle cx="642.00" cy="282.74" r="2.4" fill="#c62828"/>
+<rect x="202.57" y="70" width="258.08" height="238" fill="#c62828" opacity="0.10"/>
+<text x="331.61" y="86" font-size="11.5" fill="#c62828" text-anchor="middle" font-weight="700">超出阈值</text>
+<circle cx="84.00" cy="162.61" r="5.5" fill="#ffffff" stroke="#1d5fd0" stroke-width="2"/>
+<line x1="84.00" y1="162.61" x2="666" y2="92" stroke="#1d5fd0" stroke-width="1.2" stroke-dasharray="4 3"/>
+<circle cx="674" cy="92" r="10" fill="#1d5fd0"/>
+<text x="674" y="96" font-size="11.5" fill="#ffffff" text-anchor="middle" font-weight="700">1</text>
+<text x="690" y="90" font-size="12" fill="#3f4959">t = 1.00 圈</text>
+<text x="690" y="105" font-size="12" fill="#3f4959" font-family="ui-monospace,Menlo,Consolas,monospace">误差 5.50e-5 km</text>
+<text x="690" y="119" font-size="11.5" fill="#7b869a">起点附近，合格</text>
+<circle cx="329.52" cy="93.94" r="5.5" fill="#ffffff" stroke="#1d5fd0" stroke-width="2"/>
+<line x1="329.52" y1="93.94" x2="666" y2="122" stroke="#1d5fd0" stroke-width="1.2" stroke-dasharray="4 3"/>
+<circle cx="674" cy="122" r="10" fill="#1d5fd0"/>
+<text x="674" y="126" font-size="11.5" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+<text x="690" y="120" font-size="12" fill="#3f4959">t = 3.20 圈</text>
+<text x="690" y="135" font-size="12" fill="#3f4959" font-family="ui-monospace,Menlo,Consolas,monospace">误差 3.40e-4 km</text>
+<text x="690" y="149" font-size="11.5" fill="#7b869a">中段，超差 3.4 倍</text>
+<circle cx="642.00" cy="282.30" r="5.5" fill="#ffffff" stroke="#1d5fd0" stroke-width="2"/>
+<line x1="642.00" y1="282.30" x2="666" y2="152" stroke="#1d5fd0" stroke-width="1.2" stroke-dasharray="4 3"/>
+<circle cx="674" cy="152" r="10" fill="#1d5fd0"/>
+<text x="674" y="156" font-size="11.5" fill="#ffffff" text-anchor="middle" font-weight="700">3</text>
+<text x="690" y="150" font-size="12" fill="#3f4959">t = 6.00 圈</text>
+<text x="690" y="165" font-size="12" fill="#3f4959" font-family="ui-monospace,Menlo,Consolas,monospace">误差 2.30e-6 km</text>
+<text x="690" y="179" font-size="11.5" fill="#7b869a">末态，回到阈值内</text>
+<rect x="76" y="358" width="574" height="83" rx="8" fill="#fbfcfe" stroke="#d8dee8"/>
+<text x="90" y="378" font-size="13" fill="#1f7a4d" font-weight="700">①</text>
+<text x="112" y="378" font-size="13" fill="#3f4959">末态误差 2.3e-6 km，远在阈值内 —— 单看末态会判为合格</text>
+<text x="90" y="399" font-size="13" fill="#c62828" font-weight="700">②</text>
+<text x="112" y="399" font-size="13" fill="#3f4959">但弧段中段误差涨到 3.4e-4 km，是阈值的 3.4 倍</text>
+<text x="90" y="420" font-size="13" fill="#9a6200" font-weight="700">③</text>
+<text x="112" y="420" font-size="13" fill="#3f4959">这就是 R5（弧段外推失效）要抓的情形：末态达标 ≠ 全程达标</text>
+</svg></div>
+<div class="meta">文件：out/plots/error-profile.svg　｜　尺寸：10.7 KB</div>
+</div>
+</div></body></html>

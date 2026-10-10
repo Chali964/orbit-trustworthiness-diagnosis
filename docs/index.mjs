@@ -1,0 +1,1999 @@
+/**
+ * AGH 后端工具插件：轨道递推与可信度校验工具箱
+ * ============================================================================
+ * 用途
+ *   把「轨道递推 + 守恒量校验」的数值内核暴露成 Agent 可调用的工具，
+ *   使 AGH 能完成 ≥3 个连续步骤的自动闭环。
+ *
+ * 为什么内核用 JavaScript 而不是 Python
+ *   AGH 当前 Python 运行时（能力 ID `runtime.python.execution`）状态为 stub，
+ *   官方限制页写明「生产 Python runtime 与 Python thin SDK 仍非可用路径」。
+ *   因此内核必须跑在 AGH 自己的进程里。本文件是「自包含、无外部依赖的
+ *   文本 ESM 工具插件」——AGH 明确支持这一类，无需构建、无需联网装依赖。
+ *
+ * 与 Python 参考实现的关系
+ *   `orbit-demo/*.py` 是参考实现（含全部实验脚本）。本文件是它的等价移植，
+ *   已用 agh-orbit-plugin/verify-kernel.mjs 与 Python 版逐项对拍。
+ *   这属于 V&V 五级严格度里的第 2 级「代码间比对」。
+ *
+ * 工具清单
+ *   orbit_kernel_info    查询内核常量与方法阶数（给模型做规划用）
+ *   orbit_propagate      单次递推，返回位置误差与两个守恒量误差
+ *   orbit_order_test     观察阶测试：多档步长反推实际收敛幂次（V&V 第 5 级）
+ *   orbit_calibrate_step 由目标精度反推必要步长，并给出浮点精度下界
+ *   orbit_alarm_check    五条可信号规则体检，返回触发的规则与证据
+ */
+
+const Kind = Symbol.for('TypeBox.Kind')
+const num = (extra = {}) => ({ [Kind]: 'Number', type: 'number', ...extra })
+const int = (extra = {}) => ({ [Kind]: 'Integer', type: 'integer', ...extra })
+const str = (extra = {}) => ({ [Kind]: 'String', type: 'string', ...extra })
+const obj = (properties, required) => ({
+  [Kind]: 'Object', type: 'object', properties, required, additionalProperties: false,
+})
+const arr = (items, extra = {}) => ({ [Kind]: 'Array', type: 'array', items, ...extra })
+
+// ============================================================================
+// 一、数值内核
+// ============================================================================
+const EARTH_MU = 398600.4418               // 地球引力常数 km^3/s^2
+const EARTH_RADIUS_KM = 6371.0             // 地球平均半径，用于轨道物理合法性校验
+const EPS = Number.EPSILON                 // 双精度机器精度 = 2.220446049250313e-16
+
+/**
+ * ============================================================================
+ * 系统注册表：把一个「微分方程组」需要提供的六件事显式化
+ * ============================================================================
+ * 为什么要有这一层：整套 V&V 机制（观察阶测试、双口径标定、浮点下界、六条报警规则）
+ * 其实只依赖以下六件事，与「物理系统是什么」无关：
+ *
+ *   ① makeScenario(params)  把物理参数换算成场景量（周期、发散判据等）
+ *   ② exactState(t, sc)     解析真值 —— 有真值才能自动核对正确性
+ *   ③ deriv(s, sc)          右端项 ds/dt
+ *   ④ energy(s, sc)         守恒量（用于双判据中的「守恒量口径」）
+ *   ⑤ angularMomentum(s,sc) 第二个守恒量（没有则返回 null）
+ *   ⑥ positionError(s, ex)  位置误差的定义
+ *
+ * 于是「换一个物理系统」只需实现这六个函数，其余机制全部复用。
+ * 这不是把轨道力学的方法说成通用的，而是把**验证机制**与**被验证的系统**解耦。
+ * 二体问题与一维简谐振子是两类完全不同的系统（非线性引力 vs 线性振荡），
+ * 若同一套规则在两者上都给出符合理论阶、且能正确报警的结果，就证明了机制的可迁移性。
+ * 验证脚本：transfer-test.mjs
+ */
+const SYSTEMS = {
+  // ---------------------------------------------------------------- 二体问题
+  twoBody: {
+    key: 'twoBody',
+    name: '二体问题（开普勒轨道）',
+    nq: 2,                                  // 位置坐标个数
+    unit: 'km',
+    scenarioParams: ['semiMajorAxisKm', 'eccentricity', 'mu'],
+    conservedLabels: ['比能量 ε', '比角动量 h'],
+    // 守恒量口径的收敛幂次相对全局阶的偏移。实测（diagnose.mjs）：RK4 位置 5.000→4，
+    // 改进欧拉 2.970→2，中点法 2.989→2，即守恒量幂次 ≈ 全局阶 + 1。
+    energyOrderOffset: 1,
+    makeScenario({ semiMajorAxisKm = 7000, eccentricity = 0.05, mu = EARTH_MU } = {}) {
+      const a = Number(semiMajorAxisKm)
+      const e = Number(eccentricity)
+      const g = Number(mu)
+      if (!(a > 0)) throw new Error('半长轴必须为正数（单位 km）')
+      if (!(e >= 0 && e < 1)) {
+        throw new Error('偏心率必须落在 [0, 1) 内。本内核只处理椭圆轨道；'
+          + 'e ≥ 1 属抛物线/双曲线轨道，需要另一套参数化（活力公式与双曲开普勒方程），不在当前范围内。')
+      }
+        if (!(g > 0)) throw new Error('引力常数必须为正数')
+        // 物理合法性：近地点必须高于地球表面。
+        // 没有这道检查时，a=700 km、e=0.5 这类输入会被照常求解 —— 数学上成立（a>0 即可），
+        // 但近地点地心距仅 350 km，整条轨道位于地球内部，结果没有任何物理意义。
+        // 实测教训（2026-10-03）：这类输入会一路算出「实测阶 4.153」「位置误差 0.003 mm」
+        // 并被如实呈报，工具不报错，用户无从察觉。
+        const _rPeri = a * (1 - e)
+        if (_rPeri <= EARTH_RADIUS_KM) {
+          throw new Error(
+            `近地点地心距 ${_rPeri.toFixed(1)} km 不高于地球平均半径 ${EARTH_RADIUS_KM} km —— `
+            + `该轨道完全位于地球内部，无物理意义。请检查半长轴（单位 km，近地轨道典型值 6700–8000）`
+            + `与偏心率是否被误传（例如把「轨道高度」当成「半长轴」，或误传了「远地点地心距」）。`,
+          )
+        }
+        const nMean = Math.sqrt(g / a ** 3)
+      const rApoapsis = a * (1 + e)
+      return {
+        mu: g, a, e, nMean, period: 2 * Math.PI / nMean,
+        rApoapsis, rPeriapsis: a * (1 - e),
+        // 发散判据：地心距超过远地点 2 倍即认为跑飞。原实现写死为 a×3，随偏心率增大
+        // 余量会被压缩（e=0.9 时只剩 1.58 倍，会把正常轨道误判为发散，见 diagnose.mjs 的 D3）。
+        dimLimit: rApoapsis * 2,
+      }
+    },
+    exactState(t, sc) {
+      const E = solveKepler(sc.nMean * t, sc.e)
+      const cE = Math.cos(E), sE = Math.sin(E)
+      const Edot = sc.nMean / (1 - sc.e * cE)
+      const b = sc.a * Math.sqrt(1 - sc.e ** 2)
+      return [sc.a * (cE - sc.e), b * sE, -sc.a * sE * Edot, b * cE * Edot]
+    },
+    deriv(s, sc) {
+      const r3 = Math.pow(s[0] * s[0] + s[1] * s[1], 1.5)
+      return [s[2], s[3], -sc.mu * s[0] / r3, -sc.mu * s[1] / r3]
+    },
+    energy(s, sc) { return 0.5 * (s[2] ** 2 + s[3] ** 2) - sc.mu / Math.hypot(s[0], s[1]) },
+    angularMomentum(s) { return s[0] * s[3] - s[1] * s[2] },
+    positionError(s, ex) { return Math.hypot(s[0] - ex[0], s[1] - ex[1]) },
+  },
+
+  // ------------------------------------------------------------ 简谐振子
+  // ẍ = −ω²x，解析解 x = A·cos(ωt)，v = −Aω·sin(ωt)
+  // 与二体问题的差别：线性（而非 |r|⁻³ 非线性）、无角动量、单位是位移而非半径。
+  sho: {
+    key: 'sho',
+    name: '简谐振子（一维）',
+    nq: 1,
+    unit: 'km',
+    scenarioParams: ['amplitudeKm', 'periodSeconds'],
+    conservedLabels: ['比能量 ε'],
+    energyOrderOffset: 1,
+    makeScenario({ amplitudeKm = 7000, periodSeconds = 5828.517 } = {}) {
+      const A = Number(amplitudeKm)
+      const T = Number(periodSeconds)
+      if (!(A > 0)) throw new Error('振幅必须为正数（单位 km）')
+      if (!(T > 0)) throw new Error('周期必须为正数（单位 s）')
+      const omega = 2 * Math.PI / T
+      return {
+        amplitude: A, periodSeconds: T, omega,
+        period: T,
+        dimLimit: 2 * A,                    // |x| 超过振幅 2 倍即认为跑飞
+      }
+    },
+    exactState(t, sc) {
+      return [sc.amplitude * Math.cos(sc.omega * t), -sc.amplitude * sc.omega * Math.sin(sc.omega * t)]
+    },
+    deriv(s, sc) { return [s[1], -(sc.omega ** 2) * s[0]] },
+    // 单位质量能量：ε = (v² + ω²x²) / 2，严格守恒（精确解下恒定）
+    energy(s, sc) { return 0.5 * (s[1] ** 2 + sc.omega ** 2 * s[0] ** 2) },
+    angularMomentum() { return null },     // 一维系统没有角动量
+    positionError(s, ex) { return Math.abs(s[0] - ex[0]) },
+  },
+}
+
+const SYSTEM_KEYS = Object.keys(SYSTEMS)
+const DEFAULT_SYSTEM_KEY = 'twoBody'
+
+/**
+ * 构造一个「场景」对象：把物理参数换算成内核各处需要的量，并绑定该系统的六个函数。
+ * 所有内部函数都接受场景对象作为可选参数（默认取 DEFAULT_SCENARIO），
+ * 因此默认场景下的数值结果与不做场景化之前逐位一致（由 verify-kernel.mjs 的对拍守住）。
+ *
+ * 关键约束：标定式 A、精度平台、下界上限都随场景改变，必须按传入场景现场重算。
+ * 内核不做任何跨场景的缓存——否则就会引入「改了参数但标定没跟着变」的静默错误。
+ */
+function makeScenario({ system = DEFAULT_SYSTEM_KEY, ...rest } = {}) {
+  const sys = SYSTEMS[system]
+  if (!sys) throw new Error(`未知系统：${system}；可选 ${SYSTEM_KEYS.join(' / ')}`)
+  const sc = {
+    systemKey: sys.key, systemName: sys.name, nq: sys.nq, unit: sys.unit,
+    conservedLabels: sys.conservedLabels, energyOrderOffset: sys.energyOrderOffset,
+    ...sys.makeScenario(rest),
+  }
+  // 把该系统的六个函数绑到场景对象上，调用方只需 sc.deriv(s) 这样使用
+  sc.exactState = (t) => sys.exactState(t, sc)
+  sc.deriv = (s) => sys.deriv(s, sc)
+  sc.energy = (s) => sys.energy(s, sc)
+  sc.angularMomentum = (s) => sys.angularMomentum(s, sc)
+  sc.positionError = (s, ex) => sys.positionError(s, ex, sc)
+  return sc
+}
+
+const DEFAULT_SCENARIO = makeScenario()
+
+// 默认场景的常量别名（保持既有代码与 __kernel 导出可直接使用）
+const MU = DEFAULT_SCENARIO.mu
+const A_SEMI = DEFAULT_SCENARIO.a
+const ECC = DEFAULT_SCENARIO.e
+const N_MEAN = DEFAULT_SCENARIO.nMean
+const PERIOD = DEFAULT_SCENARIO.period
+const R_APOAPSIS = DEFAULT_SCENARIO.rApoapsis
+const DIM_LIMIT = DEFAULT_SCENARIO.dimLimit
+
+/**
+ * 把工具入参解析成场景对象。全部未传参时直接复用默认场景（避免每次重建）。
+ * system 为空 / 等于默认系统、且该系统的参数一个都没传 → 返回默认场景。
+ */
+function resolveScenario({ system, ...params } = {}) {
+  const key = system || DEFAULT_SYSTEM_KEY
+  const sys = SYSTEMS[key]
+  if (!sys) throw new Error(`未知系统：${key}；可选 ${SYSTEM_KEYS.join(' / ')}`)
+  const given = sys.scenarioParams.filter((k) => params[k] !== undefined)
+  if (key === DEFAULT_SYSTEM_KEY && given.length === 0) return DEFAULT_SCENARIO
+  return makeScenario({ system: key, ...params })
+}
+
+/** 牛顿迭代解开普勒方程 M = E − e·sinE */
+function solveKepler(M, e, tol = 1e-13, itmax = 80) {
+  M = M % (2 * Math.PI)
+  if (M < 0) M += 2 * Math.PI
+  let E = e < 0.8 ? M : Math.PI
+  for (let k = 0; k < itmax; k++) {
+    const d = (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E))
+    E -= d
+    if (Math.abs(d) < tol) break
+  }
+  return E
+}
+
+// 以下五个函数是「按场景分派」的薄封装：调用方照旧写 exactState(t, sc) / deriv(s, sc)，
+// 实际执行的是该场景绑定的系统函数。这样切换物理系统不需要改任何调用点。
+/** 解析真值 */
+function exactState(t, sc = DEFAULT_SCENARIO) { return sc.exactState(t) }
+/** 右端项 ds/dt */
+function deriv(s, sc = DEFAULT_SCENARIO) { return sc.deriv(s) }
+/** 守恒量 1 */
+function energy(s, sc = DEFAULT_SCENARIO) { return sc.energy(s) }
+/** 守恒量 2（一维系统返回 null） */
+function angularMomentum(s, sc = DEFAULT_SCENARIO) { return sc.angularMomentum(s) }
+
+// ---- 五种单步推进器。写成维度无关（数组映射），二体问题 4 维、简谐振子 2 维都能用 ----
+/** s + f·k 的逐分量运算 */
+function axpy(s, k, f) { return s.map((v, i) => v + f * k[i]) }
+
+function stEuler(s, dt, sc = DEFAULT_SCENARIO) {
+  return axpy(s, deriv(s, sc), dt)
+}
+function stHeun(s, dt, sc = DEFAULT_SCENARIO) {  // 改进欧拉 / 休恩法
+  const k1 = deriv(s, sc)
+  const k2 = deriv(axpy(s, k1, dt), sc)
+  return s.map((v, i) => v + dt * 0.5 * (k1[i] + k2[i]))
+}
+function stMidpoint(s, dt, sc = DEFAULT_SCENARIO) {  // 中点法
+  const k1 = deriv(s, sc)
+  const k2 = deriv(axpy(s, k1, 0.5 * dt), sc)
+  return axpy(s, k2, dt)
+}
+function stRK4(s, dt, sc = DEFAULT_SCENARIO) {  // 经典四阶龙格-库塔
+  const k1 = deriv(s, sc)
+  const k2 = deriv(axpy(s, k1, 0.5 * dt), sc)
+  const k3 = deriv(axpy(s, k2, 0.5 * dt), sc)
+  const k4 = deriv(axpy(s, k3, dt), sc)
+  return s.map((v, i) => v + dt / 6 * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]))
+}
+function stLeapfrog(s, dt, sc = DEFAULT_SCENARIO) {  // 辛积分器（蛙跳，kick-drift-kick）
+  const nq = sc.nq                                  // 位置坐标个数：二体 2、简谐振子 1
+  const accFrom = (st) => deriv(st, sc).slice(nq)   // 加速度部分（两个系统的加速度都只依赖位置）
+  const q = s.slice(0, nq), v = s.slice(nq)
+  const a1 = accFrom(s)
+  const vHalf = v.map((x, i) => x + 0.5 * dt * a1[i])
+  const qNew = q.map((x, i) => x + dt * vHalf[i])
+  const a2 = accFrom([...qNew, ...vHalf])
+  const vNew = vHalf.map((x, i) => x + 0.5 * dt * a2[i])
+  return [...qNew, ...vNew]
+}
+
+/* ══════════════════════════════════════════════════════════════
+ * 轨道诊断绘图（SVG）
+ * ──────────────────────────────────────────────────────────
+ * 让"设置错在哪、错了多严重"看得见。用 SVG 而非 PNG：零依赖、矢量清晰、
+ * 本身就是文本可以放进工具返回。
+ *
+ * 统一约定：图上标注用 ①②③ 编号，底部说明按同一编号列出，
+ * 保证「图片内容」与「文字原因」能逐条对上。
+ * ══════════════════════════════════════════════════════════════ */
+  // ── 配色（浅色主题，与项目文档一致）──────────────────────────
+  const C = {
+    bg: '#ffffff',
+    panel: '#f7f9fc',
+    line: '#d8dee8',
+    grid: '#e8edf4',
+    ink: '#1a1f29',
+    ink2: '#3f4959',
+    ink3: '#7b869a',
+    earth: '#cfdbe8',
+    earthEdge: '#8aa4bf',
+    earthCore: '#b9cadd',
+    target: '#1f7a4d',      // 目标（正确）轨道：绿
+    actual: '#c62828',      // 实际轨道：红
+    warn: '#9a6200',
+    ok: '#1f7a4d',
+    badge: '#1d5fd0',
+  };
+
+  const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif";
+  const MONO = "ui-monospace,Menlo,Consolas,monospace";
+
+  const esc = (s) => String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  const fmt = (x, d = 1) => {
+    if (!isFinite(x)) return '—';
+    if (x !== 0 && (Math.abs(x) < 1e-3 || Math.abs(x) >= 1e5)) return x.toExponential(2);
+    return x.toFixed(d);
+  };
+
+  const CIRCLED = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧'];
+
+  /**
+   * 把数值范围映射到像素。
+   * @param {number} v 值
+   * @param {number} lo 数据下界
+   * @param {number} hi 数据上界
+   * @param {number} p0 像素起点
+   * @param {number} p1 像素终点
+   */
+  const map = (v, lo, hi, p0, p1) => (hi === lo ? (p0 + p1) / 2 : p0 + ((v - lo) / (hi - lo)) * (p1 - p0));
+
+
+  /* ════════════════════════════════════════════════════════════════
+   * 图一：轨道对比图
+   * ════════════════════════════════════════════════════════════════ */
+
+  /**
+   * 画"实际轨道 vs 目标轨道"，并把地球画在中间作为尺度参照。
+   *
+   * @param {object} o
+   *   earthRadiusKm 地球半径（默认 6371）
+   *   target        { a, e } 目标（正确）轨道；可省
+   *   actual        { a, e } 实际（用户传入）轨道；可省
+   *   title         图标题
+   *   notes         [{ n, text, tone }] 与图上编号一一对应的说明
+   *   width / height
+   * @returns {string} SVG
+   */
+  function plotOrbitComparison({
+    earthRadiusKm = 6371,
+    target = null,
+    actual = null,
+    title = '轨道对比：实际 vs 目标',
+    notes = [],
+    width = 860,
+    height = 520,
+  } = {}) {
+    const W = width;
+    const padL = 56, padR = 56, padT = 64;
+    // 底部说明按估算宽度折行后所需高度。画布高度据此自适应 ——
+    // 否则说明框会伸出画布底边，最后几条被静默截断（曾踩过）。
+    const cwEst = W - padL - padR;
+    const perRow = Math.max(8, Math.floor((cwEst - 74) / 13));
+    const noteRows = (notes || []).reduce(
+      (acc, nn) => acc + Math.max(1, Math.ceil(String(nn.text).length / perRow)), 0);
+    const padB = noteRows ? 48 + noteRows * 21 : 40;
+    const H = height || (500 + Math.max(0, noteRows - 4) * 21);
+
+    // 画布内的绘图区
+    const cw = W - padL - padR;
+    const ch = H - padT - padB;
+    const cx = padL + cw / 2;
+    const cy = padT + ch / 2;
+
+    // 求可见范围：取所有轨道的远地点，至少覆盖地球的 1.25 倍
+    const apoOf = (o) => (o ? o.a * (1 + o.e) : 0);
+    const perOf = (o) => (o ? Math.max(0, o.a * (1 - o.e)) : 0);
+    let rMax = earthRadiusKm * 1.25;
+    for (const o of [target, actual]) if (o) rMax = Math.max(rMax, apoOf(o));
+    rMax *= 1.08;
+
+    // 等比缩放（保证圆是圆、椭圆不被拉扁）
+    const halfMin = Math.min(cw, ch) / 2;
+    const k = halfMin / rMax;
+
+    const toPx = (rKm, angRad) => [
+      cx + rKm * Math.cos(angRad) * k,
+      cy - rKm * Math.sin(angRad) * k,
+    ];
+
+    // 生成椭圆路径（起点在近地点、位于 +x 方向——与内核的相位约定一致）
+    const ellipsePath = (a, e, steps = 240) => {
+      const b = a * Math.sqrt(1 - e * e);
+      // 焦点在原点：椭圆中心在 (a·e, 0)
+      const pts = [];
+      for (let i = 0; i <= steps; i++) {
+        const th = (i / steps) * Math.PI * 2;
+        const x = a * e + a * Math.cos(th);
+        const y = b * Math.sin(th);
+        const [px, py] = [cx + x * k, cy - y * k];
+        pts.push(`${px.toFixed(2)},${py.toFixed(2)}`);
+      }
+      return 'M' + pts.join(' L');
+    };
+
+    const parts = [];
+    parts.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="${FONT}">`);
+    parts.push(`<rect width="${W}" height="${H}" fill="${C.bg}"/>`);
+
+    // 标题
+    parts.push(`<text x="${padL}" y="32" font-size="17" font-weight="700" fill="${C.ink}">${esc(title)}</text>`);
+    parts.push(`<text x="${padL}" y="52" font-size="12.5" fill="${C.ink3}">绘图区等比缩放；焦点在原点，近地点位于 +x 方向（与内核相位约定一致）</text>`);
+
+    // 绘图区背景
+    parts.push(`<rect x="${padL}" y="${padT}" width="${cw}" height="${ch}" rx="8" fill="${C.panel}" stroke="${C.line}"/>`);
+
+    // 同心参考圈（每 1/4 rMax，细网格线）
+    for (let i = 1; i <= 4; i++) {
+      parts.push(`<circle cx="${cx}" cy="${cy}" r="${(rMax * i / 4 * k).toFixed(2)}" fill="none" stroke="${C.grid}" stroke-width="1" stroke-dasharray="3 4"/>`);
+    }
+    // 坐标轴
+    parts.push(`<line x1="${padL + 8}" y1="${cy}" x2="${padL + cw - 8}" y2="${cy}" stroke="${C.grid}" stroke-width="1"/>`);
+    parts.push(`<line x1="${cx}" y1="${padT + 8}" x2="${cx}" y2="${padT + ch - 8}" stroke="${C.grid}" stroke-width="1"/>`);
+
+    // 地球
+    const rePx = earthRadiusKm * k;
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${rePx.toFixed(2)}" fill="${C.earth}" stroke="${C.earthEdge}" stroke-width="1.6"/>`);
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${(rePx * 0.55).toFixed(2)}" fill="${C.earthCore}" opacity="0.55"/>`);
+    parts.push(`<text x="${cx}" y="${cy + 4}" font-size="12" fill="#4a5b6e" text-anchor="middle" font-weight="700">地球</text>`);
+
+    // 目标轨道（绿）
+    if (target && target.a > 0 && target.e < 1) {
+      parts.push(`<path d="${ellipsePath(target.a, target.e)}" fill="none" stroke="${C.target}" stroke-width="2.6"/>`);
+    }
+    // 实际轨道（红）—— 画在最上层、加粗，并标出近地点
+    // 理由：当实际轨道整个落在地球内部时，细线会被地球圆完全盖住，核心对比就丢了
+    if (actual && actual.a > 0 && actual.e < 1) {
+      parts.push(`<path d="${ellipsePath(actual.a, actual.e)}" fill="none" stroke="${C.actual}" stroke-width="3.4" opacity="0.95"/>`);
+      const rpActual = actual.a * (1 - actual.e);
+      parts.push(`<circle cx="${(cx + rpActual * k).toFixed(2)}" cy="${cy}" r="4.8" fill="${C.actual}" stroke="#ffffff" stroke-width="1.5"/>`);
+    }
+
+    // 图例
+    const lx = padL + cw - 214, ly = padT + 14;
+    parts.push(`<rect x="${lx - 10}" y="${ly - 6}" width="206" height="${target && actual ? 64 : 40}" rx="7" fill="#ffffff" opacity="0.94" stroke="${C.line}"/>`);
+    let lrow = 0;
+    if (target) {
+      parts.push(`<line x1="${lx}" y1="${ly + 8 + lrow * 22}" x2="${lx + 26}" y2="${ly + 8 + lrow * 22}" stroke="${C.target}" stroke-width="3"/>`);
+      parts.push(`<text x="${lx + 34}" y="${ly + 12 + lrow * 22}" font-size="12.5" fill="${C.ink2}">目标（正确）轨道</text>`);
+      lrow++;
+    }
+    if (actual) {
+      parts.push(`<line x1="${lx}" y1="${ly + 8 + lrow * 22}" x2="${lx + 26}" y2="${ly + 8 + lrow * 22}" stroke="${C.actual}" stroke-width="3"/>`);
+      parts.push(`<text x="${lx + 34}" y="${ly + 12 + lrow * 22}" font-size="12.5" fill="${C.ink2}">实际（传入）轨道</text>`);
+    }
+
+    // 图上编号标记：按 notes 顺序，沿近地点方向依次排布
+    const marks = notes.map((n, i) => {
+      // 依据 tone 决定标记位置策略
+      const ang = -Math.PI / 2 + i * (Math.PI / 6);   // 从正下方起，逆时针散开
+      return { ...n, idx: i, ang };
+    });
+
+    // 标注：轨道要素摘要（左上角小卡片，便于对照）
+    const cardX = padL + 14, cardY = padT + 14;
+    const cardRows = [];
+    if (target) cardRows.push(['目标轨道', `a = ${fmt(target.a)} km，e = ${target.e}`, `近地点 ${fmt(perOf(target))} / 远地点 ${fmt(apoOf(target))} km`, C.target]);
+    if (actual) cardRows.push(['实际轨道', `a = ${fmt(actual.a)} km，e = ${actual.e}`, `近地点 ${fmt(perOf(actual))} / 远地点 ${fmt(apoOf(actual))} km`, C.actual]);
+    if (cardRows.length) {
+      const cardH = 24 + cardRows.length * 48;
+      parts.push(`<rect x="${cardX}" y="${cardY}" width="320" height="${cardH}" rx="7" fill="#ffffff" opacity="0.95" stroke="${C.line}"/>`);
+      let yy = cardY + 24;
+      for (const [label, line1, line2, color] of cardRows) {
+        parts.push(`<text x="${cardX + 12}" y="${yy}" font-size="12.5" font-weight="700" fill="${color}">${esc(label)}</text>`);
+        parts.push(`<text x="${cardX + 12}" y="${yy + 15}" font-size="12" fill="${C.ink2}" font-family="${MONO}">${esc(line1)}</text>`);
+        parts.push(`<text x="${cardX + 12}" y="${yy + 30}" font-size="11.5" fill="${C.ink3}">${esc(line2)}</text>`);
+        yy += 48;
+      }
+    }
+
+    // 标注编号：就地画气泡 + 引线
+    // 布点策略：① 实际轨道近地点（中心）② 地球边缘 ③④⑤ 沿右侧弧线均匀铺开，
+    // 避开左上角的要素卡片，彼此不重叠
+    // 布局：绘制区左上角留给要素卡片（宽 320、高约 24+48×N），
+    // 所以 ③④⑤ 只在「右上 → 右侧」这段圆弧上铺开（角度取负值，即 y 轴上方）
+    const cardRight = padL + 14 + 320;
+    const cardBottom = padT + 14 + 24 + (target && actual ? 2 : 1) * 48;
+    const spot = (idx) => {
+      if (idx === 0 && actual && actual.a > 0) {
+        return [cx + actual.a * (1 - actual.e) * k, cy];
+      }
+      if (idx === 1) {
+        return [cx + earthRadiusKm * k * Math.cos(-Math.PI / 3.4),
+                cy + earthRadiusKm * k * Math.sin(-Math.PI / 3.4)];
+      }
+      const rTarget = target ? target.a * (1 + target.e) * k : earthRadiusKm * k * 1.7;
+      // 角度从 -80° 递减到 -20°：都在上半平面偏右，避开左上卡片
+      const ang = Math.PI * (-0.44 + (idx - 2) * 0.13);
+      return [cx + rTarget * 0.90 * Math.cos(ang), cy + rTarget * 0.90 * Math.sin(ang)];
+    };
+    marks.forEach((m, i2) => {
+      const [tx, ty] = spot(i2);
+      let bx = Math.max(padL + 26, Math.min(padL + cw - 26, tx + 46));
+      let by = Math.max(padT + 24, Math.min(padT + ch - 26, ty + (i2 % 2 ? 26 : -26)));
+      // 若落进要素卡片范围，往下推出去
+      if (bx < cardRight && by < cardBottom) by = Math.min(padT + ch - 26, cardBottom + 16);
+      parts.push(`<line x1="${bx.toFixed(1)}" y1="${by.toFixed(1)}" x2="${tx.toFixed(1)}" y2="${ty.toFixed(1)}" stroke="${C.badge}" stroke-width="1.3" stroke-dasharray="4 3"/>`);
+      parts.push(`<circle cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="3.4" fill="${C.badge}"/>`);
+      parts.push(`<circle cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" r="11.5" fill="${C.badge}" stroke="#ffffff" stroke-width="1.7"/>`);
+      parts.push(`<text x="${bx.toFixed(1)}" y="${(by + 4).toFixed(1)}" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">${i2 + 1}</text>`);
+    });
+
+    // 底部：编号说明（与图上编号一一对应）
+    if (notes.length) {
+      let ny = padT + ch + 30;
+      const boxH = 24 + noteRows * 21;
+      parts.push(`<rect x="${padL}" y="${padT + ch + 10}" width="${cw}" height="${boxH}" rx="8" fill="#fbfcfe" stroke="${C.line}"/>`);
+      ny = padT + ch + 30;
+      let curY = ny;
+      notes.forEach((n, i) => {
+        const tone = n.tone || 'ink';
+        const color = tone === 'bad' ? C.actual : tone === 'good' ? C.ok : tone === 'warn' ? C.warn : C.ink2;
+        parts.push(`<text x="${padL + 14}" y="${ny + i * 21}" font-size="13" fill="${color}" font-weight="700">${CIRCLED[i] || ('(' + (i + 1) + ')')}</text>`);
+        // 说明文字过长时按估算宽度折行，避免被右侧截断
+      const maxChars = Math.floor((cw - 60) / 13);
+      const words = String(n.text);
+      const rows = [];
+      let rest = words;
+      while (rest.length > maxChars) {
+        let cut = rest.lastIndexOf('，', maxChars);
+        if (cut < maxChars * 0.5) cut = rest.lastIndexOf(' ', maxChars);
+        if (cut < maxChars * 0.5) cut = maxChars;
+        rows.push(rest.slice(0, cut + 1));
+        rest = rest.slice(cut + 1);
+      }
+      rows.push(rest);
+      rows.forEach((r, ri) => {
+        parts.push(`<text x="${padL + 36}" y="${ny + i * 21 + ri * 18}" font-size="13" fill="${C.ink2}">${esc(r)}</text>`);
+      });
+      });
+    }
+
+    parts.push('</svg>');
+    return parts.join('\n');
+  }
+
+
+  /* ════════════════════════════════════════════════════════════════
+   * 图二：误差沿弧段的分布
+   * ════════════════════════════════════════════════════════════════ */
+
+  /**
+   * 画"位置误差随弧段推进的变化"——专门用于说清 R5（末态合格、中段超差）。
+   *
+   * @param {object} o
+   *   samples    [{ t, errKm }] 采样点（t 单位：圈）
+   *   threshold  位置阈值（km）
+   *   thresholdLabel 阈值说明
+   *   annotations [{ t, errKm, text }] 需要标注的点
+   *   notes      [{ text, tone }] 底部说明（按序编号）
+   */
+  function plotErrorProfile({
+    samples = [],
+    threshold = null,
+    thresholdLabel = '位置阈值',
+    annotations = [],
+    title = '位置误差沿弧段的分布',
+    notes = [],
+    width = 860,
+    height = 460,
+  } = {}) {
+    const W = width, H = height;
+    const padL = 76, padR = 210, padT = 66, padB = 148;
+    const cw = W - padL - padR, ch = H - padT - padB;
+
+    const ts = samples.map((s) => s.t);
+    const es = samples.map((s) => s.errKm).filter((v) => v > 0);
+    const tLo = ts.length ? Math.min(...ts) : 0;
+    const tHi = ts.length ? Math.max(...ts) : 1;
+
+    // 纵轴用对数刻度（误差跨数量级时才有分辨力）
+    const eLo = es.length ? Math.max(Math.min(...es) * 0.6, 1e-15) : 1e-12;
+    const eHiBase = Math.max(es.length ? Math.max(...es) : 1e-6, threshold || 0);
+    const eHi = eHiBase * 1.6;
+
+    const lg = Math.log10;
+    const px = (t) => map(t, tLo, tHi, padL + 8, padL + cw - 8);
+    const py = (e) => map(lg(Math.max(e, eLo)), lg(eLo), lg(eHi), padT + ch - 10, padT + 10);
+
+    const parts = [];
+    parts.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="${FONT}">`);
+    parts.push(`<rect width="${W}" height="${H}" fill="${C.bg}"/>`);
+    parts.push(`<text x="${padL}" y="32" font-size="17" font-weight="700" fill="${C.ink}">${esc(title)}</text>`);
+    parts.push(`<text x="${padL}" y="52" font-size="12.5" fill="${C.ink3}">纵轴为对数刻度；横轴为弧段推进（圈）</text>`);
+    parts.push(`<rect x="${padL}" y="${padT}" width="${cw}" height="${ch}" rx="8" fill="${C.panel}" stroke="${C.line}"/>`);
+
+    // 纵轴刻度（10 的幂）
+    for (let p = Math.floor(lg(eLo)); p <= Math.ceil(lg(eHi)); p++) {
+      const v = Math.pow(10, p);
+      const y = py(v);
+      if (y < padT - 1 || y > padT + ch + 1) continue;
+      parts.push(`<line x1="${padL + 4}" y1="${y.toFixed(2)}" x2="${padL + cw - 4}" y2="${y.toFixed(2)}" stroke="${C.grid}" stroke-width="1"/>`);
+      parts.push(`<text x="${padL - 8}" y="${(y + 4).toFixed(2)}" font-size="11.5" fill="${C.ink3}" text-anchor="end" font-family="${MONO}">1e${p}</text>`);
+    }
+    // 横轴刻度
+    for (let i = 0; i <= 4; i++) {
+      const t = tLo + (tHi - tLo) * i / 4;
+      const x = px(t);
+      parts.push(`<text x="${x.toFixed(2)}" y="${padT + ch + 18}" font-size="11.5" fill="${C.ink3}" text-anchor="middle" font-family="${MONO}">${t.toFixed(tHi < 3 ? 2 : 1)}</text>`);
+    }
+    parts.push(`<text x="${padL + cw / 2}" y="${padT + ch + 36}" font-size="12" fill="${C.ink3}" text-anchor="middle">弧段推进（圈）</text>`);
+
+    // 阈值线
+    if (threshold) {
+      const y = py(threshold);
+      parts.push(`<line x1="${padL + 4}" y1="${y.toFixed(2)}" x2="${padL + cw - 4}" y2="${y.toFixed(2)}" stroke="${C.ink3}" stroke-width="1.6" stroke-dasharray="6 4"/>`);
+      parts.push(`<text x="${padL + cw - 8}" y="${(y - 6).toFixed(2)}" font-size="11.5" fill="${C.ink3}" text-anchor="end">${esc(thresholdLabel)} = ${fmt(threshold)} km</text>`);
+    }
+
+    // 误差曲线
+    if (samples.length > 1) {
+      const d = samples.map((s, i) => `${i ? 'L' : 'M'}${px(s.t).toFixed(2)},${py(s.errKm).toFixed(2)}`).join(' ');
+      parts.push(`<path d="${d}" fill="none" stroke="${C.actual}" stroke-width="2.4"/>`);
+      // 采样点
+      for (const s of samples) {
+        parts.push(`<circle cx="${px(s.t).toFixed(2)}" cy="${py(s.errKm).toFixed(2)}" r="2.4" fill="${C.actual}"/>`);
+      }
+    }
+
+    // 超阈值区段高亮（找出连续超过阈值的区间）
+    if (threshold && samples.length > 1) {
+      let segStart = null;
+      for (let i = 0; i < samples.length; i++) {
+        const over = samples[i].errKm > threshold;
+        if (over && segStart === null) segStart = samples[i].t;
+        if ((!over || i === samples.length - 1) && segStart !== null) {
+          const segEnd = samples[i].t;
+          const x0 = px(segStart), x1 = px(segEnd);
+          parts.push(`<rect x="${Math.min(x0, x1).toFixed(2)}" y="${padT + 4}" width="${Math.abs(x1 - x0).toFixed(2)}" height="${ch - 8}" fill="${C.actual}" opacity="0.10"/>`);
+          parts.push(`<text x="${((x0 + x1) / 2).toFixed(2)}" y="${padT + 20}" font-size="11.5" fill="${C.actual}" text-anchor="middle" font-weight="700">超出阈值</text>`);
+          segStart = null;
+        }
+      }
+    }
+
+    // 标注点
+    let annY0 = padT + 26;
+    annotations.forEach((a, i) => {
+      const x = px(a.t), y = py(a.errKm);
+      parts.push(`<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="5.5" fill="#ffffff" stroke="${C.badge}" stroke-width="2"/>`);
+      // 引出线到右侧
+      const ly = annY0 + i * 30;
+      parts.push(`<line x1="${x.toFixed(2)}" y1="${y.toFixed(2)}" x2="${padL + cw + 16}" y2="${ly}" stroke="${C.badge}" stroke-width="1.2" stroke-dasharray="4 3"/>`);
+      parts.push(`<circle cx="${padL + cw + 24}" cy="${ly}" r="10" fill="${C.badge}"/>`);
+      parts.push(`<text x="${padL + cw + 24}" y="${ly + 4}" font-size="11.5" fill="#ffffff" text-anchor="middle" font-weight="700">${i + 1}</text>`);
+      parts.push(`<text x="${padL + cw + 40}" y="${ly - 2}" font-size="12" fill="${C.ink2}">t = ${a.t.toFixed(2)} 圈</text>`);
+      parts.push(`<text x="${padL + cw + 40}" y="${ly + 13}" font-size="12" fill="${C.ink2}" font-family="${MONO}">误差 ${fmt(a.errKm)} km</text>`);
+      if (a.text) parts.push(`<text x="${padL + cw + 40}" y="${ly + 27}" font-size="11.5" fill="${C.ink3}">${esc(a.text)}</text>`);
+    });
+
+    // 底部说明
+    if (notes.length) {
+      let ny = padT + ch + 56;
+      const boxH = 20 + notes.length * 21;
+      parts.push(`<rect x="${padL}" y="${padT + ch + 46}" width="${cw}" height="${boxH}" rx="8" fill="#fbfcfe" stroke="${C.line}"/>`);
+      ny = padT + ch + 66;
+      notes.forEach((n, i) => {
+        const tone = n.tone || 'ink';
+        const color = tone === 'bad' ? C.actual : tone === 'good' ? C.ok : tone === 'warn' ? C.warn : C.ink2;
+        parts.push(`<text x="${padL + 14}" y="${ny + i * 21}" font-size="13" fill="${color}" font-weight="700">${CIRCLED[i] || ('(' + (i + 1) + ')')}</text>`);
+        parts.push(`<text x="${padL + 36}" y="${ny + i * 21}" font-size="13" fill="${C.ink2}">${esc(n.text)}</text>`);
+      });
+    }
+
+    parts.push('</svg>');
+    return parts.join('\n');
+  }
+
+
+  /* ════════════════════════════════════════════════════════════════
+   * 图三：误差预算分解（横向条形）
+   * ════════════════════════════════════════════════════════════════ */
+
+  /**
+   * 画误差预算的三项分解。
+   * @param {object} o
+   *   budget  内核 errorBudget 对象（含 truncationKm / floatingFloorKm /
+   *           referenceRoundingKm / floatingSharePct / bottleneck / advice）
+   *   notes    底部说明
+   */
+  // ⚠️ 已知局限（2026-10-05）：底部「编号说明」在条目文字较长时，
+//    仍有轻微重叠/截断 —— 因为说明区高度按估算行数给，与真实渲染有偏差。
+//    主体信息（三条形 + 份额 + 瓶颈）不受影响。待改为逐条测量后重排。
+  function plotErrorBudget({
+    budget = null,
+    title = '误差预算：总量分解与瓶颈',
+    notes = [],
+    width = 860,
+    height = null,
+  } = {}) {
+    const W = width;
+    const padL = 150, padR = 140, padT = 68;
+    // 说明区折行宽度（字/行）—— 高度估算与实际折行必须用同一个值，否则会截断
+    const WRAP = 44;
+    const wrapCount = (s) => {
+      const n = String(s).length;
+      return n <= WRAP ? 1 : Math.ceil(n / WRAP);
+    };
+    const noteRowsB = (notes || []).reduce((acc, nn) => acc + wrapCount(nn.text), 0);
+    // 面板高度（条形区 3 行 + 间距） + 说明区（按折行后的真实行数）
+    const panelH = 3 * 52 + 86;
+    const noteBoxH = 16 + noteRowsB * 19 + notes.length * 4;
+    const padB = 20 + noteBoxH + 20;
+    const H = height || (padT + panelH + 74 + noteBoxH + 20);
+    const cw = W - padL - padR, ch = H - padT - padB;
+
+    const parts = [];
+    parts.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="${FONT}">`);
+    parts.push(`<rect width="${W}" height="${H}" fill="${C.bg}"/>`);
+    parts.push(`<text x="${padL - 130}" y="32" font-size="17" font-weight="700" fill="${C.ink}">${esc(title)}</text>`);
+
+    if (!budget) {
+      parts.push(`<text x="${padL - 130}" y="80" font-size="14" fill="${C.ink3}">（无误差预算数据）</text>`);
+      parts.push('</svg>');
+      return parts.join('\n');
+    }
+
+    parts.push(`<text x="${padL - 130}" y="52" font-size="12.5" fill="${C.ink3}">按占总误差的份额排列；条形长度已对总误差归一</text>`);
+    parts.push(`<rect x="${padL - 130}" y="${padT}" width="${W - padL - padR + 60}" height="${ch + 60}" rx="8" fill="${C.panel}" stroke="${C.line}"/>`);
+
+    // 三项（若某项为 0 也画出，但标注 0）
+    const total = budget.totalPositionErrorKm || 1e-30;
+    const items = [
+      { key: 'truncationKm', label: '截断误差', desc: '步长有限导致的离散化误差', color: '#c62828' },
+      { key: 'floatingFloorKm', label: '浮点地板', desc: '双精度舍入的累积下界', color: '#1d5fd0' },
+      { key: 'referenceRoundingKm', label: '参考解舍入', desc: '解析真值自身的精度', color: '#9a6200' },
+    ].map((it) => ({ ...it, value: budget[it.key] ?? 0, share: (budget[it.key] ?? 0) / total }));
+
+    const barX = padL + 120;
+    const barW = W - barX - padR - 30;
+    const rowH = 52;
+    let y = padT + 34;
+
+    for (const it of items) {
+      const frac = Math.max(0, Math.min(1, total > 0 ? it.value / total : 0));
+      parts.push(`<text x="${barX - 14}" y="${y + 16}" font-size="13.5" fill="${C.ink2}" text-anchor="end" font-weight="700">${it.label}</text>`);
+      parts.push(`<text x="${barX - 14}" y="${y + 32}" font-size="11.5" fill="${C.ink3}" text-anchor="end">${it.desc}</text>`);
+      // 轨道槽
+      parts.push(`<rect x="${barX}" y="${y + 6}" width="${barW}" height="22" rx="5" fill="#eef2f7"/>`);
+      // 实际条
+      if (frac > 0) {
+        parts.push(`<rect x="${barX}" y="${y + 6}" width="${Math.max(2, barW * frac).toFixed(2)}" height="22" rx="5" fill="${it.color}" opacity="0.9"/>`);
+      }
+      parts.push(`<text x="${barX + barW + 10}" y="${y + 22}" font-size="12.5" fill="${C.ink2}" font-family="${MONO}">${fmt(it.value)} km</text>`);
+      // 份额：占比较小时给更多有效位，避免 0.015% 这类被四舍五入成 0.02%
+      const pctTxt = it.share >= 0.01 ? (it.share * 100).toFixed(2) + '%'
+        : it.share > 0 ? (it.share * 100).toPrecision(2) + '%' : '0%';
+      parts.push(`<text x="${barX + barW + 10}" y="${y + 36}" font-size="11.5" fill="${C.ink3}" font-family="${MONO}">占 ${pctTxt}</text>`);
+      y += rowH;
+    }
+
+    // 瓶颈与建议不再单独画框 —— 这两条信息已作为说明的第 4、5 条给出，
+    // 单独画框会与说明区争空间并导致重叠。
+
+    // 底部说明
+    if (notes.length) {
+      // 按折行后的真实行数决定框高；用累积 y 而非 i*21 ——
+      // 前面的条目可能折成多行，固定步长会让后续条目叠上来。
+      const MAXCB = WRAP;
+      const wrap = (s) => {
+        const rows = [];
+        let rest = String(s);
+        while (rest.length > MAXCB) {
+          let cut = rest.lastIndexOf('，', MAXCB);
+          if (cut < MAXCB * 0.5) cut = MAXCB;
+          rows.push(rest.slice(0, cut + 1));
+          rest = rest.slice(cut + 1);
+        }
+        rows.push(rest);
+        return rows;
+      };
+      const wrapped = notes.map((n) => wrap(n.text));
+      const totalRows = wrapped.reduce((a, r) => a + r.length, 0);
+      const boxTop = padT + ch + 74;
+      let curY = boxTop + 20;
+      parts.push(`<rect x="${padL - 130}" y="${boxTop}" width="${W - padL - padR + 60}" height="${16 + totalRows * 19 + notes.length * 4}" rx="8" fill="#fbfcfe" stroke="${C.line}"/>`);
+      notes.forEach((n, i) => {
+        const tone = n.tone || 'ink';
+        const color = tone === 'bad' ? C.actual : tone === 'good' ? C.ok : tone === 'warn' ? C.warn : C.ink2;
+        parts.push(`<text x="${padL - 116}" y="${curY}" font-size="13" fill="${color}" font-weight="700">${CIRCLED[i] || ('(' + (i + 1) + ')')}</text>`);
+        wrapped[i].forEach((rr, ri) => {
+          parts.push(`<text x="${padL - 94}" y="${curY + ri * 17}" font-size="12.5" fill="${C.ink2}">${esc(rr)}</text>`);
+        });
+        curY += wrapped[i].length * 19 + 4;
+      });
+    }
+
+    parts.push('</svg>');
+    return parts.join('\n');
+  }
+
+
+  /* ════════════════════════════════════════════════════════════════
+   * 便捷封装：物理合法性失败时的对比图
+   * ════════════════════════════════════════════════════════════════ */
+
+  /**
+   * 专门用于"参数被误传"这类情形：把用户传入的轨道与"如果本意如此"的目标轨道画在一起。
+   *
+   * @param {object} o
+   *   passed      用户传入的 { semiMajorAxisKm, eccentricity }
+   *   intended    推测的本意 { semiMajorAxisKm, eccentricity }（可为 null）
+   *   earthRadiusKm
+   *   reason      一句话原因
+   */
+  function plotParamMistake({ passed, intended = null, earthRadiusKm = 6371, reason = '' }) {
+    const perPassed = passed.semiMajorAxisKm * (1 - passed.eccentricity);
+    const notes = [];
+
+    notes.push({
+      text: `传入参数：a = ${fmt(passed.semiMajorAxisKm)} km，e = ${passed.eccentricity}`
+        + ` → 近地点地心距 ${fmt(perPassed)} km`,
+      tone: 'warn',
+    });
+    notes.push({
+      text: `地球平均半径 ${earthRadiusKm} km。近地点 ${fmt(perPassed)} km ${perPassed <= earthRadiusKm ? '低于' : '高于'}该值`
+        + ` → ${perPassed <= earthRadiusKm ? '轨道完全落在地球内部，无物理意义' : '轨道在地表以上，成立'}`,
+      tone: perPassed <= earthRadiusKm ? 'bad' : 'good',
+    });
+    if (intended) {
+      notes.push({
+        text: `若本意是「轨道高度 ${fmt(passed.semiMajorAxisKm)} km」，`
+          + `则半长轴应为 ${fmt(intended.semiMajorAxisKm)} km（高度 + 地球半径）`,
+        tone: 'good',
+      });
+      notes.push({
+        text: `修正后近地点地心距 ${fmt(intended.semiMajorAxisKm * (1 - intended.eccentricity))} km，轨道在地表以上`,
+        tone: 'good',
+      });
+    }
+    if (reason) notes.push({ text: reason, tone: 'ink' });
+
+    return plotOrbitComparison({
+      earthRadiusKm,
+      target: intended ? { a: intended.semiMajorAxisKm, e: intended.eccentricity } : null,
+      actual: { a: passed.semiMajorAxisKm, e: passed.eccentricity },
+      title: '参数诊断：传入的轨道 vs 本意应有的轨道',
+      notes,
+    });
+  }
+
+
+const METHODS = {
+  rk4: { name: 'RK4', order: 4, step: stRK4 },
+  heun: { name: '改进欧拉（休恩法）', order: 2, step: stHeun },
+  midpoint: { name: '中点法', order: 2, step: stMidpoint },
+  leapfrog: { name: '辛积分器（蛙跳）', order: 2, step: stLeapfrog },
+  euler: { name: '前向欧拉', order: 1, step: stEuler },
+}
+const METHOD_NAMES = Object.keys(METHODS)
+
+/**
+ * 递推并给出双真值对照。
+ * @param {object} o 参数：方法、每圈步数、积分圈数、初始相位；场景可由
+ *                   semiMajorAxisKm / eccentricity 指定，或直接传 sc 对象
+ * @returns {{...}} 位置误差(km)、比能量相对误差、比角动量相对误差、是否发散
+ */
+function propagate({ method = 'rk4', nPerOrbit = 400, orbits = 2, t0 = 0, trackMaxError = false,
+                     system, semiMajorAxisKm, eccentricity, mu,
+                     amplitudeKm, periodSeconds, sc = null } = {}) {
+  const S = sc || resolveScenario({ system, semiMajorAxisKm, eccentricity, mu, amplitudeKm, periodSeconds })
+  const M = METHODS[method]
+  if (!M) throw new Error(`未知方法：${method}；可选 ${METHOD_NAMES.join('/')}`)
+  if (!(nPerOrbit >= 2)) throw new Error('nPerOrbit 必须 ≥ 2')
+  const dt = S.period / nPerOrbit
+  const nSteps = Math.max(1, Math.round(orbits * nPerOrbit))
+  let s = exactState(t0, S)
+  const e0 = energy(s, S)
+  const h0 = angularMomentum(s, S)            // 一维简谐振子没有角动量，返回 null
+  let diverged = false, done = 0
+  // 全时段最大位置误差（可选）。为什么需要这个指标：
+  //   只测「终点」误差会受抽样相位影响。若终点恰好落在折返点（一维系统在整周期处
+  //   dx/dφ = 0），一阶相位误差不可见，只剩二阶项，测出的收敛阶会被抬高。
+  //   实测（diag-sho-sampling.mjs，简谐振子）：
+  //     整周期采样 → rk4 测出 5.00（理论 4）、leapfrog 测出 4.00（理论 2）
+  //     非折返点采样 → rk4 4.00、leapfrog 2.00，与理论一致
+  //   取全时段最大值则与抽样相位无关，任何弧段都能给出正确阶数。
+  const sampleEvery = trackMaxError ? Math.max(1, Math.floor(nSteps / 64)) : 0
+  let maxPosErr = 0
+  for (let k = 0; k < nSteps; k++) {
+    s = M.step(s, dt, S)
+    done = k + 1
+    const r = Math.hypot(...s.slice(0, S.nq))
+    if (!Number.isFinite(r) || r > S.dimLimit) { diverged = true; break }
+    if (trackMaxError && (k % sampleEvery === 0 || k === nSteps - 1)) {
+      const ek = S.exactState(t0 + done * dt)
+      const pe = S.positionError(s, ek)
+      if (Number.isFinite(pe) && pe > maxPosErr) maxPosErr = pe
+    }
+  }
+  const ex = exactState(t0 + done * dt, S)
+  const posErr = S.positionError(s, ex)
+  const relE = Math.abs(energy(s, S) - e0) / Math.abs(e0)
+  const relH = (h0 === null || h0 === 0) ? null
+    : Math.abs(angularMomentum(s, S) - h0) / Math.abs(h0)
+  return {
+    method, methodName: M.name, theoreticalOrder: M.order,
+    system: S.systemKey, systemName: S.systemName,
+    scenario: describeScenario(S),
+    periodSeconds: S.period,
+    nPerOrbit, orbits, dtSeconds: dt, steps: done,
+    positionErrorKm: posErr,
+    maxPositionErrorKm: trackMaxError ? maxPosErr : null,
+    relEnergyError: relE,
+    relAngularMomentumError: relH,
+    energyErrorOverEps: relE / EPS,
+    diverged,
+    reference: `${S.systemName}的解析真值`,
+  }
+}
+
+/**
+ * 场景摘要（一行文本），供各工具在结果里回显。系统无关，二体与简谐振子共用。
+ */
+function scenarioLine(s) {
+  if (!s) return '场景：未指定'
+  if (s.system === 'sho') {
+    return `场景【简谐振子】振幅 ${s.amplitudeKm} km，周期 ${s.periodSeconds} s，`
+      + `角频率 ${s.angularFrequency.toExponential(4)} rad/s`
+  }
+  return `场景【二体问题】a=${s.semiMajorAxisKm} km，e=${s.eccentricity}，`
+    + `周期 ${s.periodSeconds.toFixed(3)} s`
+    // 同时给「高度」与「地心距」：只给其一都出现过误读（把地心距当高度）
+    + (Number.isFinite(s.periapsisAltitudeKm)
+      ? `\n近地点高度 ${s.periapsisAltitudeKm.toFixed(1)} km｜远地点高度 ${s.apoapsisAltitudeKm.toFixed(1)} km`
+        + `（对应地心距 ${s.rPeriapsisKm} / ${s.rApoapsisKm} km；地表半径按 6371 km 计）`
+      : '')
+}
+
+/** 把场景对象压成一段可读描述（供各工具回显用） */
+function describeScenario(S) {
+  if (S.systemKey === 'sho') {
+    return {
+      system: S.systemKey, systemName: S.systemName,
+      amplitudeKm: S.amplitude, periodSeconds: S.periodSeconds,
+      angularFrequency: S.omega, divergenceLimitKm: S.dimLimit,
+    }
+  }
+    return {
+      system: S.systemKey, systemName: S.systemName,
+      semiMajorAxisKm: S.a, eccentricity: S.e, mu: S.mu,
+      periodSeconds: S.period,
+      // r* 为「地心距」（从地心算），*Altitude 为「高度」（从地表算）。
+      // 两者都给，避免只有 r* 时被误读成高度 —— 实测中出现过此类误读。
+      rPeriapsisKm: S.rPeriapsis, rApoapsisKm: S.rApoapsis,
+      periapsisAltitudeKm: S.rPeriapsis - EARTH_RADIUS_KM,
+      apoapsisAltitudeKm: S.rApoapsis - EARTH_RADIUS_KM,
+      divergenceLimitKm: S.dimLimit,
+    }
+}
+
+/** 由相邻两档反推幂次：v ∝ n^(−power) */
+function powerBetween(n0, v0, n1, v1) {
+  if (!(v0 > 0 && v1 > 0) || n0 === n1) return NaN
+  return Math.log(v0 / v1) / Math.log(n1 / n0)
+}
+
+/** 最小二乘拟合 log y = intercept + slope·log x */
+function fitLogLog(xs, ys) {
+  const m = xs.length
+  const lx = xs.map(Math.log), ly = ys.map(Math.log)
+  const mx = lx.reduce((a, b) => a + b, 0) / m
+  const my = ly.reduce((a, b) => a + b, 0) / m
+  let sxx = 0, sxy = 0
+  for (let i = 0; i < m; i++) { sxx += (lx[i] - mx) ** 2; sxy += (lx[i] - mx) * (ly[i] - my) }
+  return { slope: sxy / sxx, intercept: my - (sxy / sxx) * mx }
+}
+
+/** 带拟合优度的 log-log 最小二乘。返回幂次、系数、R²、残差标准差（dex）。
+ *  period 必须传：A 的换算是 A = C / T^p，T 随场景变。 */
+function fitQuality(ns, vs, period) {
+  const xs = ns.map(Math.log), ys = vs.map((v) => Math.log(v))
+  const m = xs.length
+  const mx = xs.reduce((a, b) => a + b, 0) / m
+  const my = ys.reduce((a, b) => a + b, 0) / m
+  let sxx = 0, sxy = 0
+  for (let i = 0; i < m; i++) { sxx += (xs[i] - mx) ** 2; sxy += (xs[i] - mx) * (ys[i] - my) }
+  const slope = sxy / sxx
+  const intercept = my - slope * mx
+  const ss = ys.reduce((a, y) => a + (y - my) ** 2, 0)
+  const ssr = ys.reduce((a, y, i) => a + (y - (intercept + slope * xs[i])) ** 2, 0)
+  const power = -slope
+  return {
+    power, slope, intercept,
+    r2: ss > 0 ? 1 - ssr / ss : 1,
+    residDex: Math.sqrt(ssr / m) / Math.LN10,
+    A: Math.exp(intercept) / period ** power,
+    count: m,
+  }
+}
+
+// 标定式可靠性门槛。数值由 diagnose.mjs 与 diag-position-power.mjs 实测标定，见下方对照表。
+const FIT_R2_MIN = 0.999          // 拟合优度下限
+const FIT_RESID_MAX_DEX = 0.06    // 残差标准差上限（dex）
+const EXTRAP_MAX_DEX = 0.30       // 外推检验：对窗口外下一档的预测偏差上限（dex）
+const POWER_TOL = 0.35            // 幂次与理论值的最大允许偏差
+//
+// 实测对照（窗口 [50..1600]，2 圈）——门槛据此设定
+//   方法        位置口径                    守恒量口径                判定
+//   rk4         R²=.99956 p=4.267          R²=1.00000 p=4.999       两个都可靠
+//   heun        R²=.99981 p=2.082          R²=.99993  p=2.970       两个都可靠
+//   midpoint    R²=.99985 p=2.069          R²=.99999  p=2.989       两个都可靠
+//   leapfrog    R²=1.00000 p=1.999 ✓       R²=.97694  p=5.359 ✗     只用位置口径
+//   euler       R²=.40593 ✗               R²=.96638  ✗             两个都不可靠
+//
+// 一条实测得到的经验规律：守恒量口径的幂次 ≈ 方法的全局阶 + 1
+//   （RK4 4→5.000、heun 2→2.970、midpoint 2→2.989、leapfrog 位置 2）。据此做自洽检验。
+//
+// 为什么这条检验是必需的：辛积分器的能量误差是「有界振荡」，单次末值测量受相位影响，
+// 局部幂次会在 6.15 → −1.44 之间乱跳，拟合出的 p=5.359 是假值；而它的位置误差是
+// 相位误差累积，幂次恒为 2.00、R²=1.00000，是干净的幂律。若不加检验，工具会拿
+// 假幂次反推出「守恒量口径需 188 步」这类无意义数字并交给模型。
+
+/**
+ * 标定截断误差项 E ≈ A·h^p，并对结果做可靠性检验。
+ * 换算方向很关键：由 E ≈ C·n^(−p) 且 n = T/h，得 A = C / T^p（除以 T^p，不是乘）。
+ *
+ * 四重检验（任一不通过即判该口径不可靠）
+ *   ① 拟合优度 R² ≥ 0.999
+ *   ② 残差标准差 ≤ 0.06 dex
+ *   ③ 外推检验：用拟合式预测窗口外下一档（2×最大步数），与实测偏差 ≤ 0.30 dex
+ *   ④ 幂次自洽：位置口径 p ≈ 理论阶；守恒量口径 p ≈ 理论阶 + 1；偏差 ≤ 0.35
+ * 最后在两个口径中选一个可靠者作为「选定口径」（都可靠时取 R² 更高者）。
+ */
+function calibrateTruncation({ method = 'rk4', orbits = 2, nList = [50, 100, 200, 400, 800, 1600],
+                               system, semiMajorAxisKm, eccentricity, mu,
+                               amplitudeKm, periodSeconds, sc = null } = {}) {
+  const S = sc || resolveScenario({ system, semiMajorAxisKm, eccentricity, mu, amplitudeKm, periodSeconds })
+  const theoretical = METHODS[method].order
+  const pos = [], ee = []
+  for (const n of nList) {
+    const r = propagate({ method, nPerOrbit: n, orbits, sc: S })
+    pos.push(r.positionErrorKm)
+    ee.push(r.relEnergyError)
+  }
+  // 外推检验用的窗口外下一档
+  const nNext = nList[nList.length - 1] * 2
+  const rNext = propagate({ method, nPerOrbit: nNext, orbits, sc: S })
+
+  const assess = (vs, measuredNext, expectedPower, label) => {
+    const q = fitQuality(nList, vs, S.period)
+    const reasons = []
+    if (!(q.r2 >= FIT_R2_MIN)) {
+      reasons.push(`拟合优度不足：R² = ${q.r2.toFixed(5)} < ${FIT_R2_MIN}`)
+    }
+    if (!(q.residDex <= FIT_RESID_MAX_DEX)) {
+      reasons.push(`残差过大：${q.residDex.toFixed(3)} dex > ${FIT_RESID_MAX_DEX}`)
+    }
+    const hNext = S.period / nNext
+    const predictedNext = q.A * hNext ** q.power
+    const extrapDex = (predictedNext > 0 && measuredNext > 0)
+      ? Math.abs(Math.log10(predictedNext / measuredNext)) : Infinity
+    if (!(extrapDex <= EXTRAP_MAX_DEX)) {
+      reasons.push(`外推检验失败：对每圈 ${nNext} 步的预测偏差 ${extrapDex.toFixed(2)} dex > ${EXTRAP_MAX_DEX}，`
+        + '说明拟合窗口内已混入平台趋势或误差不服从幂律')
+    }
+    const selfDev = Math.abs(q.power - expectedPower)
+    if (!(selfDev <= POWER_TOL)) {
+      reasons.push(`幂次不自洽：实测 ${q.power.toFixed(3)} 与理论 ${expectedPower} 相差 ${selfDev.toFixed(3)} > ${POWER_TOL}`)
+    }
+    return {
+      label, ...q, expectedPower, extrapDex, predictedNext, measuredNext,
+      reliable: reasons.length === 0, reasons,
+    }
+  }
+
+  const mp = assess(pos, rNext.positionErrorKm, theoretical, '位置误差')
+  const me = assess(ee, rNext.relEnergyError, theoretical + S.energyOrderOffset, '比能量相对误差')
+
+  let chosenMetric = null, chosen = null
+  if (mp.reliable && me.reliable) {
+    chosenMetric = me.r2 >= mp.r2 ? 'ee' : 'pos'
+    chosen = chosenMetric === 'ee' ? me : mp
+  } else if (me.reliable) { chosenMetric = 'ee'; chosen = me }
+  else if (mp.reliable) { chosenMetric = 'pos'; chosen = mp }
+
+  const note = chosen
+    ? `选定口径：${chosenMetric === 'ee' ? '守恒量' : '位置'}，`
+      + `E(h) ≈ ${chosen.A.toExponential(3)}·h^${chosen.power.toFixed(3)}（R² = ${chosen.r2.toFixed(5)}，`
+      + `残差 ${chosen.residDex.toFixed(3)} dex，外推偏差 ${chosen.extrapDex.toFixed(2)} dex）。`
+      + (mp.reliable && me.reliable ? '两个口径都可靠，取拟合优度更高者。' : '')
+    : `标定式不可用：${methodName(method)} 的误差在两个口径下都不服从幂律。`
+      + `位置口径：${mp.reasons[0] || '—'}；守恒量口径：${me.reasons[0] || '—'}。`
+      + '该方法对二体问题是条件不稳定的，误差按指数增长而非幂律，不能靠标定式反推步长，'
+      + '必须改用实跑迭代直接试出步长。'
+
+  const out = {
+    method, methodName: methodName(method), theoreticalOrder: theoretical,
+    scenario: describeScenario(S),
+    nList, nNext,
+    metrics: { pos: mp, ee: me },
+    // 兼容旧字段名（供 probeFloor / calibrateStep 使用）
+    posPower: mp.power, posA: mp.A, posReliable: mp.reliable, posReasons: mp.reasons,
+    eePower: me.power, eeA: me.A, eeReliable: me.reliable, eeReasons: me.reasons,
+    chosenMetric, chosenPower: chosen ? chosen.power : null, chosenA: chosen ? chosen.A : null,
+    reliable: chosenMetric !== null, note,
+  }
+  // 把场景对象本身挂在结果上（不可枚举，不会进入 JSON 输出），
+  // 供 probeFloor 等下游复用，避免靠字符串字段反推场景而丢失系统信息。
+  Object.defineProperty(out, 'scenarioObject', { value: S, enumerable: false })
+  return out
+}
+
+function methodName(key) {
+  return METHODS[key] ? METHODS[key].name : key
+}
+
+/**
+ * 估计精度平台：在深舍入区取几个相位，取中位数（平台是分布，不是曲线）。
+ *
+ * 关键守卫：必须先判断「探针步长是否真的进入了舍入主导区」。
+ *   判据：把标定式外推到探针步长，若实测误差远大于（≥3 倍）截断项预测值，
+ *         说明截断项已可忽略、测量到的就是舍入平台；否则说明还在截断区，
+ *         这个「平台」是假的，必须报 null 而不是报一个荒谬的大数。
+ *   实测教训：前向欧拉的阶数低、误差下降极慢，探针取每圈 20000 步时误差仍有
+ *   1.4e-2（是截断误差，不是舍入），此时若照公式反推会得到
+ *   「位置下界上限 3.14 亿步/圈」这种没有工程意义的数字。
+ */
+function probeFloor({ method = 'rk4', orbits = 2, nPerOrbit = 20000, cal = null,
+                      system, semiMajorAxisKm, eccentricity, mu,
+                      amplitudeKm, periodSeconds, sc = null } = {}) {
+  const S = sc || (cal && cal.scenarioObject) || resolveScenario({ system, semiMajorAxisKm, eccentricity, mu, amplitudeKm, periodSeconds })
+  const c = cal || calibrateTruncation({ method, orbits, sc: S })
+  const phases = [0, S.period / 3, 2 * S.period / 3]
+  const pos = [], ee = []
+  for (const t0 of phases) {
+    const r = propagate({ method, nPerOrbit, orbits, t0, sc: S })
+    pos.push(r.positionErrorKm)
+    ee.push(r.relEnergyError)
+  }
+  const med = (a) => [...a].sort((x, y) => x - y)[Math.floor(a.length / 2)]
+  const hProbe = S.period / nPerOrbit
+  // 只有该口径的标定可靠时，才能用「截断预测」判断是否触底；
+  // 标定不可靠说明误差不服从幂律，截断预测本身没有意义，此时报「无法判定」。
+  const predEe = c.eeReliable ? c.eeA * hProbe ** c.eePower : null
+  const predPos = c.posReliable ? c.posA * hProbe ** c.posPower : null
+  const floorEe = med(ee)
+  const floorPos = med(pos)
+  const eeReached = predEe !== null && floorEe >= 3 * predEe
+  const posReached = predPos !== null && floorPos >= 3 * predPos
+  const blocked = []
+  if (predEe === null) blocked.push('守恒量口径标定不可靠')
+  if (predPos === null) blocked.push('位置口径标定不可靠')
+  return {
+    nProbe: nPerOrbit, samples: phases.length,
+    rawFloorEnergy: floorEe, rawFloorPosKm: floorPos,
+    floorEnergy: eeReached ? floorEe : null,
+    floorPosKm: posReached ? floorPos : null,
+    floorEnergyMin: Math.min(...ee), floorEnergyMax: Math.max(...ee),
+    floorPosMin: Math.min(...pos), floorPosMax: Math.max(...pos),
+    predictedTruncEeAtProbe: predEe,
+    predictedTruncPosAtProbe: predPos,
+    energyFloorReached: eeReached,
+    posFloorReached: posReached,
+    floorNote: (eeReached && posReached)
+      ? '探针已进入舍入主导区，平台可用。'
+      : blocked.length
+        ? `${blocked.join('、')}，无法用截断预测判断探针是否触底，下界不可估。`
+          + '（标定不可靠说明误差不服从幂律，此时「平台」这个概念本身不适用。）'
+        : `探针未进入舍入主导区（${!eeReached ? '能量' : ''}${!eeReached && !posReached ? '、' : ''}${!posReached ? '位置' : ''}口径），`
+          + '此时的「平台」仍是截断误差，下界不可估。应加大 nProbe 或改用高阶方法。',
+  }
+}
+
+/**
+ * 由目标精度反推必要步长，并给出「再缩也没用」的上界。
+ * n_required = T·(A/E_target)^(1/p)
+ * n_upper    = T·(A/E_floor)^(1/p)   ← 浮点下界对应的转折点
+ */
+function calibrateStep({ method = 'rk4', orbits = 2, targetRelEnergyErr = 1e-11, targetPosErrKm = null,
+                         system, semiMajorAxisKm, eccentricity, mu,
+                      amplitudeKm, periodSeconds, sc = null } = {}) {
+  const S = sc || resolveScenario({ system, semiMajorAxisKm, eccentricity, mu, amplitudeKm, periodSeconds })
+  const cal = calibrateTruncation({ method, orbits, sc: S })
+  const floor = probeFloor({ method, orbits, cal, sc: S })
+  const T = S.period
+  const out = {
+    method, methodName: methodName(method), theoreticalOrder: cal.theoreticalOrder,
+    scenario: describeScenario(S),
+    calibrationReliable: cal.reliable,
+    calibrationNote: cal.note,
+    chosenMetric: cal.chosenMetric,
+    calibratedPower: cal.chosenPower, calibratedA: cal.chosenA,
+    reliability: {
+      position: { reliable: cal.posReliable, reasons: cal.posReasons, power: cal.posPower, A: cal.posA },
+      energy: { reliable: cal.eeReliable, reasons: cal.eeReasons, power: cal.eePower, A: cal.eeA },
+    },
+    targetRelEnergyErr,
+    floorRelEnergyError: floor.floorEnergy,
+    floorRelEnergyRawProbe: floor.rawFloorEnergy,
+    floorRelEnergySpread: [floor.floorEnergyMin, floor.floorEnergyMax],
+    floorPosErrorKm: floor.floorPosKm,
+    floorPosErrorRawProbe: floor.rawFloorPosKm,
+    probeStepsPerOrbit: floor.nProbe,
+    energyFloorReached: floor.energyFloorReached,
+    posFloorReached: floor.posFloorReached,
+    floorNote: floor.floorNote,
+    notes: [
+      '目标精度低于精度平台时不可达，需要换更高阶方法或换更高精度算法。',
+      '每圈步数超过上界后，再缩步长不会改善精度，只增加计算量。',
+      '平台是随机分布（改初始相位即变），按中位数 + 散布范围报告，不给单点值。',
+      '下界的口径应与交付指标一致；用守恒量标定出的下界去判位置精度会得出错误结论。',
+      '标定式只在「该口径的误差服从幂律」时成立。标定不可靠时本工具不返回步数，'
+        + '因为返回一个基于假幂次的数字比不返回更危险。',
+    ],
+  }
+
+  // 守恒量口径：可靠才反推
+  if (cal.eeReliable) {
+    out.truncationModel = `E(h) ≈ ${cal.eeA.toExponential(4)} × h^${cal.eePower.toFixed(3)}（守恒量口径，h 单位为秒）`
+    out.requiredStepsPerOrbit = Math.ceil(T * (cal.eeA / targetRelEnergyErr) ** (1 / cal.eePower))
+    out.ceilingStepsPerOrbit = floor.floorEnergy === null ? null
+      : Math.floor(T * (cal.eeA / floor.floorEnergy) ** (1 / cal.eePower))
+    out.feasible = floor.floorEnergy === null ? null : targetRelEnergyErr >= floor.floorEnergy
+  } else {
+    out.truncationModel = null
+    out.requiredStepsPerOrbit = null
+    out.ceilingStepsPerOrbit = null
+    out.feasible = null
+    out.eeBlockedReason = `守恒量口径标定不可靠，不返回步数。原因：${cal.eeReasons.join('；')}`
+  }
+
+  // 位置口径：可靠才反推
+  if (targetPosErrKm != null) {
+    out.targetPosErrKm = targetPosErrKm
+    if (cal.posReliable) {
+      out.requiredStepsPerOrbitPos = Math.ceil(T * (cal.posA / targetPosErrKm) ** (1 / cal.posPower))
+      out.ceilingStepsPerOrbitPos = floor.floorPosKm === null ? null
+        : Math.floor(T * (cal.posA / floor.floorPosKm) ** (1 / cal.posPower))
+      out.feasiblePos = floor.floorPosKm === null ? null : targetPosErrKm >= floor.floorPosKm
+    } else {
+      out.requiredStepsPerOrbitPos = null
+      out.ceilingStepsPerOrbitPos = null
+      out.feasiblePos = null
+      out.posBlockedReason = `位置口径标定不可靠，不返回步数。原因：${cal.posReasons.join('；')}`
+    }
+  }
+  return out
+}
+
+/**
+ * 观察阶测试（V&V 第 5 级严格度）：多档步长反推实际收敛幂次。
+ * @param {boolean} useMaxError 用「全时段最大位置误差」代替「终点误差」。
+ *   终点误差受抽样相位影响：抽样时刻若落在折返点，一阶相位误差不可见，测出的阶数会被抬高。
+ *   见 propagate 里 trackMaxError 的说明与 diag-sho-sampling.mjs 的实测。
+ */
+function orderTest({ method = 'rk4', orbits = 2, nList = [50, 100, 200, 400], useMaxError = false,
+                     system, semiMajorAxisKm, eccentricity, mu,
+                     amplitudeKm, periodSeconds, sc = null } = {}) {
+  const S = sc || resolveScenario({ system, semiMajorAxisKm, eccentricity, mu, amplitudeKm, periodSeconds })
+  const rows = nList.map((n) => {
+    const r = propagate({ method, nPerOrbit: n, orbits, sc: S, trackMaxError: useMaxError })
+    const posErr = (useMaxError && r.maxPositionErrorKm > 0) ? r.maxPositionErrorKm : r.positionErrorKm
+    return { n, dt: r.dtSeconds, posErr, relE: r.relEnergyError, relH: r.relAngularMomentumError }
+  })
+  const intervals = []
+  for (let i = 1; i < rows.length; i++) {
+    intervals.push({
+      from: rows[i - 1].n, to: rows[i].n,
+      observedOrderPos: powerBetween(rows[i - 1].n, rows[i - 1].posErr, rows[i].n, rows[i].posErr),
+      observedOrderEnergy: powerBetween(rows[i - 1].n, rows[i - 1].relE, rows[i].n, rows[i].relE),
+      observedOrderAngMom: powerBetween(rows[i - 1].n, rows[i - 1].relH, rows[i].n, rows[i].relH),
+    })
+  }
+  const fp = fitLogLog(rows.map((r) => r.n), rows.map((r) => r.posErr))
+  const theoretical = METHODS[method].order
+  const fitted = -fp.slope
+  const ratio = fitted / theoretical
+  // 「阶数明显高于理论」同样是要报警的异常：正常数值方法不会超过理论阶，
+  // 出现说明测量本身有问题（最典型的是抽样落在折返点，一阶误差不可见）。
+  // 实测：简谐振子整周期采样时，rk4 测出 5.00（理论 4）、leapfrog 测出 4.00（理论 2）。
+  const verdict = ratio > 1.25 ? 'order_exceeds_theory_check_sampling'
+    : ratio > 0.85 ? 'observed_order_matches_theory'
+      : ratio > 0.6 ? 'order_degraded_check_step_range' : 'order_collapsed'
+  return {
+    method, methodName: METHODS[method].name, theoreticalOrder: theoretical,
+    scenario: describeScenario(S), usedMaxError: useMaxError,
+    rows, intervals, fittedOrderPos: fitted, orderRatio: ratio, verdict,
+    hint: '用位置误差标定阶数；比能量误差的幂次通常会高出一阶，不可用于标定收敛阶。'
+      + '若实测阶高于理论阶，多半是抽样时刻落在折返点（改 useMaxError 或用非整周期弧段）。',
+  }
+}
+
+/**
+ * 六条报警规则体检。
+ *
+ * 两条设计教训（均由 smoke-tools.mjs 实测暴露并修正）：
+ *   ① 下界的口径必须与交付指标一致。早期版本用「比能量误差」标定出的上限去判
+ *      辛积分器的步长是否过小，对 leapfrog 误报 R3——因为辛积分器能量误差是
+ *      有界振荡、很早就贴住噪声底，而位置误差还远未到平台。现改为以位置口径判定。
+ *   ② 必须覆盖「两项都不达标」。早期版本只有 R1（一好一坏），导致前向欧拉在
+ *      每圈 2000 步时位置差 5000 km、能量差 7e-2，却一条规则也不触发。现补 R6。
+ */
+const ALARM_RULES = {
+  R1: '守恒量达标但位置超差（最危险：虚假安心，守恒量好不等于位置对）',
+  R2: '观测阶明显低于理论阶（用四点阶梯全局拟合判定；步长区间或实现有问题）',
+  R3: '步长已小于有效下界（双判据：标定式下界上限，或现场再细分 8 倍实测无改善）',
+  R4: '递推发散（迭代跑飞，结果不可用）',
+  R5: '短弧段合格但长弧段不合格（弧段外推失效，与 R1 同构的虚假安心）',
+  R6: '两项指标均不达标（该配置不合格，需换方法或换步长）',
+}
+
+/**
+ * 规则严重度。区分「阻断交付」与「仅提示」是必须的：
+ *   致命（fatal）：这条触发说明结果**不可用于交付**——守恒量与位置矛盾、递推发散、两项都失败。
+ *   警告（warn） ：这条触发说明数值过程有问题或结论的适用范围受限，但**结论本身仍可用**。
+ * 用途：闭环第四步若把「任何报警」都当成不通过，就会因为一条 R5 警告而否定一个各项指标
+ * 都合格的配置。实测教训见 loop-runner.mjs 的目标 A。
+ */
+const ALARM_SEVERITY = { R1: 'fatal', R2: 'warn', R3: 'warn', R4: 'fatal', R5: 'warn', R6: 'fatal' }
+const FATAL_RULES = Object.keys(ALARM_SEVERITY).filter((k) => ALARM_SEVERITY[k] === 'fatal')
+
+/**
+ * ============================================================================
+ * 纯判定函数：只做「决策」，不做任何测量
+ * ============================================================================
+ * 为什么要把它单独抽出来
+ *   报警规则此前和「怎么测量」绑在一起，于是每个调用方都得自己抄一份判定逻辑
+ *   ——工作台页面就抄了一份，结果插件改了口径它没跟着改，同一现象给出不同结论。
+ *   现在判定逻辑只有这一份；测量部分由调用方按自己的算力预算决定测多少。
+ *
+ * metrics 里哪些字段可以缺
+ *   全部可选。某条规则所需的测量缺失时，该规则判为「未评估」并在 evidence 里
+ *   写明缺什么 —— 不做猜测、不静默跳过。
+ *
+ * @param {object} m 已测好的量：
+ *   diverged, positionErrorKm, relEnergyError, theoreticalOrder, nPerOrbit
+ *   observedOrderPos      可选：相邻两点的局部收敛阶
+ *   globalOrderPos        可选：四点阶梯的全局收敛阶（缺失则退回 observedOrderPos）
+ *   refineImprovement     可选：把步长细化 refineFactor 倍后位置误差的改善倍数
+ *   refineFactor          可选：上面那个细化倍数，缺省 8
+ *   ceilingStepsPerOrbitPos 可选：位置口径的下界上限（缺失则 R3 只用运行时探针）
+ *   ceilingStepsPerOrbitEnergy 可选：守恒量口径的下界上限（仅作参考文本）
+ *   longerDiverged, longerPositionErrorKm, arcGrowthRatio 可选：2× 弧段的结果
+ * @param {object} thr 目标：{ targetRelEnergyErr, targetPosErrKm }
+ */
+function decideRules(m, thr) {
+  const posTol = thr.targetPosErrKm
+  const eTol = thr.targetRelEnergyErr
+  const energyPass = Number.isFinite(m.relEnergyError) && m.relEnergyError <= eTol
+  const posPass = Number.isFinite(m.positionErrorKm) && m.positionErrorKm <= posTol
+
+  const rules = []
+  const add = (id, evaluated, hit, title, desc, evidence) => {
+    rules.push({
+      id, hit: !!hit, evaluated, severity: ALARM_SEVERITY[id],
+      title: title || ALARM_RULES[id], desc, evidence,
+      off: !evaluated,
+    })
+    return rules[rules.length - 1]
+  }
+
+  // ---- R1 / R6：两项指标的关系 ----
+  if (m.diverged) {
+    add('R1', false, false, null, '已发散，本规则不适用', '发散时由 R4 独占判定')
+    add('R6', false, false, null, '已发散，本规则不适用', '发散时由 R4 独占判定')
+  } else {
+    add('R1', true, energyPass && !posPass, null,
+      '两个检查给出矛盾结论 —— 守恒量给了虚假的安全感',
+      `守恒量相对误差 ${m.relEnergyError.toExponential(3)} ${energyPass ? '≤' : '>'} ${eTol.toExponential(0)}`
+      + `，位置误差 ${m.positionErrorKm.toExponential(3)} km ${posPass ? '≤' : '>'} ${posTol} km`)
+    add('R6', true, !energyPass && !posPass, null,
+      '该配置两项都不合格，不应交付',
+      `守恒量 ${m.relEnergyError.toExponential(3)} 与位置 ${m.positionErrorKm.toExponential(3)} km 同时超出阈值`)
+  }
+
+  // 发散之后，收敛阶 / 下界 / 弧段外推这些测量都失去意义，一律判为不适用（与 R4 独占一致）
+  const measurable = !m.diverged
+
+  // ---- R2：观测阶偏低 ----
+  const order = Number.isFinite(m.globalOrderPos) ? m.globalOrderPos : m.observedOrderPos
+  const orderSrc = Number.isFinite(m.globalOrderPos) ? '四点阶梯全局拟合' : '相邻两点局部估计'
+  if (!measurable) {
+    add('R2', false, false, null, '已发散，本规则不适用', '发散后收敛阶测量失去意义')
+  } else if (!Number.isFinite(order) || !m.theoreticalOrder) {
+    add('R2', false, false, null, '缺收敛阶测量', '未提供 observedOrderPos / globalOrderPos，无法判定')
+  } else {
+    const ratio = order / m.theoreticalOrder
+    add('R2', true, ratio < 0.6, null,
+      '当前步长没进入正常收敛区间，标定出来的误差本身不可信',
+      `实测阶 ${order.toFixed(3)}（${orderSrc}）／理论阶 ${m.theoreticalOrder} = ${ratio.toFixed(2)}`)
+  }
+
+  // ---- R3：步长已小于有效下界 ----
+  const byRuntime = Number.isFinite(m.refineImprovement) && m.refineImprovement < 2
+  const byCalib = Number.isFinite(m.ceilingStepsPerOrbitPos) && m.nPerOrbit > m.ceilingStepsPerOrbitPos
+  if (!measurable) {
+    add('R3', false, false, null, '已发散，本规则不适用', '发散后下界测量失去意义')
+  } else if (!Number.isFinite(m.refineImprovement) && !Number.isFinite(m.ceilingStepsPerOrbitPos)) {
+    add('R3', false, false, null, '缺下界测量', '未提供 refineImprovement 或 ceilingStepsPerOrbitPos，无法判定')
+  } else {
+    const parts = []
+    if (byRuntime) {
+      parts.push(`现场实测：步长再细分 ${m.refineFactor || 8} 倍，位置误差只改善 ${m.refineImprovement.toFixed(2)} 倍（不足 2 倍），说明已触底`)
+    }
+    if (byCalib) {
+      parts.push(`标定式判定：每圈 ${m.nPerOrbit} 步已超过位置口径的下界上限 ${Math.floor(m.ceilingStepsPerOrbitPos)} 步`)
+    }
+    add('R3', true, byRuntime || byCalib, null,
+      '步长已在有效下界之下，继续缩步长不会改善位置精度',
+      parts.length ? parts.join('；') + '。'
+        + `（守恒量口径上限为 ${m.ceilingStepsPerOrbitEnergy == null ? '未测出' : Math.floor(m.ceilingStepsPerOrbitEnergy)} 步；判定以位置口径为准，`
+        + '因为位置才是交付指标。辛积分器的能量误差是有界振荡、很早就贴住噪声底，若按能量口径判定会误报。）'
+        : `未触底：步长再细分 ${m.refineFactor || 8} 倍仍改善 ${m.refineImprovement.toFixed(2)} 倍`)
+  }
+
+  // ---- R4：发散 ----
+  add('R4', true, !!m.diverged, null,
+    '递推发散（迭代跑飞，结果不可用）',
+    m.diverged ? '状态量超过发散判据，递推中断' : '未发散，状态量始终在发散判据以内')
+
+  // ---- R5：短弧段合格但长弧段不合格 ----
+  if (!measurable) {
+    add('R5', false, false, null, '已发散，本规则不适用', '发散后弧段外推测量失去意义')
+  } else if (!Number.isFinite(m.longerPositionErrorKm) && m.longerDiverged !== true) {
+    add('R5', false, false, null, '缺长弧段测量', '未提供 longerPositionErrorKm / longerDiverged，无法判定')
+  } else {
+  // R5 的「长弧段是否失效」用**全时段最大**位置误差判定，而不是末态误差。
+  // 原因（diag-arc-growth.mjs 实测）：周期性系统的末态误差对抽样相位敏感，
+  //   简谐振子 rk4、n=50：6.3 圈 0.563 km → 12.6 圈 0.576 km（几乎没涨）→ 25.2 圈 2.104 km。
+  //   三个弧段的终点 |sin(ωt)| 分别是 0.951 / 0.588 / 0.951，误差被相位污染，
+  //   「T vs 2T」的比较因此不可靠。改用全时段最大值后，误差随弧段单调平滑增长。
+  const laterFail = m.longerDiverged === true
+    || (Number.isFinite(m.longerMaxPositionErrorKm) && m.longerMaxPositionErrorKm > posTol)
+    || (!Number.isFinite(m.longerMaxPositionErrorKm)
+      && Number.isFinite(m.longerPositionErrorKm) && m.longerPositionErrorKm > posTol)
+  // 只用「长弧段是否真的越过阈值」判定；不用增长比值 —— 比值没有绝对量级门槛，
+  // 实测会误报（RK4 每圈 20000 步、1 圈时误差才 6.7e-12 km，比值却达 35.8×）。
+  add('R5', true, posPass && laterFail, null,
+      '短弧段合格但长弧段不合格 —— 短弧段验证的结论不能外推',
+      `${posPass ? '当前弧段末态合格' : '当前弧段末态已不合格'}（${m.positionErrorKm.toExponential(3)} km）；`
+      + `加倍弧段内的最大位置误差为 `
+      + `${m.longerDiverged ? '发散' : (Number.isFinite(m.longerMaxPositionErrorKm) ? m.longerMaxPositionErrorKm.toExponential(3) : m.longerPositionErrorKm.toExponential(3)) + ' km'}`
+      + `（阈值 ${posTol} km）`
+      + (Number.isFinite(m.arcGrowthRatio) ? `，末态增长 ${m.arcGrowthRatio.toFixed(2)} 倍` : ''))
+  }
+
+  const triggered = rules.filter((r) => r.hit).map((r) => r.id)
+  const blocking = triggered.filter((k) => ALARM_SEVERITY[k] === 'fatal')
+  const warnings = triggered.filter((k) => ALARM_SEVERITY[k] === 'warn')
+  const unevaluated = rules.filter((r) => !r.evaluated).map((r) => r.id)
+  const evidence = {}
+  for (const r of rules) evidence[r.id] = r.evidence
+  return {
+    rules, triggeredRules: triggered, blockingRules: blocking, warningRules: warnings,
+    unevaluatedRules: unevaluated, deliverable: blocking.length === 0, evidence,
+    summary: triggered.length === 0
+      ? (unevaluated.length ? `未触发信号；${unevaluated.length} 条规则因缺少测量未评估（${unevaluated.join('、')}）`
+        : '六项检查全部通过，未触发信号。')
+      : `触发 ${triggered.length} 条：${triggered.join('、')}`
+        + `（致命 ${blocking.length} 条，警告 ${warnings.length} 条）`
+        + `：${blocking.length === 0 ? '结果仍可用于交付，但需说明上述警告' : '结果不可用于交付'}。`,
+  }
+}
+
+/**
+ * @param {object} o.cal   可选：预先算好的标定结果（必须与 method/orbits/场景一致）。
+ *    用于网格扫描等需要固定 nPerOrbit 之外参数、反复调用本函数的场景，避免重复标定。
+ * @param {object} o.floor 可选：预先算好的平台探测结果（必须与 cal 配套）。
+ */
+function alarmCheck({
+  method = 'rk4', nPerOrbit = 400, orbits = 2,
+  targetRelEnergyErr = 1e-10, targetPosErrKm = 1.0,
+  system, semiMajorAxisKm, eccentricity, mu, amplitudeKm, periodSeconds,
+  sc = null, cal = null, floor = null,
+} = {}) {
+  const S = sc || resolveScenario({ system, semiMajorAxisKm, eccentricity, mu, amplitudeKm, periodSeconds })
+  // main / longer 都开 trackMaxError：R5 的弧段比较要用全时段最大误差，
+  // 否则会被终点相位污染（详见 decideRules 里 R5 的注释）。
+  const main = propagate({ method, nPerOrbit, orbits, sc: S, trackMaxError: true })
+  const fine = propagate({ method, nPerOrbit: nPerOrbit * 2, orbits, sc: S })
+  const longer = propagate({ method, nPerOrbit, orbits: orbits * 2, sc: S, trackMaxError: true })
+  const C = cal || calibrateTruncation({ method, orbits, sc: S })
+  const F = floor || probeFloor({ method, orbits, cal: C, sc: S })
+  const T = S.period
+  const ceilingEe = F.floorEnergy === null ? null
+    : T * (C.eeA / F.floorEnergy) ** (1 / C.eePower)
+
+  const theoretical = METHODS[method].order
+  const energyPass = main.relEnergyError <= targetRelEnergyErr
+  const posPass = main.positionErrorKm <= targetPosErrKm
+  const observedOrder = powerBetween(nPerOrbit, main.positionErrorKm, nPerOrbit * 2, fine.positionErrorKm)
+  const arcGrowth = main.positionErrorKm > 0 ? longer.positionErrorKm / main.positionErrorKm : NaN
+
+  // ---- 测量部分 ----
+  // 这几项只对「未发散」的配置有意义（发散后测量失去意义）
+  let globalOrder = observedOrder
+  let orderSource = '局部两点估计（阶梯不完整，已回退）'
+  let refineImprovement = null
+  let r3RefineFactor = 8
+
+  if (!main.diverged) {
+    // R2：四点阶梯 (n/2, n, 2n, 4n) 的全局幂次，而不是相邻两点的局部估计。
+    //   网格统计（grid-eval.mjs）实测：局部两点估计在粗步长区噪声很大 ——
+    //   改进欧拉 n=50、6 圈时局部估计给 2.172（看似正常），四点拟合给 0.998（确实衰减）。
+    const ladderN = [0.5, 1, 2, 4].map((k) => Math.max(2, Math.round(nPerOrbit * k)))
+    const ladderErr = ladderN.map((nn) => {
+      if (nn === nPerOrbit) return main.positionErrorKm
+      const rr = propagate({ method, nPerOrbit: nn, orbits, sc: S })
+      return (rr.diverged || !(rr.positionErrorKm > 0)) ? NaN : rr.positionErrorKm
+    })
+    if (ladderErr.every((v) => Number.isFinite(v) && v > 0)) {
+      globalOrder = -fitLogLog(ladderN, ladderErr).slope
+      orderSource = `四点阶梯全局拟合 ${ladderN.join('/')}`
+    }
+
+    // R3 的运行时探针：把步长再细分 8 倍，看位置误差还有没有改善。
+    //   改善倍数 = 粗步长误差 / 细步长误差，正常应远大于 1。
+    //   注意方向：写成「细/粗 < 2」会把几乎所有健康配置都判成触底（实测误报率 100%）。
+    const finerR3 = propagate({ method, nPerOrbit: nPerOrbit * 8, orbits, sc: S })
+    refineImprovement = (finerR3.positionErrorKm > 0)
+      ? main.positionErrorKm / finerR3.positionErrorKm : null
+  }
+
+  const ceilingPos = F.floorPosKm === null ? null
+    : T * (C.posA / F.floorPosKm) ** (1 / C.posPower)
+
+  // ---- 判定部分：交给共享的 decideRules，与工作流页面共用同一份标准 ----
+  const dec = decideRules({
+    diverged: main.diverged,
+    positionErrorKm: main.positionErrorKm,
+    relEnergyError: main.relEnergyError,
+    theoreticalOrder: theoretical,
+    nPerOrbit,
+    observedOrderPos: observedOrder,
+    globalOrderPos: Number.isFinite(globalOrder) ? globalOrder : null,
+    refineImprovement: Number.isFinite(refineImprovement) ? refineImprovement : null,
+    refineFactor: r3RefineFactor,
+    ceilingStepsPerOrbitPos: ceilingPos === null ? null : Math.floor(ceilingPos),
+    ceilingStepsPerOrbitEnergy: ceilingEe === null ? null : Math.floor(ceilingEe),
+    longerDiverged: longer.diverged,
+    longerPositionErrorKm: longer.positionErrorKm,
+    longerMaxPositionErrorKm: longer.maxPositionErrorKm,
+    arcGrowthRatio: arcGrowth,
+  }, { targetRelEnergyErr, targetPosErrKm })
+
+  // ---- 误差预算：把总误差分解为「截断 / 浮点 / 参考解」，判定瓶颈并给出改进方向 ----
+  // 与"准不准"相比，误差预算回答的是"这个精度受什么限制、还能不能更好"。
+  // 数据全部来自上面已算好的量，不增加任何额外积分。
+  // 与工作区里的《误差预算表》同源 —— 那份是事后整理的文档，这里是运行时可得的字段。
+  const errorBudget = (() => {
+    if (main.diverged) return null          // 发散时分解无意义
+
+    const total = main.positionErrorKm
+    const floorKm = F.floorPosKm
+    // 参考解（开普勒解析解）的求解舍入：按双精度迭代精度 × 轨道尺度估计。
+    // 这是推断值、未单独实测；量级比浮点地板小约四个数量级，在所有配置下均可忽略。
+    const REF_ROUNDING_KM = 7e-13
+
+    if (floorKm === null || !(total > 0)) {
+      return {
+        totalPositionErrorKm: total,
+        floatingFloorKm: null,
+        bottleneck: null,
+        note: '探针未进入舍入主导区，浮点下界不可估 —— 此时无法给出瓶颈判定。',
+      }
+    }
+
+    const truncSq = Math.max(0, total * total - floorKm * floorKm)
+    const truncation = Math.sqrt(truncSq)
+    const floatShare = floorKm / total
+    const bottleneck = floatShare > 0.25 ? 'floating' : 'truncation'
+
+    let advice
+    let stepsForOneOrderBetter = null
+    let predictedErrorKm = null
+    const usableCal = C.posReliable && Number.isFinite(C.posPower) && C.posPower > 0
+      && Number.isFinite(C.posA)
+
+    if (bottleneck === 'truncation') {
+      if (usableCal) {
+        // 目标：把误差压一个数量级。截断项 ~ n^(−p)，故步数需增至 10^(1/p) 倍。
+        const k = Math.pow(10, 1 / C.posPower)
+        stepsForOneOrderBetter = Math.ceil(nPerOrbit * k)
+        const newTrunc = truncation / 10
+        predictedErrorKm = Math.sqrt(newTrunc * newTrunc + floorKm * floorKm)
+        advice = `瓶颈为截断误差（浮点仅占 ${(floatShare * 100).toFixed(3)}%）。缩步长仍然有效：`
+          + `步数增至约 ${stepsForOneOrderBetter} 步/圈（${k.toFixed(2)} 倍），`
+          + `预计位置误差降至 ${predictedErrorKm.toExponential(2)} km。`
+        if (newTrunc < floorKm) {
+          advice += `注意：届时浮点地板 ${floorKm.toExponential(2)} km 将成为新的限制。`
+        }
+      } else {
+        advice = '瓶颈为截断误差，但该方法的标定式不可靠，无法定量外推所需步数。'
+      }
+    } else {
+      advice = `瓶颈已转移到浮点舍入（占 ${(floatShare * 100).toFixed(1)}%）。`
+        + `继续缩步长收益递减 —— 理论上误差最多压到浮点地板 ${floorKm.toExponential(3)} km，`
+        + `但需步长趋于无限小，实际不可行。建议停止减小步长，或改用更高阶的方法。`
+    }
+
+    return {
+      totalPositionErrorKm: total,
+      truncationKm: truncation,
+      floatingFloorKm: floorKm,
+      referenceRoundingKm: REF_ROUNDING_KM,
+      floatingSharePct: floatShare * 100,
+      bottleneck,
+      advice,
+      stepsForOneOrderBetter,
+      predictedErrorKm,
+      floorLimited: bottleneck === 'floating',
+      note: '截断项按 sqrt(总²−地板²) 分解（两机制独立、按步随机累积）；'
+        + '地板为实测下界（固定步长仅改初始相位的相位扫描中位数）；'
+        + '参考解舍入为推断量级，比地板小约四个数量级，可忽略。',
+    }
+  })()
+
+  return {
+    method, methodName: METHODS[method].name, nPerOrbit, orbits,
+    scenario: describeScenario(S),
+    metrics: {
+      positionErrorKm: main.positionErrorKm, relEnergyError: main.relEnergyError,
+      relAngularMomentumError: main.relAngularMomentumError,
+      observedOrderPos: observedOrder, theoreticalOrder: theoretical,
+      globalOrderPos: globalOrder, orderSource,
+      runtimeRefineImprovement: refineImprovement,
+      runtimeRefineFactor: r3RefineFactor,
+      runtimeAtFloor: Number.isFinite(refineImprovement) ? refineImprovement < 2 : null,
+      arcGrowthRatio: arcGrowth,
+      ceilingStepsPerOrbitPos: ceilingPos === null ? null : Math.floor(ceilingPos),
+      ceilingStepsPerOrbitEnergy: ceilingEe === null ? null : Math.floor(ceilingEe),
+      posFloorReached: F.posFloorReached,
+      floorNote: F.floorNote,
+    },
+    calibrationReliable: C.reliable,
+    thresholds: { targetRelEnergyErr, targetPosErrKm },
+    passFlags: { energyPass, posPass },
+    triggeredRules: dec.triggeredRules,
+    ruleCatalog: ALARM_RULES,
+    ruleSeverity: ALARM_SEVERITY,
+    blockingRules: dec.blockingRules,
+    warningRules: dec.warningRules,
+    unevaluatedRules: dec.unevaluatedRules,
+    deliverable: dec.deliverable,
+    evidence: dec.evidence,
+    summary: dec.summary,
+    // 误差预算：把"误差是多少"推进到"受什么限制、还能不能更好"
+    errorBudget,
+  }
+}
+
+// ============================================================================
+// 二、插件与工具注册
+// ============================================================================
+const readOnlyMeta = {
+  isReadOnly: true,
+  isDestructive: false,
+  isConcurrencySafe: true,
+  isOpenWorld: false,
+  replay: 'safe',
+  costHint: undefined,
+  deferLoading: false,
+  requiresApproval: 'never',
+}
+
+const methodProp = str({ description: '数值方法', enum: METHOD_NAMES })
+
+// 物理系统选择。默认二体问题；换成简谐振子（system: 'sho'）可验证验证机制的可迁移性。
+const systemProp = str({ description: '物理系统', enum: SYSTEM_KEYS })
+const shoProps = {
+  amplitudeKm: num({ exclusiveMinimum: 0, maximum: 1e9, description: '简谐振子振幅（km），默认 7000' }),
+  periodSeconds: num({ exclusiveMinimum: 0, maximum: 1e9, description: '简谐振子周期（s），默认 5828.517' }),
+}
+
+// 场景参数：全部可选。不传即用默认场景（system=twoBody、a=7000 km、e=0.05）。
+// 标定式、精度平台、下界上限都会随场景现场重算，不存在跨场景的陈旧常数。
+const scenarioProps = {
+  system: systemProp,
+  semiMajorAxisKm: num({ exclusiveMinimum: 0, maximum: 1e9, description: '二体问题：半长轴 a（km），默认 7000' }),
+  eccentricity: num({ minimum: 0, maximum: 0.999, description: '二体问题：偏心率 e，取值 [0, 1)，默认 0.05' }),
+  ...shoProps,
+}
+
+const SCENARIO_KEYS = ['system', 'semiMajorAxisKm', 'eccentricity', 'amplitudeKm', 'periodSeconds']
+
+const TOOLS = [
+  {
+    name: 'orbit_kernel_info',
+    description: 'Return the orbit propagation kernel constants, available integrators, their theoretical orders, and the calibrated floating-point accuracy floor for a given orbit scenario. Optional semiMajorAxisKm / eccentricity select the scenario; omit them for the default low-Earth-orbit case. Call this first when planning a verification run.',
+    parameters: obj(scenarioProps, []),
+    async execute({ system, semiMajorAxisKm, eccentricity, amplitudeKm, periodSeconds }) {
+      const S = resolveScenario({ system, semiMajorAxisKm, eccentricity, amplitudeKm, periodSeconds })
+      const cal = calibrateTruncation({ method: 'rk4', orbits: 2, sc: S })
+      const floor = probeFloor({ method: 'rk4', orbits: 2, cal, sc: S })
+      const structured = {
+        model: '常微分方程组；每个系统都提供解析真值，故可自动核对正确性',
+        availableSystems: SYSTEM_KEYS.map((k) => ({
+          key: k, name: SYSTEMS[k].name,
+          scenarioParams: SYSTEMS[k].scenarioParams,
+          conservedQuantities: SYSTEMS[k].conservedLabels,
+        })),
+        scenario: {
+          semiMajorAxis_km: S.a, eccentricity: S.e, mu_km3_s2: S.mu,
+          period_s: S.period, rPeriapsis_km: S.rPeriapsis, rApoapsis_km: S.rApoapsis,
+          divergenceLimit_km: S.dimLimit,
+          note: '发散判据为远地点半径的 2 倍。可传 semiMajorAxisKm / eccentricity 换场景，'
+            + '标定与平台会随之重算。本内核只处理椭圆轨道（0 ≤ e < 1）。',
+        },
+        machineEpsilon: EPS,
+        integrators: METHOD_NAMES.map((k) => ({ key: k, name: METHODS[k].name, theoreticalOrder: METHODS[k].order })),
+        calibration: {
+          truncationModel: 'E(h) ≈ A·h^p（h 单位为秒）',
+          validationChecks: {
+            r2Minimum: FIT_R2_MIN,
+            residualMaxDex: FIT_RESID_MAX_DEX,
+            extrapolationMaxDex: EXTRAP_MAX_DEX,
+            powerTolerance: POWER_TOL,
+            note: '四项检验全部通过才认为该口径的标定可用；否则工具返回 null 而不是数字。',
+          },
+          empiricalLaw: '守恒量口径的幂次 ≈ 全局阶 + 1（实测 RK4 4→5.000、heun 2→2.970、midpoint 2→2.989）',
+          integratorReliability: Object.fromEntries(METHOD_NAMES.map((k) => {
+            const c = calibrateTruncation({ method: k, orbits: 2, sc: S })
+            return [k, {
+              chosenMetric: c.chosenMetric,
+              position: { reliable: c.posReliable, power: c.posPower, r2: c.metrics.pos.r2, reasons: c.posReasons },
+              energy: { reliable: c.eeReliable, power: c.eePower, r2: c.metrics.ee.r2, reasons: c.eeReasons },
+            }]
+          })),
+        },
+        accuracyFloor: {
+          relEnergyError: floor.floorEnergy,
+          relEnergySpread: [floor.floorEnergyMin, floor.floorEnergyMax],
+          positionErrorKm: floor.floorPosKm,
+          probeStepsPerOrbit: floor.nProbe,
+          reached: { energy: floor.energyFloorReached, position: floor.posFloorReached },
+          note: '平台是随机分布，改初始相位即变；只能给中位数与散布范围。为 null 表示探针步长尚未进入舍入主导区，下界不可估。',
+        },
+        alarmRules: ALARM_RULES,
+      }
+      return { content: [{ type: 'text', text: JSON.stringify(structured, null, 2) }], structured }
+    },
+  },
+  {
+    name: 'orbit_propagate',
+    description: 'Propagate a two-body orbit with the chosen integrator and report position error against the analytic Kepler solution, plus relative errors of specific energy and specific angular momentum.',
+    parameters: obj({
+      method: methodProp,
+      nPerOrbit: int({ minimum: 2, maximum: 2000000, description: '每圈步数（步长的倒数形式）' }),
+      orbits: num({ minimum: 0.05, maximum: 200, description: '积分圈数' }),
+      t0: num({ description: '初始时刻，用于改变初始相位' }),
+      ...scenarioProps,
+    }, ['method', 'nPerOrbit', 'orbits']),
+    async execute({ method, nPerOrbit, orbits, t0, system, semiMajorAxisKm, eccentricity, amplitudeKm, periodSeconds }) {
+      const r = propagate({ method, nPerOrbit, orbits, t0: t0 || 0, system, semiMajorAxisKm, eccentricity, amplitudeKm, periodSeconds })
+      const lines = [
+        scenarioLine(r.scenario),
+        `方法 ${r.methodName}（理论阶 ${r.theoreticalOrder}）｜每圈 ${r.nPerOrbit} 步｜步长 ${r.dtSeconds.toExponential(4)} s｜共 ${r.steps} 步`,
+        `位置误差（对解析解）  ${r.positionErrorKm.toExponential(4)} km`,
+        `比能量相对误差        ${r.relEnergyError.toExponential(4)}  （${r.energyErrorOverEps.toFixed(1)} × ε）`,
+        `比角动量相对误差      ${r.relAngularMomentumError.toExponential(4)}`,
+        r.diverged ? '状态：发散' : '状态：正常',
+      ]
+      return { content: [{ type: 'text', text: lines.join('\n') }], structured: r }
+    },
+  },
+  {
+    name: 'orbit_order_test',
+    description: 'Observed-order test (the strictest level of code verification): run the same integrator over a ladder of step sizes and fit the empirical convergence exponent, then compare it with the theoretical order.',
+    parameters: obj({
+      method: methodProp,
+      orbits: num({ minimum: 0.05, maximum: 200 }),
+      nList: arr(int({ minimum: 2 }), { minItems: 3, maxItems: 16, description: '每圈步数阶梯，必须递增' }),
+      useMaxError: { [Kind]: 'Boolean', type: 'boolean', description: '用全时段最大位置误差代替终点误差（避免抽样落在折返点导致的阶数虚高）' },
+      ...scenarioProps,
+    }, ['method', 'nList']),
+    async execute({ method, orbits, nList, useMaxError, system, semiMajorAxisKm, eccentricity, amplitudeKm, periodSeconds }) {
+      const r = orderTest({ method, orbits: orbits || 2, nList, useMaxError: !!useMaxError, system, semiMajorAxisKm, eccentricity, amplitudeKm, periodSeconds })
+      const lines = [
+        scenarioLine(r.scenario),
+        `${r.methodName}：理论阶 ${r.theoreticalOrder}，拟合实测阶 ${r.fittedOrderPos.toFixed(3)}（比值 ${r.orderRatio.toFixed(2)}）`,
+      ]
+      for (const it of r.intervals) {
+        lines.push(`  ${it.from} → ${it.to} 步/圈：位置阶 ${it.observedOrderPos.toFixed(3)}｜能量阶 ${it.observedOrderEnergy.toFixed(3)}｜角动量阶 ${it.observedOrderAngMom.toFixed(3)}`)
+      }
+      lines.push(`判定：${r.verdict}`, `提示：${r.hint}`)
+      return { content: [{ type: 'text', text: lines.join('\n') }], structured: r }
+    },
+  },
+  {
+    name: 'orbit_calibrate_step',
+    description: 'Given an accuracy target, compute the minimum steps per orbit required, and the ceiling beyond which shrinking the step no longer improves accuracy because floating-point rounding dominates. The truncation calibration is validated by four checks (R-squared, residual, extrapolation to the next step-size bracket, and power self-consistency); if the error of the chosen integrator does not follow a power law, this tool returns null for the step counts instead of a misleading number and explains why.',
+    parameters: obj({
+      method: methodProp,
+      orbits: num({ minimum: 0.05, maximum: 200 }),
+      targetRelEnergyErr: num({ exclusiveMinimum: 0, description: '目标比能量相对误差' }),
+      targetPosErrKm: num({ exclusiveMinimum: 0, description: '可选：目标位置误差 km' }),
+      ...scenarioProps,
+    }, ['targetRelEnergyErr']),
+    async execute({ method, orbits, targetRelEnergyErr, targetPosErrKm, system, semiMajorAxisKm, eccentricity, amplitudeKm, periodSeconds }) {
+      const r = calibrateStep({
+        method, orbits: orbits || 2, targetRelEnergyErr, targetPosErrKm,
+        system, semiMajorAxisKm, eccentricity, amplitudeKm, periodSeconds,
+      })
+      const fx = (v) => (v === null || v === undefined ? '未测出' : v.toExponential(3))
+      const lines = [
+        scenarioLine(r.scenario),
+        `方法 ${r.methodName}（理论阶 ${r.theoreticalOrder}）｜标定可靠性：${r.calibrationReliable ? '✓ 可靠' : '✗ 不可靠'}`,
+        `口径选择：${r.calibrationNote}`,
+      ]
+      if (r.truncationModel) lines.push(`标定式：${r.truncationModel}`)
+
+      lines.push('', `【守恒量口径】目标比能量相对误差 ≤ ${r.targetRelEnergyErr.toExponential(0)}`)
+      if (r.requiredStepsPerOrbit === null) {
+        lines.push(`  ✗ 不返回步数 —— ${r.eeBlockedReason}`)
+      } else {
+        lines.push(`  至少每圈 ${r.requiredStepsPerOrbit} 步`)
+        lines.push(r.ceilingStepsPerOrbit === null
+          ? '  上界：未测出（探针未触及舍入区，下界不可估）'
+          : `  上界 ${r.ceilingStepsPerOrbit} 步/圈（再缩无效）`)
+        lines.push(`  精度平台 ${fx(r.floorRelEnergyError)}（探针实测 ${fx(r.floorRelEnergyRawProbe)}，`
+          + `散布 ${r.floorRelEnergySpread[0].toExponential(2)} ~ ${r.floorRelEnergySpread[1].toExponential(2)}）`)
+        lines.push(r.feasible === null ? '  可达性：无法判定'
+          : `  可达性：${r.feasible ? '可达' : '不可达 —— 目标低于浮点精度平台'}`)
+      }
+
+      if (targetPosErrKm != null) {
+        lines.push('', `【位置口径】目标位置误差 ≤ ${targetPosErrKm} km`)
+        if (r.requiredStepsPerOrbitPos === null) {
+          lines.push(`  ✗ 不返回步数 —— ${r.posBlockedReason}`)
+        } else {
+          lines.push(`  至少每圈 ${r.requiredStepsPerOrbitPos} 步，`
+            + `上界 ${r.ceilingStepsPerOrbitPos === null ? '未测出' : r.ceilingStepsPerOrbitPos + ' 步'}`)
+        }
+      }
+
+      lines.push('', `说明：${r.floorNote}`)
+      if (!r.calibrationReliable) {
+        lines.push('⚠ 该方法对二体问题条件不稳定，误差按指数增长而非幂律，标定式不可用。')
+        lines.push('  请改用实跑迭代（用 orbit_propagate 逐步试步长），或换用标定可靠的方法。')
+      }
+      return { content: [{ type: 'text', text: lines.join('\n') }], structured: r }
+    },
+  },
+  {
+    name: 'orbit_alarm_check',
+    description: 'Run the six warning rules over a given configuration: R1 conservation-good-but-position-bad (false confidence), R2 observed order too low, R3 step already below the floating-point floor, R4 divergence, R5 error accumulation over longer arcs, R6 both metrics fail. Returns triggered rules with numeric evidence. ALSO returns an error budget that decomposes the total position error into truncation / floating-point / reference-rounding components, names the current bottleneck, and advises whether shrinking the step size can still improve accuracy — report this budget when the user asks whether the accuracy can be improved or why it stops improving.',
+    parameters: obj({
+      method: methodProp,
+      nPerOrbit: int({ minimum: 2, maximum: 2000000 }),
+      orbits: num({ minimum: 0.05, maximum: 200 }),
+      targetRelEnergyErr: num({ exclusiveMinimum: 0 }),
+      targetPosErrKm: num({ exclusiveMinimum: 0 }),
+      ...scenarioProps,
+    }, ['method', 'nPerOrbit']),
+    async execute({ method, nPerOrbit, orbits, targetRelEnergyErr, targetPosErrKm,
+                    system, semiMajorAxisKm, eccentricity, amplitudeKm, periodSeconds }) {
+      // ── 参数非法时：不出报错了事，而是给出「图 + 逐条原因」──
+      // 这类"输入写错但工具照常算完"的情形正是本项目最想拦住的，所以单独处理。
+      let r = null
+      try {
+        r = alarmCheck({
+          method, nPerOrbit, orbits: orbits || 2,
+          targetRelEnergyErr: targetRelEnergyErr ?? 1e-10,
+          targetPosErrKm: targetPosErrKm ?? 1.0,
+          system, semiMajorAxisKm, eccentricity, amplitudeKm, periodSeconds,
+        })
+      } catch (e) {
+        const msg = String(e && e.message ? e.message : e)
+        const isTwoBody = !system || system === DEFAULT_SYSTEM_KEY
+        if (isTwoBody && Number.isFinite(Number(semiMajorAxisKm)) && Number(semiMajorAxisKm) > 0) {
+          const aPassed = Number(semiMajorAxisKm)
+          const ePassed = Number.isFinite(Number(eccentricity)) ? Number(eccentricity) : 0.05
+          const perPassed = aPassed * (1 - ePassed)
+
+          // 推测本意：小值是「高度」的概率最大；否则多半是偏心率过大
+          let intended = null
+          let guessNote = ''
+          if (aPassed < EARTH_RADIUS_KM) {
+            intended = { semiMajorAxisKm: aPassed + EARTH_RADIUS_KM, eccentricity: ePassed }
+            guessNote = `半长轴 ${aPassed} km 小于地球半径 ${EARTH_RADIUS_KM} km，`
+              + '最常见的成因是**把「轨道高度」当成了「半长轴」**。'
+              + `若本意是高度 ${aPassed} km，则半长轴应为 ${aPassed}+${EARTH_RADIUS_KM} = ${aPassed + EARTH_RADIUS_KM} km。`
+          } else {
+            const eMax = Math.max(0, 1 - EARTH_RADIUS_KM / aPassed)
+            intended = { semiMajorAxisKm: aPassed, eccentricity: Math.min(ePassed, eMax * 0.98) }
+            guessNote = `半长轴 ${aPassed} km 本身合理，但偏心率 ${ePassed} 使近地点降到 `
+              + `${perPassed.toFixed(1)} km（低于地表）。在 a = ${aPassed} km 下，`
+              + `偏心率须小于 ${eMax.toFixed(4)} 才能让近地点高于地表。`
+          }
+
+          const svg = plotParamMistake({
+            passed: { semiMajorAxisKm: aPassed, eccentricity: ePassed },
+            intended,
+            reason: guessNote.replace(/\*\*/g, ''),
+          })
+          const structured = {
+            ok: false, error: 'PARAMETER_INVALID', message: msg,
+            passed: { semiMajorAxisKm: aPassed, eccentricity: ePassed },
+            inferredIntended: intended,
+            earthRadiusKm: EARTH_RADIUS_KM,
+            diagnosticSvg: svg,
+          }
+          const out = [
+            '【参数被拒绝 —— 该轨道无物理意义】',
+            msg,
+            '',
+            `传入：a = ${aPassed} km，e = ${ePassed} → 近地点地心距 ${perPassed.toFixed(1)} km`,
+            `地球平均半径 ${EARTH_RADIUS_KM} km`,
+            '',
+            '推断本意：' + guessNote.replace(/\*\*/g, ''),
+            '',
+            '【已生成诊断图】下图把「传入的轨道」与「本意应有的轨道」画在同一尺度下，'
+              + '红=传入、绿=目标，地球为参照：',
+            '  ① 传入轨道与地球的相对大小（差异一眼可见）',
+            '  ② 近地点地心距与地球半径的对比',
+            '  ③ 修正后的轨道应落在何处',
+            '  ④ 修正后的近地点地心距',
+            '（图注编号与图中标注一一对应；SVG 见 structured.diagnosticSvg）',
+            '',
+            svg,
+          ]
+          return { content: [{ type: 'text', text: out.join('\n') }], structured }
+        }
+        // 非二体或参数无法解读时，退回原始报错
+        return {
+          content: [{ type: 'text', text: '参数被拒绝：' + msg }],
+          structured: { ok: false, error: 'PARAMETER_INVALID', message: msg },
+        }
+      }
+      const lines = [
+        scenarioLine(r.scenario),
+        `${r.methodName}｜每圈 ${r.nPerOrbit} 步｜${r.orbits} 圈`,
+        `位置误差 ${r.metrics.positionErrorKm.toExponential(3)} km｜比能量 ${r.metrics.relEnergyError.toExponential(3)}｜实测阶 ${r.metrics.observedOrderPos.toFixed(3)}（理论 ${r.metrics.theoreticalOrder}）`,
+        r.summary,
+      ]
+      for (const key of r.triggeredRules) lines.push(`  [${key}] ${r.ruleCatalog[key]}\n      证据：${r.evidence[key]}`)
+      // 误差预算必须进 content —— 否则模型看不到，白算
+      if (r.errorBudget && r.errorBudget.bottleneck) {
+        const b = r.errorBudget
+        lines.push('')
+        lines.push('误差预算：总位置误差 '
+          + `${b.totalPositionErrorKm.toExponential(3)} km ＝ 截断 ${b.truncationKm.toExponential(3)}`
+          + ` ＋ 浮点 ${b.floatingFloorKm.toExponential(3)}（占 ${b.floatingSharePct.toFixed(3)}%）`
+          + `　→　瓶颈：${b.bottleneck === 'floating' ? '浮点舍入' : '截断误差'}`)
+        lines.push(`改进方向：${b.advice}`)
+      } else if (r.errorBudget) {
+        lines.push('')
+        lines.push(`误差预算：${r.errorBudget.note}`)
+      }
+      // ── 生成误差预算图：把三项分解与瓶颈画出来 ──
+      if (r.errorBudget && r.errorBudget.totalPositionErrorKm) {
+        const b = r.errorBudget
+        const bnName = b.bottleneck === 'floating' ? '浮点地板' : '截断误差'
+        r = {
+          ...r,
+          diagnosticSvg: plotErrorBudget({
+            budget: b,
+            notes: [
+              { text: `总位置误差 ${b.totalPositionErrorKm.toExponential(3)} km 由三项构成`, tone: 'ink' },
+              {
+                text: `截断项 ${b.truncationKm.toExponential(3)} km（占 ${((1 - b.floatingSharePct / 100) * 100).toFixed(2)}%）`,
+                tone: b.bottleneck === 'truncation' ? 'bad' : 'ink',
+              },
+              {
+                text: `浮点地板 ${b.floatingFloorKm.toExponential(3)} km（占 ${b.floatingSharePct.toFixed(3)}%）—— 双精度下的下界，缩步长也无法降低`,
+                tone: b.bottleneck === 'floating' ? 'bad' : 'ink',
+              },
+              { text: `当前瓶颈：${bnName}`, tone: 'warn' },
+              { text: b.advice, tone: 'good' },
+            ],
+          }),
+        }
+        lines.push('')
+        lines.push('【已生成误差预算图】三项分解与瓶颈见下图（编号与图注一一对应；SVG 见 structured.diagnosticSvg）：')
+        lines.push('  ① 三项占总误差的份额（条形长度已对总误差归一）')
+        lines.push('  ② 截断项 —— 缩步长可以降低')
+        lines.push('  ③ 浮点地板 —— 双精度下界，缩步长无效')
+        lines.push('  ④ 当前瓶颈')
+        lines.push('  ⑤ 可执行的改进方向')
+        lines.push(r.diagnosticSvg)
+      }
+      return { content: [{ type: 'text', text: lines.join('\n') }], structured: r }
+    },
+  },
+]
+
+export const orbitToolkit = {
+  inject: ['extension'],
+  apply(ctx) {
+    const agnes = ctx.extension()
+    for (const tool of TOOLS) {
+      agnes.registerTool({ ...tool, meta: readOnlyMeta })
+    }
+    agnes.on('session_start', () => {
+      agnes.ctx.log.info(`轨道可信度工具箱已就绪：${TOOLS.map((t) => t.name).join(', ')}`)
+    })
+  },
+}
+
+// 供本地核对脚本使用（不影响插件加载）
+export const __kernel = {
+  MU, A_SEMI, ECC, N_MEAN, PERIOD, EPS, METHODS, METHOD_NAMES,
+  EARTH_MU, DEFAULT_SCENARIO, makeScenario, resolveScenario, SYSTEMS, SYSTEM_KEYS,
+  solveKepler, exactState, deriv, energy, angularMomentum,
+  propagate, orderTest, calibrateTruncation, probeFloor, calibrateStep, alarmCheck, decideRules,
+  plotOrbitComparison, plotErrorProfile, plotErrorBudget, plotParamMistake,
+  TOOLS,
+}

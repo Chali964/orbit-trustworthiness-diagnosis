@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>与同期工作的关系说明</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#fff; --line:#e3e6ec; --line2:#cfd5df;
+    --ink:#1a1f29; --ink2:#3f4959; --ink3:#7b869a;
+    --brand:#1d5fd0; --brand2:#eaf1fd; --brand3:#cfe0fa;
+    --hot:#c62828; --hot2:#fdecec; --hot3:#f4cccc;
+    --ok:#1f7a4d; --ok2:#e8f5ee; --ok3:#b6ddc7;
+    --warn:#9a6200; --warn2:#fdf3e3; --warn3:#efdcb4;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:15.5px;line-height:1.9}
+  .wrap{max-width:940px;margin:0 auto;padding:34px 22px 80px}
+  .doc-head{border-bottom:3px double var(--line2);padding-bottom:16px;margin-bottom:24px}
+  .doc-head .kicker{font-size:12.4px;letter-spacing:.18em;color:var(--ink3);margin-bottom:8px}
+  .doc-head h1{margin:0 0 10px;font-size:25px;line-height:1.4;font-weight:700}
+  .doc-head .meta{font-size:13.4px;color:var(--ink2);line-height:1.9}
+
+  .lead{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--brand);
+    border-radius:0 10px 10px 0;padding:16px 20px;margin:18px 0 26px;font-size:15px}
+  .lead .t{font-weight:700;font-size:14px;color:var(--brand);letter-spacing:.05em;margin-bottom:7px}
+
+  h2{font-size:18.5px;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid var(--line2);font-weight:700}
+  h2 .num{color:var(--brand);margin-right:8px}
+  p{margin:11px 0}
+  strong{font-weight:700}
+
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.7px;background:var(--card)}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:#f0f3f8;font-weight:700;color:var(--ink2);font-size:13.3px}
+  caption{caption-side:top;text-align:left;font-size:13px;color:var(--ink3);padding-bottom:5px}
+
+  .note{background:var(--brand2);border:1px solid var(--brand3);border-radius:9px;padding:13px 17px;font-size:14.4px;margin:14px 0}
+  .note .t{font-weight:700;color:var(--brand);margin-bottom:4px}
+  .note.hot{background:var(--hot2);border-color:var(--hot3)}
+  .note.hot .t{color:var(--hot)}
+  .note.ok{background:var(--ok2);border-color:var(--ok3)}
+  .note.ok .t{color:var(--ok)}
+  .note.warn{background:var(--warn2);border-color:var(--warn3)}
+  .note.warn .t{color:var(--warn)}
+
+  /* 差异点：编号大号 */
+  .diff{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:15px 20px;margin:12px 0}
+  .diff .h{display:flex;gap:12px;align-items:baseline;margin-bottom:7px}
+  .diff .n{font-size:22px;font-weight:700;color:var(--brand);line-height:1;flex:0 0 auto}
+  .diff .t{font-size:15.8px;font-weight:700;line-height:1.5}
+  .diff .b{font-size:14.4px;color:var(--ink2);line-height:1.82}
+  .diff .b .us{color:var(--ok);font-weight:700}
+  .diff .b .them{color:var(--ink3);font-weight:700}
+
+  code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;
+    background:#f3f5f9;border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  a{color:var(--brand);text-decoration:none;border-bottom:1px solid var(--brand3)}
+  footer{margin-top:42px;padding-top:15px;border-top:1px solid var(--line);font-size:12.8px;color:var(--ink3);line-height:1.9}
+  @media print{body{background:#fff}.diff,.note,table{break-inside:avoid}h2{break-after:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="doc-head">
+  <div class="kicker">作品说明书 · 一节（可直接抽出作答辩材料）</div>
+  <h1>与同期工作的关系</h1>
+  <div class="meta">
+    <b>队伍：</b>蓝牙配队　|　<b>项目：</b>轨道仿真可信度诊断系统<br>
+    <b>编制：</b>2026 年 10 月 3 日
+  </div>
+</div>
+
+<div class="lead">
+  <div class="t">为什么写这一节</div>
+  任何一项工作都应当知道自己站在哪里。我们在开发过程中做了<b>跨 6 类渠道的新颖性核查</b>（学术预印本、同行评审期刊、会议论文、商业产品、标准规范、开源仓库），
+  目的是<b>确认我们解决的是不是一个已被人做过的问题</b>。<br><br>
+  <b>核查结果是：核心想法已有同期工作，我们没有首创它。</b>但同时，我们在四个方面与这些工作存在实质差异。
+  本节如实列出两者。<br><br>
+  <b>我们选择主动出示这份说明，而不是等被问到。</b>
+</div>
+
+<h2><span class="num">一</span>核查结论</h2>
+
+<table>
+  <tr><th style="width:180px">核查项</th><th>结果</th></tr>
+  <tr><td><b>渠道覆盖</b></td><td>6 类：学术预印本（arXiv）· 同行评审期刊（Neurocomputing、Springer ICCS）· 会议论文 · 商业产品 · 标准规范 · 开源仓库</td></tr>
+  <tr><td><b>检索轮次</b></td><td>13 轮 / 约 50 组关键词（含中英文、同义表述、方法术语、产品名）</td></tr>
+  <tr><td><b>实质重复</b></td><td><b>未发现</b>——没有找到"问题陈述、方法路径、应用场景"三者完全重合的已发表实现</td></tr>
+  <tr style="background:#fdf3e3"><td><b>高度重叠</b></td><td><b>4 项</b>——问题陈述与方法路径与我们重合，差异见第三节</td></tr>
+  <tr><td><b>方法组件重合</b></td><td>正常——观察阶测试、守恒量校验、跨工具交叉验证、可信度分级<b>均为领域成熟方法或已有标准</b>，本文档不主张这些方法的创新性</td></tr>
+</table>
+
+<h2><span class="num">二</span>四项同期工作</h2>
+
+<p>按与我们重合程度排序。<strong>全部为 2026 年发表</strong>。</p>
+
+<table>
+  <caption>表 1　与本文最高度重叠的四项工作</caption>
+  <tr>
+    <th style="width:230px">工作</th><th class="c" style="width:130px">出处 / 时间</th><th>它解决的问题</th>
+  </tr>
+  <tr>
+    <td><b>Judge Agent</b><br><span style="font-size:12.5px;color:var(--ink3)">A Judge Agent Closes the Reliability Gap in AI-Generated Scientific Simulation</span></td>
+    <td class="c">arXiv 2603.25780<br>2026-03</td>
+    <td>LLM 生成的仿真代码会<b>"静默失效"</b>（跑得通但结果是错的）。用 Plan / Judge / Execute 三个智能体自动化"经典数学验证"（良态性、收敛性、误差认证）。报告把静默失败率从 <b>42% 降到 1.5%</b>（134 用例 / 12 领域）</td>
+  </tr>
+  <tr>
+    <td><b>AutoCred</b><br><span style="font-size:12.5px;color:var(--ink3)">LLM-Assisted Credibility Scoring for Simulation Models</span></td>
+    <td class="c">ICCS 2026<br>（Springer，同行评审）</td>
+    <td>仿真可信度评估依赖大量人工专家、难以规模化。用 LLM 从时间序列数据自动构造概念模型、生成可信度指标与权重、生成诊断可视化脚本并打分，另有<b>元验证模块</b>检查内部一致性</td>
+  </tr>
+  <tr>
+    <td><b>Möltner et al.</b><br><span style="font-size:12.5px;color:var(--ink3)">Creation, evaluation and self-validation of simulation models with LLMs</span></td>
+    <td class="c">Neurocomputing 663<br>2026-06</td>
+    <td>用 LLM 智能体生成多体动力学仿真模型，并<b>通过预定义的验证方法集做自评估</b>，判别模型中的参数化错误。用带真值的参数化模型做基准</td>
+  </tr>
+  <tr>
+    <td><b>AIVV</b><br><span style="font-size:12.5px;color:var(--ink3)">Neuro-Symbolic LLM Agent-Integrated V&amp;V</span></td>
+    <td class="c">arXiv 2604.02478<br>2026-04</td>
+    <td>完整 V&amp;V 操作仍依赖人机回环（HITL），人工负担不可持续。用 LLM 作为"审议外层"，把数学方法标出的异常升级给角色分工的 LLM 委员会做语义判断</td>
+  </tr>
+</table>
+
+<div class="note">
+  <div class="t">我们与它们的共同出发点</div>
+  这四项工作与本文<b>共享同一个问题诊断</b>：数值仿真的失效不产生错误提示（他们称 "silently fails"，我们称"错误不会自己报错"），
+  而验证这件事传统上依赖人工、慢且难扩展。<b>我们不回避这一点：问题是被共同认识到的，解法方向也趋同。</b>
+</div>
+
+<h2><span class="num">三</span>四点实质差异</h2>
+
+<div class="diff">
+  <div class="h"><span class="n">①</span><span class="t">验证对象不同：我们解决"使用侧"的问题，而非"生成侧"</span></div>
+  <div class="b">
+    <span class="them">Judge Agent</span> 面向 AI 开发者，场景是"我让 AI 生成了一段求解器，帮我验证它写对没有"。<br>
+    <span class="us">本文</span> 面向仿真使用者，场景是"我手上这套配置可不可信、该用多少步、这个结果能不能交付"。<br><br>
+    <b>这不是"场景包装"的差别，而是输入与输出的性质不同</b>：前者输入是代码、输出是"代码对不对"；后者输入是物理配置与精度目标、输出是"该用什么参数、能不能交付"。
+    <b>后者必须包含"反推参数"这一步</b>（由目标精度反推所需步长），而前者不需要。
+  </div>
+</div>
+
+<div class="diff">
+  <div class="h"><span class="n">②</span><span class="t">判定权归属不同：判据是确定性算法，模型不打分</span></div>
+  <div class="b">
+    <span class="them">AutoCred</span> 的可信度指标、权重与评分<b>由 LLM 生成与给出</b>（虽有权重归一化与元验证，判定主体仍是模型）。<br>
+    <span class="us">本文</span> 把判据<b>写死为确定性算法</b>——截断误差幂律标定 + 四重可靠性检验 + 六条分级规则；
+    <b>LLM 只负责编排流程与解释结果，不参与判定，也不给出任何数值</b>。<br><br>
+    <b>直接后果：本文的判定结果可复现、可审计、不随模型版本更替而漂移。</b>
+    同一个配置用不同版本的模型跑，六条规则的结论必然一致；而"由模型打分"的框架无法保证这一点。
+  </div>
+</div>
+
+<div class="diff">
+  <div class="h"><span class="n">③</span><span class="t">误差预算分解与瓶颈判定</span></div>
+  <div class="b">
+    本文把总误差<b>拆解为截断误差、浮点舍入、参考解舍入三项</b>，并给出主导项判定与占比。<br><br>
+    <b>实测结果</b>：在 763 步/圈配置下浮点占比仅 <b>0.014%</b>（瓶颈为截断误差，缩步长有效）；
+    在 6125 步/圈配置下浮点占比升至 <b>48.5%</b>（瓶颈已转移，缩步长收益打折）。<br><br>
+    这一步回答的是<b>"精度受什么限制、还能不能更好"</b>，而非仅"准不准"。<b>在本次检索覆盖的范围内，未见到同类做法。</b>
+  </div>
+</div>
+
+<div class="diff">
+  <div class="h"><span class="n">④</span><span class="t">把领域已知陷阱形式化为自动报警</span></div>
+  <div class="b">
+    "守恒量保持得好并不等于位置精度高"是数值 V&amp;V 领域被广泛讨论的陷阱（多篇文献明确指出不宜以守恒量作为精度判据）。<br><br>
+    <span class="us">本文把它做成了一条自动触发的致命级规则（R1）</span>：
+    当守恒量达标而位置误差超差时自动报警并阻断交付，同时给出两侧的具体数值作为证据。
+    另一条规则（R5）处理同构的陷阱——"短弧段合格但长弧段不合格"。<br><br>
+    <b>陷阱本身不是我们发现；把它变成可自动触发的检查，是本文的处理方式。</b>
+  </div>
+</div>
+
+<h2><span class="num">四</span>本文贡献的界定</h2>
+
+<div class="note ok">
+  <div class="t">一句话</div>
+  <b>本文不提出新的数值验证理论。</b>本文的贡献是：<b>在一个具体领域（轨道动力学）内，把成熟的 V&amp;V 方法做成一个完整、可复现、可审计的工程实现，并让智能体在其中承担编制与解释的角色。</b>
+</div>
+
+<table>
+  <caption>表 2　贡献的准确表述（建议对外材料统一使用）</caption>
+  <tr><th style="width:180px">层面</th><th>我们的表述</th></tr>
+  <tr><td><b>问题</b></td><td>仿真失效不报错，验证依赖人工。这个问题<b>被领域共同认识到</b>，并非我们首先提出</td></tr>
+  <tr><td><b>方法</b></td><td>观察阶测试、守恒量校验、交叉验证、可信度分级<b>均为成熟方法或已有标准</b>（NASA-STD-7009B、ASME V&amp;V 20 等），我们不主张其创新性</td></tr>
+  <tr><td><b>我们的贡献</b></td><td>① <b>流程工程化</b>——把人工 V&amp;V 流程做成智能体可自主跑完的闭环<br>
+    ② <b>陷阱形式化</b>——把领域已知陷阱做成自动检查（R1 / R5）<br>
+    ③ <b>误差归因</b>——误差预算分解与瓶颈判定<br>
+    ④ <b>判断可审计</b>——用确定性规则核对智能体输出，不让模型自审<br>
+    ⑤ <b>标准落地</b>——把标准中的评估要求转化为可自动触发的检查</td></tr>
+  <tr><td><b>性质</b></td><td>以上五项<b>均为工程与流程层面的工作，不含物理或数学理论的原创</b></td></tr>
+</table>
+
+<h2><span class="num">五</span>已知局限</h2>
+
+<table>
+  <caption>表 3　本工作的边界（主动列出）</caption>
+  <tr><th style="width:200px">局限</th><th>说明</th></tr>
+  <tr>
+    <td><b>不提出形式化理论</b></td>
+    <td>Judge Agent 提出了 simulability class 𝔖（有限可规格化 / 良态性 / 可近似性 / 可认证性四个条件），界定了"哪些问题能被自动化流水线可靠求解"。
+    <b>本文只有工程规则，没有对应的理论刻画</b>——这是与该项工作相比最明显的短板</td>
+  </tr>
+  <tr>
+    <td><b>覆盖范围窄</b></td>
+    <td>只覆盖二体问题与简谐振子，<b>不含 J2 及更高阶摄动</b>。这是刻意的取舍：解析真值是全部可信度主张的基准，加入摄动后解析解不再闭合，整套双判据需重写。
+    <b>我们选择窄而深</b>；机制的<b>可迁移性</b>已通过简谐振子验证，但覆盖广度仍是劣势</td>
+  </tr>
+  <tr>
+    <td><b>弧段外推规则存在固有漏报</b></td>
+    <td>R5 规则用 2 倍弧段代理 4 倍真值，漏报率 24.4%。这是"省一半算力"的代价，属明确取舍而非缺陷</td>
+  </tr>
+  <tr>
+    <td><b>不是首创</b></td>
+    <td>本方向 2026 年已有至少四项同期工作。<b>本文的开发期与这些工作重叠，不主张灵感独有</b></td>
+  </tr>
+</table>
+
+<h2><span class="num">六</span>核查本身的局限</h2>
+
+<div class="note warn">
+  <div class="t">这份核查也不是完备的</div>
+  ① <b>未使用专业文献数据库</b>（Web of Science / Scopus）做引文追溯，检索基于公开网络搜索<br>
+  ② <b>未做全文精读</b>——四篇重叠工作基于摘要与部分正文判断，其方法细节可能还有本文尚未识别的重合<br>
+  ③ <b>未覆盖中文数据库</b>（CNKI、万方等），国内是否有人做同类工作无法确认<br>
+  ④ <b>预印本更新频繁</b>，核查结果有时效性（编制日 2026-10-03）<br>
+  ⑤ 相似度判断为<b>语义判断</b>，未做量化相似度计算<br><br>
+  <b>因此"未发现实质重复"这一结论，限定在上述范围内，不等于全网不存在。</b>
+</div>
+
+<footer>
+  <b>配套材料：</b>《新颖性核查报告-多渠道路径》（完整核查过程与判据）·《GitHub查重报告-轨道仿真可信度诊断系统》（开源仓库层面的查重）·《应对方案-新颖性核查与后续优化》。<br>
+  <b>使用建议：</b>本节可作为作品说明书的独立一节；答辩时若被问及与同期工作的关系，可直接引用第三、四节。<br>
+  <b>再核查提示：</b>建议在作品提交前（10.14）再执行一次新颖性检索，确认无新的同题工作出现。
+</footer>
+
+</div>
+</body>
+</html>
