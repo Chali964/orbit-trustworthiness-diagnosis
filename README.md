@@ -113,11 +113,11 @@ agh package enable agh-orbit-toolkit
 
 ## 一次真实的诊断过程
 
-以下为实测记录（会话 `9b66886d`，单轮 8 个步骤，耗时 1 分 54 秒，**用户只给目标、未指定任何步骤**）：
+以下为实测记录（会话 `9b66886d`，单轮 8 个步骤，耗时 1 分 54 秒，**用户只给目标与一组待评估的配置、未指定任何步骤**）：
 
 ```
 1. todo                   ← 自己拆出六项任务清单
-2. orbit_kernel_info      比较五种方法，选定 RK4
+2. orbit_kernel_info      比较五种方法，核验用户指定的 RK4 是否合适
 3. orbit_calibrate_step   标定：最小 763 步/圈；浮点上界 6125 步/圈
 4. orbit_propagate        763 步 → 位置误差 9.81e-6 km
 5. orbit_order_test       实测阶 4.09 ≈ 理论阶 4，实现无问题
